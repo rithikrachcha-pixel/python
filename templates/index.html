@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}AssessSim — Internship Assessment Game Simulator{% endblock %}
+
+{% block content %}
+<div class="hero">
+  <div class="hero-content">
+    <h1>Internship Assessment<br><span class="highlight">Game Simulator</span></h1>
+    <p class="hero-sub">Practice the cognitive and behavioral games used by top firms in their summer internship applications. Train for Pymetrics, SHL, and Cappfinity assessments.</p>
+    <a href="#pymetrics" class="btn btn-primary">Start Practicing</a>
+  </div>
+  <div class="hero-badges">
+    <span class="badge badge-pymetrics">Pymetrics</span>
+    <span class="badge badge-shl">SHL</span>
+    <span class="badge badge-cappfinity">Cappfinity</span>
+  </div>
+</div>
+
+<!-- Pymetrics Section -->
+<section id="pymetrics" class="section">
+  <div class="section-header">
+    <span class="platform-tag tag-pymetrics">Pymetrics</span>
+    <h2>Pymetrics Games</h2>
+    <p>Neuroscience-based games measuring cognitive and emotional traits. Used by Goldman Sachs, JPMorgan, Unilever, and many more.</p>
+  </div>
+  <div class="game-grid">
+    <a href="/game/bart" class="game-card">
+      <div class="game-icon" style="background:#FF6B6B">🎈</div>
+      <div class="game-info">
+        <h3>Balloon Risk (BART)</h3>
+        <p>Pump balloons to earn money — but pop one and you lose it all. Measures risk tolerance and decision-making.</p>
+        <span class="game-tag">Risk</span>
+        <span class="game-tag">Decision Making</span>
+      </div>
+    </a>
+    <a href="/game/gonogo" class="game-card">
+      <div class="game-icon" style="background:#4ECDC4">⚡</div>
+      <div class="game-info">
+        <h3>Go / No-Go</h3>
+        <p>Respond to target stimuli as fast as possible while ignoring distractors. Measures impulse control and attention.</p>
+        <span class="game-tag">Impulse Control</span>
+        <span class="game-tag">Attention</span>
+      </div>
+    </a>
+    <a href="/game/digit-span" class="game-card">
+      <div class="game-icon" style="background:#45B7D1">🔢</div>
+      <div class="game-info">
+        <h3>Digit Span</h3>
+        <p>Memorize and recall sequences of numbers, forwards and backwards. Measures working memory capacity.</p>
+        <span class="game-tag">Working Memory</span>
+        <span class="game-tag">Recall</span>
+      </div>
+    </a>
+    <a href="/game/nback" class="game-card">
+      <div class="game-icon" style="background:#96CEB4">🧠</div>
+      <div class="game-info">
+        <h3>N-Back Task</h3>
+        <p>Identify when a stimulus matches one from N steps earlier. Measures fluid intelligence and working memory.</p>
+        <span class="game-tag">Fluid Intelligence</span>
+        <span class="game-tag">Memory</span>
+      </div>
+    </a>
+    <a href="/game/attention" class="game-card">
+      <div class="game-icon" style="background:#FFEAA7">👁️</div>
+      <div class="game-info">
+        <h3>Attention &amp; Focus</h3>
+        <p>React to targets appearing on screen as quickly as possible. Measures reaction time and sustained attention.</p>
+        <span class="game-tag">Reaction Time</span>
+        <span class="game-tag">Focus</span>
+      </div>
+    </a>
+  </div>
+</section>
+
+<!-- SHL Section -->
+<section id="shl" class="section section-alt">
+  <div class="section-header">
+    <span class="platform-tag tag-shl">SHL</span>
+    <h2>SHL Assessments</h2>
+    <p>Industry-standard aptitude tests used globally by thousands of employers for graduate and intern recruitment.</p>
+  </div>
+  <div class="game-grid">
+    <a href="/game/numerical" class="game-card">
+      <div class="game-icon" style="background:#6C5CE7">📊</div>
+      <div class="game-info">
+        <h3>Numerical Reasoning</h3>
+        <p>Interpret tables and graphs to answer numerical questions. Timed multiple-choice format.</p>
+        <span class="game-tag">Maths</span>
+        <span class="game-tag">Data Interpretation</span>
+      </div>
+    </a>
+    <a href="/game/verbal" class="game-card">
+      <div class="game-icon" style="background:#A29BFE">📝</div>
+      <div class="game-info">
+        <h3>Verbal Reasoning</h3>
+        <p>Read passages and determine whether statements are True, False, or Cannot Say based on the text.</p>
+        <span class="game-tag">Comprehension</span>
+        <span class="game-tag">Critical Reading</span>
+      </div>
+    </a>
+    <a href="/game/inductive" class="game-card">
+      <div class="game-icon" style="background:#FD79A8">🔷</div>
+      <div class="game-info">
+        <h3>Inductive Reasoning</h3>
+        <p>Identify the rule behind sequences of shapes and patterns. Measures abstract thinking and logic.</p>
+        <span class="game-tag">Pattern Recognition</span>
+        <span class="game-tag">Abstract Logic</span>
+      </div>
+    </a>
+  </div>
+</section>
+
+<!-- Cappfinity Section -->
+<section id="cappfinity" class="section">
+  <div class="section-header">
+    <span class="platform-tag tag-cappfinity">Cappfinity</span>
+    <h2>Cappfinity Assessments</h2>
+    <p>Strength-based and situational assessments used by firms like KPMG, EY, and Clifford Chance.</p>
+  </div>
+  <div class="game-grid">
+    <a href="/game/sjt" class="game-card">
+      <div class="game-icon" style="background:#00B894">💼</div>
+      <div class="game-info">
+        <h3>Situational Judgment Test</h3>
+        <p>Rate responses to realistic workplace scenarios. Measures professional judgment and values alignment.</p>
+        <span class="game-tag">Judgment</span>
+        <span class="game-tag">Workplace Skills</span>
+      </div>
+    </a>
+  </div>
+</section>
+
+<section class="tips-section">
+  <h2>Tips for Assessment Games</h2>
+  <div class="tips-grid">
+    <div class="tip-card">
+      <span class="tip-icon">🎯</span>
+      <h3>Be Authentic</h3>
+      <p>Pymetrics games measure your natural traits — trying to "game" them often backfires. Answer instinctively.</p>
+    </div>
+    <div class="tip-card">
+      <span class="tip-icon">⏱️</span>
+      <h3>Practice Speed</h3>
+      <p>SHL tests are timed. Practice until answering quickly feels natural — don't sacrifice accuracy for pace.</p>
+    </div>
+    <div class="tip-card">
+      <span class="tip-icon">🧘</span>
+      <h3>Stay Calm</h3>
+      <p>Anxiety hurts reaction time and working memory. Take a breath before each game.</p>
+    </div>
+    <div class="tip-card">
+      <span class="tip-icon">🔁</span>
+      <h3>Repeat Often</h3>
+      <p>Cognitive assessments improve with practice. Run through each game multiple times over several days.</p>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% block title %}Balloon Risk Task (BART) — AssessSim{% endblock %}
+
+{% block content %}
+<div class="game-page">
+  <div class="game-header">
+    <div class="game-header-icon" style="background:#FF6B6B">🎈</div>
+    <div>
+      <h1>Balloon Risk Task (BART)</h1>
+      <p>Pymetrics &mdash; Risk Tolerance &amp; Decision Making</p>
+    </div>
+  </div>
+
+  <div class="game-meta">
+    <div class="game-meta-item">🎈 <strong>20</strong>&nbsp;balloons</div>
+    <div class="game-meta-item">💰 <strong>$0.05</strong>&nbsp;per pump</div>
+    <div class="game-meta-item">⏱️ <strong>No time limit</strong></div>
+    <div class="game-meta-item">🧠 <strong>Risk &amp; Reward</strong></div>
+  </div>
+
+  <div id="instructions" class="instructions">
+    <h2>📋 How It Works</h2>
+    <ul>
+      <li>You have <strong>20 balloons</strong> to inflate.</li>
+      <li>Each pump earns you <strong>$0.05</strong> and grows the balloon.</li>
+      <li>Click <strong>"Collect &amp; Next"</strong> at any time to bank your earnings and move on.</li>
+      <li>Each pump has a <strong>random chance of popping</strong> — the more pumps, the higher the risk.</li>
+      <li>If the balloon <strong>pops</strong>, you lose all money from that round.</li>
+      <li>Try to maximise your total earnings across all 20 balloons.</li>
+    </ul>
+    <div class="notice" style="margin-top:1rem">
+      💡 <strong>Tip:</strong> This game measures risk tolerance — neither extremely cautious nor extremely reckless scores best. Find your balance.
+    </div>
+    <button class="btn btn-primary mt-2" onclick="startGame()">Start Game</button>
+  </div>
+
+  <div id="game-area" class="hidden">
+    <div class="hud">
+      <div class="hud-item">
+        <div class="hud-value" id="balloon-num">1</div>
+        <div class="hud-label">Balloon</div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-value" id="current-pumps">0</div>
+        <div class="hud-label">Pumps</div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-value" id="current-earn" style="color:var(--warning)">$0.00</div>
+        <div class="hud-label">This Balloon</div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-value" id="total-earn" style="color:var(--success)">$0.00</div>
+        <div class="hud-label">Total Banked</div>
+      </div>
+    </div>
+
+    <div class="game-arena" id="arena">
+      <div class="balloon-container">
+        <div id="balloon" class="balloon" style="width:80px;height:80px"></div>
+      </div>
+    </div>
+
+    <div class="balloon-controls" style="justify-content:center; margin-top:1.5rem">
+      <button id="btn-pump" class="btn btn-primary btn-lg" onclick="pump()">💨 Pump (+$0.05)</button>
+      <button id="btn-collect" class="btn btn-success btn-lg" onclick="collect()">✅ Collect &amp; Next</button>
+    </div>
+
+    <p class="text-center text-muted mt-2" style="font-size:0.82rem">
+      Press <kbd>Space</kbd> to pump &nbsp;·&nbsp; <kbd>Enter</kbd> to collect
+    </p>
+  </div>
+
+  <div id="results-area" class="hidden" style="text-align:center;padding:2rem">
+    <h2 style="font-size:1.8rem;margin-bottom:0.5rem">Game Complete!</h2>
+    <p class="text-muted mb-2">Here's how you performed on the Balloon Risk Task</p>
+    <div class="score-display" id="final-total">$0.00</div>
+    <p class="text-muted">Total Earned</p>
+    <div class="results-grid" style="max-width:500px;margin:1.5rem auto">
+      <div class="result-card">
+        <div class="rc-value" id="r-avg-pumps">0</div>
+        <div class="rc-label">Avg Pumps / Balloon</div>
+      </div>
+      <div class="result-card">
+        <div class="rc-value" id="r-pops">0</div>
+        <div class="rc-label">Balloons Popped</div>
+      </div>
+      <div class="result-card">
+        <div class="rc-value" id="r-collects">0</div>
+        <div class="rc-label">Successful Collects</div>
+      </div>
+      <div class="result-card">
+        <div class="rc-value" id="r-profile">—</div>
+        <div class="rc-label">Risk Profile</div>
+      </div>
+    </div>
+    <div class="notice" id="profile-desc" style="max-width:500px;margin:0 auto"></div>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button class="btn btn-outline" onclick="location.reload()">Play Again</button>
+      <a href="/" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const MAX_BALLOONS = 20;
+  const EARN_PER_PUMP = 0.05;
+
+  let balloonNum = 0;
+  let pumps = 0;
+  let currentEarn = 0;
+  let totalEarned = 0;
+  let pops = 0;
+  let collects = 0;
+  let allPumps = [];
+  let gameRunning = false;
+
+  // Pop probability grows with pumps (logistic style)
+  function popChance(p) {
+    return 1 - Math.pow(0.95, p);
+  }
+
+  function startGame() {
+    document.getElementById('instructions').classList.add('hidden');
+    document.getElementById('game-area').classList.remove('hidden');
+    gameRunning = true;
+    nextBalloon();
+  }
+
+  function nextBalloon() {
+    balloonNum++;
+    if (balloonNum > MAX_BALLOONS) { endGame(); return; }
+    pumps = 0; currentEarn = 0;
+    updateHUD();
+    resetBalloon();
+    document.getElementById('btn-pump').disabled = false;
+    document.getElementById('btn-collect').disabled = false;
+  }
+
+  function resetBalloon() {
+    const arena = document.getElementById('arena');
+    arena.innerHTML = `<div class="balloon-container"><div id="balloon" class="balloon" style="width:80px;height:80px"></div></div>`;
+  }
+
+  function updateHUD() {
+    document.getElementById('balloon-num').textContent = Math.min(balloonNum, MAX_BALLOONS);
+    document.getElementById('current-pumps').textContent = pumps;
+    document.getElementById('current-earn').textContent = '$' + currentEarn.toFixed(2);
+    document.getElementById('total-earn').textContent = '$' + totalEarned.toFixed(2);
+  }
+
+  function updateBalloonSize() {
+    const b = document.getElementById('balloon');
+    if (!b) return;
+    const size = Math.min(80 + pumps * 8, 280);
+    b.style.width = size + 'px';
+    b.style.height = size + 'px';
+    // colour shift red->yellow as it gets bigger
+    const r = Math.min(255, 180 + pumps * 3);
+    const g = Math.max(30, 107 - pumps * 4);
+    b.style.background = `radial-gradient(circle at 35% 35%, rgba(255,255,255,0.4), transparent 60%), linear-gradient(135deg, rgb(${r},${g},80), rgb(${r-20},${g-20},40))`;
+  }
+
+  function pump() {
+    if (!gameRunning) return;
+    const chance = popChance(pumps + 1);
+    if (Math.random() < chance) {
+      popBalloon();
+    } else {
+      pumps++;
+      currentEarn = pumps * EARN_PER_PUMP;
+      updateHUD();
+      updateBalloonSize();
+    }
+  }
+
+  function popBalloon() {
+    allPumps.push(pumps);
+    pops++;
+    document.getElementById('btn-pump').disabled = true;
+    document.getElementById('btn-collect').disabled = true;
+
+    const arena = document.getElementById('arena');
+    arena.innerHTML = '<div class="balloon-pop">💥</div>';
+    showFeedback('💥');
+
+    setTimeout(() => {
+      pumps = 0; currentEarn = 0;
+      updateHUD();
+      if (balloonNum < MAX_BALLOONS) nextBalloon();
+      else endGame();
+    }, 1200);
+  }
+
+  function collect() {
+    if (!gameRunning || pumps === 0) return;
+    allPumps.push(pumps);
+    collects++;
+    totalEarned += currentEarn;
+    showFeedback('✅');
+    updateHUD();
+
+    document.getElementById('btn-pump').disabled = true;
+    document.getElementById('btn-collect').disabled = true;
+    setTimeout(() => {
+      if (balloonNum < MAX_BALLOONS) nextBalloon();
+      else endGame();
+    }, 600);
+  }
+
+  function showFeedback(emoji) {
+    const el = document.createElement('div');
+    el.className = 'feedback-overlay';
+    el.textContent = emoji;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 700);
+  }
+
+  function endGame() {
+    gameRunning = false;
+    document.getElementById('game-area').classList.add('hidden');
+    document.getElementById('results-area').classList.remove('hidden');
+
+    const avgPumps = allPumps.length ? (allPumps.reduce((a,b)=>a+b,0)/allPumps.length).toFixed(1) : 0;
+    document.getElementById('final-total').textContent = '$' + totalEarned.toFixed(2);
+    document.getElementById('r-avg-pumps').textContent = avgPumps;
+    document.getElementById('r-pops').textContent = pops;
+    document.getElementById('r-collects').textContent = collects;
+
+    let profile, desc;
+    if (avgPumps < 5) {
+      profile = 'Risk-Averse'; desc = 'You tend to be very cautious and prefer certainty over potential gain. Firms seeking risk-tolerant candidates may view this differently to conservative roles.';
+    } else if (avgPumps < 12) {
+      profile = 'Balanced'; desc = 'You show a healthy balance between caution and risk-taking — a trait valued across most professional environments.';
+    } else if (avgPumps < 20) {
+      profile = 'Risk-Tolerant'; desc = 'You are comfortable with risk and pursue higher rewards. This is valued in trading, consulting, and entrepreneurial roles.';
+    } else {
+      profile = 'High-Risk Taker'; desc = 'You pump aggressively, suggesting a very high risk appetite. This can be a strength in certain roles but may indicate impulsivity.';
+    }
+
+    document.getElementById('r-profile').textContent = profile;
+    document.getElementById('profile-desc').textContent = '🧠 ' + desc;
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.code === 'Space') { e.preventDefault(); pump(); }
+    if (e.code === 'Enter') { e.preventDefault(); collect(); }
+  });
+</script>
+{% endblock %}

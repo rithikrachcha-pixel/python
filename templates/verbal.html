@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+{% block title %}Verbal Reasoning — AssessSim{% endblock %}
+
+{% block content %}
+<div class="game-page">
+  <div class="game-header">
+    <div class="game-header-icon" style="background:#A29BFE">📝</div>
+    <div>
+      <h1>Verbal Reasoning</h1>
+      <p>SHL Style &mdash; Critical Reading &amp; Comprehension</p>
+    </div>
+  </div>
+
+  <div class="game-meta">
+    <div class="game-meta-item">📋 <strong>12</strong>&nbsp;questions</div>
+    <div class="game-meta-item">⏱️ <strong>17 min</strong>&nbsp;timer</div>
+    <div class="game-meta-item">✅ True / False / Cannot Say</div>
+    <div class="game-meta-item">📖 4 passages</div>
+  </div>
+
+  <div id="instructions" class="instructions">
+    <h2>📋 Instructions</h2>
+    <ul>
+      <li>Read each passage, then decide if the statement is <strong>True</strong>, <strong>False</strong>, or <strong>Cannot Say</strong>.</li>
+      <li><strong>True</strong> — the statement follows logically from the passage.</li>
+      <li><strong>False</strong> — the statement contradicts the passage.</li>
+      <li><strong>Cannot Say</strong> — you cannot determine truth/falsity from the passage alone.</li>
+      <li>Base your answer <em>only</em> on the text — do not use outside knowledge.</li>
+    </ul>
+    <div class="notice" style="margin-top:1rem">
+      💡 <strong>Tip:</strong> "Cannot Say" is very common in SHL tests. If the passage neither confirms nor denies a statement, Cannot Say is correct — even if it seems obvious.
+    </div>
+    <button class="btn btn-primary mt-2" onclick="startGame()">Start Test (17 min timer)</button>
+  </div>
+
+  <div id="game-area" class="hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <div class="progress-bar-wrap" style="flex:1;margin-right:1rem;margin-bottom:0">
+        <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+      </div>
+      <div class="timer" id="timer">17:00</div>
+    </div>
+    <div id="question-area"></div>
+    <div class="question-nav">
+      <button id="prev-btn" class="btn btn-outline btn-sm" onclick="navigate(-1)">← Previous</button>
+      <span id="q-counter" class="text-muted" style="font-size:0.85rem"></span>
+      <button id="next-btn" class="btn btn-primary btn-sm" onclick="navigate(1)">Next →</button>
+    </div>
+    <div style="text-align:center;margin-top:1.5rem">
+      <button class="btn btn-success" onclick="submitTest()">Submit Test</button>
+    </div>
+  </div>
+
+  <div id="results-area" class="hidden" style="text-align:center;padding:2rem">
+    <h2 style="font-size:1.8rem;margin-bottom:0.5rem">Test Complete!</h2>
+    <div class="score-display" id="final-score"></div>
+    <p class="text-muted">Correct Answers</p>
+    <div id="review-area" style="max-width:700px;margin:1.5rem auto;text-align:left"></div>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button class="btn btn-outline" onclick="location.reload()">Retake</button>
+      <a href="/" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const questions = [
+  {
+    passage: "Agile methodology has transformed modern software development by emphasising iterative delivery and cross-functional collaboration. Unlike traditional waterfall approaches, Agile breaks projects into short sprints — typically two weeks — allowing teams to incorporate feedback continuously. Studies suggest that organisations adopting Agile see a 37% reduction in time-to-market on average. However, Agile is not universally effective; highly regulated industries such as aerospace and pharmaceuticals often require rigorous upfront documentation that Agile practices can undermine.",
+    statement: "Traditional waterfall methodology is faster than Agile for most projects.",
+    answer: "False",
+    explanation: "The passage states Agile reduces time-to-market by 37%, indicating waterfall is slower — not faster."
+  },
+  {
+    passage: "Agile methodology has transformed modern software development by emphasising iterative delivery and cross-functional collaboration. Unlike traditional waterfall approaches, Agile breaks projects into short sprints — typically two weeks — allowing teams to incorporate feedback continuously. Studies suggest that organisations adopting Agile see a 37% reduction in time-to-market on average. However, Agile is not universally effective; highly regulated industries such as aerospace and pharmaceuticals often require rigorous upfront documentation that Agile practices can undermine.",
+    statement: "Agile methodology may be less suitable for the pharmaceutical industry.",
+    answer: "True",
+    explanation: "The passage explicitly states pharmaceutical industries require rigorous upfront documentation that Agile can undermine."
+  },
+  {
+    passage: "Agile methodology has transformed modern software development by emphasising iterative delivery and cross-functional collaboration. Unlike traditional waterfall approaches, Agile breaks projects into short sprints — typically two weeks — allowing teams to incorporate feedback continuously. Studies suggest that organisations adopting Agile see a 37% reduction in time-to-market on average. However, Agile is not universally effective; highly regulated industries such as aerospace and pharmaceuticals often require rigorous upfront documentation that Agile practices can undermine.",
+    statement: "The majority of software companies globally have adopted Agile.",
+    answer: "Cannot Say",
+    explanation: "The passage says Agile has 'transformed' development but gives no data on global adoption rates."
+  },
+  {
+    passage: "Carbon capture and storage (CCS) technology involves capturing CO₂ emissions from industrial sources and storing them underground. Proponents argue that CCS is essential for meeting net-zero targets, particularly for hard-to-abate sectors like cement and steel production. Critics, however, contend that CCS is prohibitively expensive — currently costing between $50–$100 per tonne of CO₂ — and that investment would be better directed at renewable energy. The International Energy Agency estimates that CCS could contribute up to 15% of required emission reductions by 2050.",
+    statement: "CCS technology is currently cost-free for industrial operators.",
+    answer: "False",
+    explanation: "The passage explicitly states CCS currently costs $50–$100 per tonne of CO₂."
+  },
+  {
+    passage: "Carbon capture and storage (CCS) technology involves capturing CO₂ emissions from industrial sources and storing them underground. Proponents argue that CCS is essential for meeting net-zero targets, particularly for hard-to-abate sectors like cement and steel production. Critics, however, contend that CCS is prohibitively expensive — currently costing between $50–$100 per tonne of CO₂ — and that investment would be better directed at renewable energy. The International Energy Agency estimates that CCS could contribute up to 15% of required emission reductions by 2050.",
+    statement: "Without CCS, net-zero targets cannot be achieved in the cement and steel industries.",
+    answer: "Cannot Say",
+    explanation: "The passage says proponents argue CCS is 'essential' — but does not confirm this as fact. Cannot Say."
+  },
+  {
+    passage: "Carbon capture and storage (CCS) technology involves capturing CO₂ emissions from industrial sources and storing them underground. Proponents argue that CCS is essential for meeting net-zero targets, particularly for hard-to-abate sectors like cement and steel production. Critics, however, contend that CCS is prohibitively expensive — currently costing between $50–$100 per tonne of CO₂ — and that investment would be better directed at renewable energy. The International Energy Agency estimates that CCS could contribute up to 15% of required emission reductions by 2050.",
+    statement: "The IEA believes CCS will play some role in reducing emissions by 2050.",
+    answer: "True",
+    explanation: "The passage states the IEA 'estimates CCS could contribute up to 15% of required emission reductions by 2050'."
+  },
+  {
+    passage: "Remote work adoption accelerated dramatically during the COVID-19 pandemic, with many companies maintaining hybrid arrangements permanently. Research from Stanford University found that remote workers were 13% more productive than their office-based counterparts, though this effect was partially offset by feelings of isolation reported by 24% of remote employees. Not all roles are suited to remote work; positions requiring physical presence, real-time collaboration, or access to specialised equipment remain predominantly office-based. Companies implementing hybrid models report challenges in maintaining a unified corporate culture.",
+    statement: "All employees working remotely report higher productivity.",
+    answer: "False",
+    explanation: "The 13% productivity gain was an average — not universal — and isolation was reported by 24%, suggesting varied experiences."
+  },
+  {
+    passage: "Remote work adoption accelerated dramatically during the COVID-19 pandemic, with many companies maintaining hybrid arrangements permanently. Research from Stanford University found that remote workers were 13% more productive than their office-based counterparts, though this effect was partially offset by feelings of isolation reported by 24% of remote employees. Not all roles are suited to remote work; positions requiring physical presence, real-time collaboration, or access to specialised equipment remain predominantly office-based. Companies implementing hybrid models report challenges in maintaining a unified corporate culture.",
+    statement: "Stanford University conducted research into the productivity of remote workers.",
+    answer: "True",
+    explanation: "The passage directly states 'Research from Stanford University found that remote workers were 13% more productive'."
+  },
+  {
+    passage: "Remote work adoption accelerated dramatically during the COVID-19 pandemic, with many companies maintaining hybrid arrangements permanently. Research from Stanford University found that remote workers were 13% more productive than their office-based counterparts, though this effect was partially offset by feelings of isolation reported by 24% of remote employees. Not all roles are suited to remote work; positions requiring physical presence, real-time collaboration, or access to specialised equipment remain predominantly office-based. Companies implementing hybrid models report challenges in maintaining a unified corporate culture.",
+    statement: "Hybrid working models have been shown to resolve corporate culture challenges.",
+    answer: "False",
+    explanation: "The passage states hybrid models 'report challenges in maintaining a unified corporate culture' — implying problems persist."
+  },
+  {
+    passage: "Quantitative easing (QE) is a monetary policy tool whereby central banks purchase government bonds and other financial assets to inject money into the economy. First widely used during the 2008 global financial crisis, QE aims to lower interest rates and stimulate lending. Critics argue that QE primarily benefits asset owners — inflating stock and property prices — while doing little for those without assets. Supporters counter that without QE, credit markets could have frozen entirely in 2008, precipitating a deeper depression. The long-term effects of extended QE on inflation remain a subject of active academic debate.",
+    statement: "QE was first used as a monetary policy tool in the 2008 global financial crisis.",
+    answer: "Cannot Say",
+    explanation: "The passage says QE was 'first widely used' in 2008 — not that it was first used ever. Cannot Say."
+  },
+  {
+    passage: "Quantitative easing (QE) is a monetary policy tool whereby central banks purchase government bonds and other financial assets to inject money into the economy. First widely used during the 2008 global financial crisis, QE aims to lower interest rates and stimulate lending. Critics argue that QE primarily benefits asset owners — inflating stock and property prices — while doing little for those without assets. Supporters counter that without QE, credit markets could have frozen entirely in 2008, precipitating a deeper depression. The long-term effects of extended QE on inflation remain a subject of active academic debate.",
+    statement: "According to critics, QE disproportionately benefits wealthier individuals.",
+    answer: "True",
+    explanation: "Critics argue QE 'primarily benefits asset owners' by inflating asset prices while doing little for those without assets — implying a wealth disparity."
+  },
+  {
+    passage: "Quantitative easing (QE) is a monetary policy tool whereby central banks purchase government bonds and other financial assets to inject money into the economy. First widely used during the 2008 global financial crisis, QE aims to lower interest rates and stimulate lending. Critics argue that QE primarily benefits asset owners — inflating stock and property prices — while doing little for those without assets. Supporters counter that without QE, credit markets could have frozen entirely in 2008, precipitating a deeper depression. The long-term effects of extended QE on inflation remain a subject of active academic debate.",
+    statement: "Academic consensus holds that prolonged QE definitively causes inflation.",
+    answer: "False",
+    explanation: "The passage states the long-term effects 'remain a subject of active academic debate' — indicating no definitive consensus."
+  }
+];
+
+  let currentQ = 0;
+  let answers = new Array(questions.length).fill(null);
+  let timerInterval = null;
+  let secondsLeft = 17 * 60;
+  const OPTIONS = ["True", "False", "Cannot Say"];
+
+  function startGame() {
+    document.getElementById('instructions').classList.add('hidden');
+    document.getElementById('game-area').classList.remove('hidden');
+    renderQuestion(0);
+    startTimer();
+  }
+
+  function startTimer() {
+    timerInterval = setInterval(() => {
+      secondsLeft--;
+      const m = Math.floor(secondsLeft / 60).toString().padStart(2,'0');
+      const s = (secondsLeft % 60).toString().padStart(2,'0');
+      const el = document.getElementById('timer');
+      el.textContent = `${m}:${s}`;
+      if (secondsLeft <= 60) el.classList.add('urgent');
+      if (secondsLeft <= 0) { clearInterval(timerInterval); submitTest(); }
+    }, 1000);
+  }
+
+  function renderQuestion(idx) {
+    currentQ = idx;
+    const q = questions[idx];
+    document.getElementById('q-counter').textContent = `Question ${idx+1} of ${questions.length}`;
+    document.getElementById('progress-bar').style.width = ((idx+1)/questions.length*100) + '%';
+    document.getElementById('prev-btn').disabled = idx === 0;
+    document.getElementById('next-btn').disabled = idx === questions.length - 1;
+
+    let html = `<div class="question-card">
+      <div class="question-number">Question ${idx+1}</div>
+      <div class="passage-box">${q.passage}</div>
+      <div class="question-text"><strong>Statement:</strong> "${q.statement}"</div>
+      <ul class="options-list">`;
+
+    OPTIONS.forEach((opt, i) => {
+      const sel = answers[idx] === i ? 'selected' : '';
+      const colours = ['var(--success)', 'var(--danger)', 'var(--warning)'];
+      html += `<li><button class="option-btn ${sel}" onclick="selectAnswer(${idx},${i},this)" style="${sel ? 'border-color:'+colours[i] : ''}">
+        <span class="option-letter" style="background:${colours[i]};color:#000">${opt[0]}</span>${opt}
+      </button></li>`;
+    });
+    html += `</ul></div>`;
+    document.getElementById('question-area').innerHTML = html;
+  }
+
+  function selectAnswer(qIdx, optIdx, btn) {
+    answers[qIdx] = optIdx;
+    document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+  }
+
+  function navigate(dir) {
+    const next = currentQ + dir;
+    if (next >= 0 && next < questions.length) renderQuestion(next);
+  }
+
+  function submitTest() {
+    clearInterval(timerInterval);
+    document.getElementById('game-area').classList.add('hidden');
+    document.getElementById('results-area').classList.remove('hidden');
+
+    let score = 0;
+    let reviewHtml = '';
+
+    questions.forEach((q, i) => {
+      const userAnsIdx = answers[i];
+      const userAns = userAnsIdx !== null ? OPTIONS[userAnsIdx] : null;
+      const correct = userAns === q.answer;
+      if (correct) score++;
+
+      reviewHtml += `<div class="question-card" style="margin-bottom:1rem">
+        <div class="question-number" style="color:${correct?'var(--success)':'var(--danger)'}">
+          Q${i+1} — ${correct ? '✅ Correct' : '✗ Incorrect'}
+        </div>
+        <div class="passage-box" style="font-size:0.8rem">${q.passage}</div>
+        <div style="font-size:0.88rem;margin-bottom:0.5rem"><strong>Statement:</strong> "${q.statement}"</div>
+        <div style="font-size:0.85rem">
+          <span style="color:var(--text-muted)">Your answer: </span>
+          <strong style="color:${correct?'var(--success)':'var(--danger)'}">${userAns || 'Not answered'}</strong>
+        </div>`;
+      if (!correct) {
+        reviewHtml += `<div style="font-size:0.85rem;margin-top:0.2rem">
+          <span style="color:var(--text-muted)">Correct: </span>
+          <strong style="color:var(--success)">${q.answer}</strong>
+        </div>`;
+      }
+      reviewHtml += `<div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.3rem">💡 ${q.explanation}</div></div>`;
+    });
+
+    document.getElementById('final-score').textContent = `${score} / ${questions.length}`;
+    document.getElementById('review-area').innerHTML = reviewHtml;
+  }
+</script>
+{% endblock %}

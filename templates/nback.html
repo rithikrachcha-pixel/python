@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+{% block title %}N-Back Task — AssessSim{% endblock %}
+
+{% block content %}
+<div class="game-page">
+  <div class="game-header">
+    <div class="game-header-icon" style="background:#96CEB4">🧠</div>
+    <div>
+      <h1>N-Back Task</h1>
+      <p>Pymetrics &mdash; Fluid Intelligence &amp; Working Memory</p>
+    </div>
+  </div>
+
+  <div class="game-meta">
+    <div class="game-meta-item">🔤 Letters</div>
+    <div class="game-meta-item">🔢 Starts <strong>1-Back</strong></div>
+    <div class="game-meta-item">🎯 <strong>30</strong>&nbsp;trials per level</div>
+    <div class="game-meta-item">📈 Adaptive difficulty</div>
+  </div>
+
+  <div id="instructions" class="instructions">
+    <h2>📋 How It Works</h2>
+    <ul>
+      <li>Letters appear one at a time on the screen.</li>
+      <li>Press <kbd>Space</kbd> (or the button) when the current letter <strong>matches the one N steps back</strong>.</li>
+      <li>At <strong>1-Back</strong>: match the immediately previous letter.</li>
+      <li>At <strong>2-Back</strong>: match the letter 2 positions earlier. And so on.</li>
+      <li>Each level has <strong>30 trials</strong>. Score ≥75% to advance to N+1-Back.</li>
+    </ul>
+    <div class="notice" style="margin-top:1rem">
+      💡 <strong>Tip:</strong> Keep the sequence in your head as a running list — mentally say each letter aloud and drop the oldest one each step.
+    </div>
+    <div style="margin-top:1rem;display:flex;gap:0.75rem;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="startGame(1)">Start 1-Back</button>
+      <button class="btn btn-outline" onclick="startGame(2)">2-Back</button>
+      <button class="btn btn-outline" onclick="startGame(3)">3-Back (Hard)</button>
+    </div>
+  </div>
+
+  <div id="game-area" class="hidden">
+    <div class="hud">
+      <div class="hud-item">
+        <div class="hud-value" id="n-level" style="color:var(--accent2)">1</div>
+        <div class="hud-label">N-Back Level</div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-value" id="trial-num">1</div>
+        <div class="hud-label">Trial</div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-value" id="correct-count" style="color:var(--success)">0</div>
+        <div class="hud-label">Correct</div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-value" id="accuracy-pct">—</div>
+        <div class="hud-label">Accuracy</div>
+      </div>
+    </div>
+
+    <div class="game-arena">
+      <p id="wait-msg" style="font-size:1rem;color:var(--text-muted)">Get ready…</p>
+      <div id="letter-display" class="nback-letter hidden">A</div>
+      <div id="trial-feedback" style="min-height:1.5rem;font-size:1rem;margin-top:0.5rem"></div>
+    </div>
+
+    <div style="text-align:center;margin-top:1.5rem">
+      <button id="match-btn" class="btn btn-primary btn-lg" onclick="registerMatch()">MATCH ✓</button>
+      <p class="key-hint mt-1">Press <kbd>Space</kbd> if current letter matches <span id="n-label">1</span> step(s) back</p>
+    </div>
+  </div>
+
+  <div id="level-complete" class="hidden" style="text-align:center;padding:2rem">
+    <h2 id="lc-title" style="font-size:1.8rem"></h2>
+    <div class="score-display" id="lc-score"></div>
+    <p id="lc-msg" class="text-muted mt-1"></p>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button id="lc-next" class="btn btn-primary" onclick="nextLevel()">Next Level →</button>
+      <a href="/" class="btn btn-outline">Back to Home</a>
+    </div>
+  </div>
+
+  <div id="results-area" class="hidden" style="text-align:center;padding:2rem">
+    <h2 style="font-size:1.8rem;margin-bottom:0.5rem">N-Back Complete!</h2>
+    <p class="text-muted mb-2">Your fluid intelligence performance</p>
+    <div class="score-display" id="final-level">1-Back</div>
+    <p class="text-muted">Highest Level Achieved</p>
+    <div class="results-grid" style="max-width:500px;margin:1.5rem auto">
+      <div class="result-card">
+        <div class="rc-value" id="r-best-n">1</div>
+        <div class="rc-label">Best N-Level</div>
+      </div>
+      <div class="result-card">
+        <div class="rc-value" id="r-total-acc">0%</div>
+        <div class="rc-label">Overall Accuracy</div>
+      </div>
+    </div>
+    <div class="notice" id="result-desc" style="max-width:500px;margin:0 auto"></div>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button class="btn btn-outline" onclick="location.reload()">Play Again</button>
+      <a href="/" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const LETTERS = 'BCDFGHJKLMNPQRSTVWXZ';
+  const TRIALS_PER_LEVEL = 30;
+  const MATCH_PROB = 0.33;
+  const DISPLAY_MS = 500;
+  const ISI_MS = 1000;
+  const ADVANCE_THRESHOLD = 0.75;
+
+  let n = 1;
+  let history = [];
+  let trials = [];
+  let trialIdx = 0;
+  let correct = 0, total = 0;
+  let allCorrect = 0, allTotal = 0;
+  let bestN = 1;
+  let responded = false;
+  let stimTimer = null;
+  let currentIsMatch = false;
+
+  function buildTrials(level) {
+    const seq = [];
+    for (let i = 0; i < TRIALS_PER_LEVEL; i++) {
+      if (i >= level && Math.random() < MATCH_PROB) {
+        seq.push({ letter: seq[i - level].letter, isMatch: true });
+      } else {
+        let l;
+        do { l = LETTERS[Math.floor(Math.random() * LETTERS.length)]; }
+        while (i >= level && l === seq[i - level].letter);
+        seq.push({ letter: l, isMatch: false });
+      }
+    }
+    return seq;
+  }
+
+  function startGame(level) {
+    n = level;
+    document.getElementById('instructions').classList.add('hidden');
+    document.getElementById('game-area').classList.remove('hidden');
+    document.getElementById('level-complete').classList.add('hidden');
+    newLevel();
+  }
+
+  function newLevel() {
+    trials = buildTrials(n);
+    trialIdx = 0; correct = 0; total = 0; history = [];
+    document.getElementById('n-level').textContent = n + '-Back';
+    document.getElementById('n-label').textContent = n;
+    document.getElementById('trial-num').textContent = 1;
+    document.getElementById('correct-count').textContent = 0;
+    document.getElementById('accuracy-pct').textContent = '—';
+    document.getElementById('wait-msg').textContent = 'Starting…';
+    document.getElementById('letter-display').classList.add('hidden');
+
+    setTimeout(runTrial, 800);
+  }
+
+  function runTrial() {
+    if (trialIdx >= TRIALS_PER_LEVEL) { levelEnd(); return; }
+
+    const t = trials[trialIdx];
+    currentIsMatch = t.isMatch;
+    responded = false;
+
+    document.getElementById('trial-num').textContent = trialIdx + 1;
+    document.getElementById('wait-msg').textContent = '';
+    document.getElementById('trial-feedback').textContent = '';
+
+    const el = document.getElementById('letter-display');
+    el.textContent = t.letter;
+    el.className = 'nback-letter';
+    el.classList.remove('hidden');
+
+    stimTimer = setTimeout(() => {
+      el.classList.add('hidden');
+      if (!responded) {
+        // No press
+        if (currentIsMatch) {
+          // Miss
+          recordResult(false, 'miss');
+        } else {
+          // Correct rejection
+          recordResult(true, 'cr');
+        }
+      }
+      trialIdx++;
+      setTimeout(runTrial, ISI_MS - DISPLAY_MS);
+    }, DISPLAY_MS);
+  }
+
+  function registerMatch() {
+    if (responded) return;
+    responded = true;
+    if (currentIsMatch) {
+      const el = document.getElementById('letter-display');
+      el.classList.add('nback-match');
+      recordResult(true, 'hit');
+    } else {
+      recordResult(false, 'fa');
+    }
+  }
+
+  function recordResult(isCorrect, type) {
+    if (isCorrect) correct++;
+    total++;
+    allTotal++;
+    if (isCorrect) allCorrect++;
+
+    const fb = document.getElementById('trial-feedback');
+    if (type === 'hit') { fb.textContent = '✅ Correct match!'; fb.style.color = 'var(--success)'; }
+    else if (type === 'cr') { fb.textContent = ''; }
+    else if (type === 'fa') { fb.textContent = '✗ False alarm'; fb.style.color = 'var(--danger)'; }
+    else if (type === 'miss') { fb.textContent = '✗ Missed match'; fb.style.color = 'var(--danger)'; }
+
+    document.getElementById('correct-count').textContent = correct;
+    const acc = Math.round((correct / total) * 100);
+    document.getElementById('accuracy-pct').textContent = acc + '%';
+  }
+
+  function levelEnd() {
+    document.getElementById('game-area').classList.add('hidden');
+    document.getElementById('level-complete').classList.remove('hidden');
+
+    const acc = Math.round((correct / total) * 100);
+    bestN = Math.max(bestN, n);
+
+    document.getElementById('lc-score').textContent = acc + '%';
+    const passed = acc >= ADVANCE_THRESHOLD * 100;
+    document.getElementById('lc-title').textContent = passed ? `${n}-Back Passed! 🎉` : `${n}-Back Complete`;
+    document.getElementById('lc-msg').textContent = passed
+      ? `You scored ${acc}% — advancing to ${n+1}-Back!`
+      : `You scored ${acc}% — a score of ≥75% is needed to advance. Great effort!`;
+
+    const nextBtn = document.getElementById('lc-next');
+    if (passed) {
+      nextBtn.textContent = `Start ${n+1}-Back →`;
+      nextBtn.disabled = false;
+    } else {
+      nextBtn.textContent = 'Try Again';
+      nextBtn.onclick = () => startGame(n);
+    }
+
+    if (!passed || n >= 5) {
+      if (n >= 5) nextBtn.textContent = '🏆 Max Level! See Results';
+      nextBtn.onclick = () => showFinalResults();
+    }
+  }
+
+  function nextLevel() {
+    n++;
+    document.getElementById('level-complete').classList.add('hidden');
+    document.getElementById('game-area').classList.remove('hidden');
+    newLevel();
+  }
+
+  function showFinalResults() {
+    document.getElementById('level-complete').classList.add('hidden');
+    document.getElementById('results-area').classList.remove('hidden');
+
+    document.getElementById('final-level').textContent = bestN + '-Back';
+    document.getElementById('r-best-n').textContent = bestN;
+    const totalAcc = allTotal ? Math.round((allCorrect / allTotal) * 100) + '%' : '—';
+    document.getElementById('r-total-acc').textContent = totalAcc;
+
+    let desc;
+    if (bestN >= 4) desc = "Exceptional working memory and fluid intelligence — 4-Back and above is elite performance. This is a major cognitive advantage.";
+    else if (bestN === 3) desc = "Strong working memory. 3-Back performance puts you well above average — great for analytical and fast-paced roles.";
+    else if (bestN === 2) desc = "Solid performance at 2-Back. Keep practising to reach 3-Back.";
+    else desc = "1-Back is the starting point. Daily N-Back training is shown to improve working memory — try again tomorrow!";
+
+    document.getElementById('result-desc').textContent = '🧠 ' + desc;
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.code === 'Space') { e.preventDefault(); registerMatch(); }
+  });
+</script>
+{% endblock %}

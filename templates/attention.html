@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title %}Attention & Focus — AssessSim{% endblock %}
+
+{% block content %}
+<div class="game-page">
+  <div class="game-header">
+    <div class="game-header-icon" style="background:#FFEAA7">👁️</div>
+    <div>
+      <h1>Attention &amp; Focus</h1>
+      <p>Pymetrics &mdash; Sustained Attention &amp; Reaction Time</p>
+    </div>
+  </div>
+
+  <div class="game-meta">
+    <div class="game-meta-item">🎯 <strong>40</strong>&nbsp;targets</div>
+    <div class="game-meta-item">⚡ Reaction time measured</div>
+    <div class="game-meta-item">⏱️ <strong>~3 min</strong></div>
+    <div class="game-meta-item">🔵 Click the <strong>★ star</strong></div>
+  </div>
+
+  <div id="instructions" class="instructions">
+    <h2>📋 How It Works</h2>
+    <ul>
+      <li>A grid of symbols appears. One cell contains a <strong>★ (star)</strong> — the others are distractors.</li>
+      <li><strong>Click the star as fast as possible.</strong></li>
+      <li>After each click the grid refreshes with a new layout.</li>
+      <li>There are <strong>40 rounds</strong> total. Your reaction time and accuracy are tracked.</li>
+    </ul>
+    <div class="notice" style="margin-top:1rem">
+      💡 <strong>Tip:</strong> Scan from the top-left, moving row by row. Try to keep a consistent scan pattern to improve speed.
+    </div>
+    <button class="btn btn-primary mt-2" onclick="startGame()">Start Game</button>
+  </div>
+
+  <div id="game-area" class="hidden">
+    <div class="hud">
+      <div class="hud-item">
+        <div class="hud-value" id="round-num">1</div>
+        <div class="hud-label">Round</div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-value" id="hits-disp" style="color:var(--success)">0</div>
+        <div class="hud-label">Correct</div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-value" id="errors-disp" style="color:var(--danger)">0</div>
+        <div class="hud-label">Errors</div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-value" id="rt-disp" style="color:var(--warning)">—</div>
+        <div class="hud-label">Last RT (ms)</div>
+      </div>
+    </div>
+
+    <div class="game-arena" id="arena" style="padding:1.5rem">
+      <p id="ready-msg" style="color:var(--text-muted);font-size:1.1rem">Loading…</p>
+      <div id="symbol-grid" class="attention-grid hidden"></div>
+      <p id="inst-msg" style="font-size:0.85rem;color:var(--text-muted);margin-top:0.75rem">Click the ★ star</p>
+    </div>
+  </div>
+
+  <div id="results-area" class="hidden" style="text-align:center;padding:2rem">
+    <h2 style="font-size:1.8rem;margin-bottom:0.5rem">Complete!</h2>
+    <p class="text-muted mb-2">Your attention and reaction time results</p>
+    <div class="score-display" id="final-rt">0ms</div>
+    <p class="text-muted">Average Reaction Time</p>
+    <div class="results-grid" style="max-width:550px;margin:1.5rem auto">
+      <div class="result-card">
+        <div class="rc-value" id="r-hits">0</div>
+        <div class="rc-label">Correct Hits</div>
+      </div>
+      <div class="result-card">
+        <div class="rc-value" id="r-errors">0</div>
+        <div class="rc-label">Errors</div>
+      </div>
+      <div class="result-card">
+        <div class="rc-value" id="r-best-rt">0ms</div>
+        <div class="rc-label">Best RT</div>
+      </div>
+      <div class="result-card">
+        <div class="rc-value" id="r-acc">0%</div>
+        <div class="rc-label">Accuracy</div>
+      </div>
+    </div>
+    <div class="notice" id="result-desc" style="max-width:500px;margin:0 auto"></div>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button class="btn btn-outline" onclick="location.reload()">Play Again</button>
+      <a href="/" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const TOTAL_ROUNDS = 40;
+  const GRID_SIZE = 25; // 5x5
+  const SYMBOLS = ['●', '■', '▲', '◆', '▼', '▶', '◀'];
+  const TARGET = '★';
+
+  let round = 0;
+  let hits = 0, errors = 0;
+  let reactionTimes = [];
+  let roundStart = 0;
+  let targetIdx = -1;
+  let active = false;
+
+  function startGame() {
+    document.getElementById('instructions').classList.add('hidden');
+    document.getElementById('game-area').classList.remove('hidden');
+
+    let cnt = 3;
+    document.getElementById('ready-msg').textContent = cnt;
+    const iv = setInterval(() => {
+      cnt--;
+      if (cnt <= 0) { clearInterval(iv); document.getElementById('ready-msg').textContent = ''; showGrid(); }
+      else document.getElementById('ready-msg').textContent = cnt;
+    }, 700);
+  }
+
+  function showGrid() {
+    if (round >= TOTAL_ROUNDS) { endGame(); return; }
+    round++;
+    active = true;
+    document.getElementById('round-num').textContent = round;
+
+    const grid = document.getElementById('symbol-grid');
+    grid.innerHTML = '';
+    grid.classList.remove('hidden');
+
+    // Place target at random position
+    targetIdx = Math.floor(Math.random() * GRID_SIZE);
+    for (let i = 0; i < GRID_SIZE; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'attention-cell';
+      if (i === targetIdx) {
+        cell.textContent = TARGET;
+        cell.style.color = '#FFD700';
+        cell.style.fontSize = '1.8rem';
+      } else {
+        cell.textContent = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+      }
+      cell.addEventListener('click', () => handleClick(i, cell));
+      grid.appendChild(cell);
+    }
+
+    roundStart = performance.now();
+  }
+
+  function handleClick(idx, cell) {
+    if (!active) return;
+    active = false;
+
+    const rt = Math.round(performance.now() - roundStart);
+
+    if (idx === targetIdx) {
+      hits++;
+      reactionTimes.push(rt);
+      cell.classList.add('target');
+      document.getElementById('rt-disp').textContent = rt + 'ms';
+    } else {
+      errors++;
+      cell.classList.add('wrong');
+      // Also highlight correct cell
+      const cells = document.getElementById('symbol-grid').children;
+      cells[targetIdx].classList.add('target');
+      document.getElementById('rt-disp').textContent = '—';
+    }
+
+    document.getElementById('hits-disp').textContent = hits;
+    document.getElementById('errors-disp').textContent = errors;
+
+    setTimeout(showGrid, 400);
+  }
+
+  function endGame() {
+    document.getElementById('game-area').classList.add('hidden');
+    document.getElementById('results-area').classList.remove('hidden');
+
+    const avgRT = reactionTimes.length ? Math.round(reactionTimes.reduce((a,b)=>a+b,0)/reactionTimes.length) : 0;
+    const bestRT = reactionTimes.length ? Math.min(...reactionTimes) : 0;
+    const acc = Math.round((hits / TOTAL_ROUNDS) * 100);
+
+    document.getElementById('final-rt').textContent = avgRT + 'ms';
+    document.getElementById('r-hits').textContent = hits;
+    document.getElementById('r-errors').textContent = errors;
+    document.getElementById('r-best-rt').textContent = bestRT + 'ms';
+    document.getElementById('r-acc').textContent = acc + '%';
+
+    let desc;
+    if (avgRT < 400 && acc >= 95) desc = "Elite reaction time and accuracy. You have excellent sustained attention — a strong signal for fast-paced analytical environments.";
+    else if (avgRT < 600 && acc >= 85) desc = "Good performance overall. Fast, accurate responses indicate strong attention to detail.";
+    else if (errors > 5) desc = "Several errors suggest rushing. Slow down slightly to improve accuracy — precision is valued over raw speed.";
+    else desc = "Average performance. Reduce distractions when taking the real assessment and warm up with a few minutes of focus exercises first.";
+
+    document.getElementById('result-desc').textContent = '🧠 ' + desc;
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Results — AssessSim{% endblock %}
+
+{% block content %}
+<div class="results-page">
+  <div class="results-header">
+    <h1 style="font-size:2rem;margin-bottom:0.5rem">Your Results</h1>
+    <p class="text-muted">Well done for completing the assessment. Here's your performance summary.</p>
+  </div>
+
+  <div id="summary-card" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2rem;margin-bottom:2rem">
+    <h2 style="font-size:1.2rem;margin-bottom:1.5rem">Cognitive Trait Profile</h2>
+    <div class="trait-bars" id="trait-bars"></div>
+  </div>
+
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.75rem;margin-bottom:2rem">
+    <h2 style="font-size:1.1rem;margin-bottom:1rem">What These Scores Mean</h2>
+    <p style="color:var(--text-muted);font-size:0.9rem;line-height:1.7">
+      Assessment platforms like Pymetrics, SHL, and Cappfinity do not simply rank you against other candidates.
+      They match your cognitive and behavioural profile against <strong>models of successful employees</strong>
+      at specific companies. A "low" score on risk tolerance does not mean you failed — it means you may be
+      a stronger fit for roles that require caution rather than risk-seeking.
+    </p>
+    <p style="color:var(--text-muted);font-size:0.9rem;line-height:1.7;margin-top:0.75rem">
+      The best strategy is to <strong>practice until the games feel natural</strong>, then perform authentically on the real assessment.
+    </p>
+  </div>
+
+  <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+    <a href="/#pymetrics" class="btn btn-primary">Practice More Games</a>
+    <a href="/" class="btn btn-outline">Back to Home</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const traits = [
+    { label: "Risk Tolerance", color: "#FF6B6B" },
+    { label: "Impulse Control", color: "#4ECDC4" },
+    { label: "Working Memory", color: "#45B7D1" },
+    { label: "Fluid Intelligence", color: "#96CEB4" },
+    { label: "Attention", color: "#FFEAA7" },
+    { label: "Numerical Reasoning", color: "#6C5CE7" },
+    { label: "Verbal Reasoning", color: "#A29BFE" },
+    { label: "Abstract Reasoning", color: "#FD79A8" },
+    { label: "Professional Judgment", color: "#00B894" }
+  ];
+
+  // Generate placeholder scores (in a real app these would come from session data)
+  const params = new URLSearchParams(window.location.search);
+  const dataStr = params.get('data');
+  let scoreData = {};
+  try { if (dataStr) scoreData = JSON.parse(dataStr); } catch(e) {}
+
+  const barsEl = document.getElementById('trait-bars');
+  traits.forEach(t => {
+    const score = scoreData[t.label] || Math.floor(50 + Math.random() * 35);
+    const row = document.createElement('div');
+    row.className = 'trait-bar-row';
+    row.innerHTML = `
+      <div class="trait-bar-label">
+        <span>${t.label}</span>
+        <span style="color:${t.color};font-weight:700">${score}th percentile</span>
+      </div>
+      <div class="trait-bar-bg">
+        <div class="trait-bar-fill" style="width:0%;background:${t.color}" data-width="${score}"></div>
+      </div>`;
+    barsEl.appendChild(row);
+  });
+
+  // Animate bars on load
+  setTimeout(() => {
+    document.querySelectorAll('.trait-bar-fill').forEach(el => {
+      el.style.width = el.dataset.width + '%';
+    });
+  }, 100);
+</script>
+{% endblock %}

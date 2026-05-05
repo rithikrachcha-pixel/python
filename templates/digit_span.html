@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+{% block title %}Digit Span — AssessSim{% endblock %}
+
+{% block content %}
+<div class="game-page">
+  <div class="game-header">
+    <div class="game-header-icon" style="background:#45B7D1">🔢</div>
+    <div>
+      <h1>Digit Span</h1>
+      <p>Pymetrics &mdash; Working Memory Capacity</p>
+    </div>
+  </div>
+
+  <div class="game-meta">
+    <div class="game-meta-item">🔢 Starts at <strong>3</strong>&nbsp;digits</div>
+    <div class="game-meta-item">📈 Increases each round</div>
+    <div class="game-meta-item">↩️ Forward &amp; Backward</div>
+    <div class="game-meta-item">❌ Stops after <strong>2</strong>&nbsp;failures</div>
+  </div>
+
+  <div id="instructions" class="instructions">
+    <h2>📋 How It Works</h2>
+    <ul>
+      <li>A sequence of digits will appear one at a time.</li>
+      <li><strong>Forward Span:</strong> Type the digits in the <em>same order</em> you saw them.</li>
+      <li><strong>Backward Span:</strong> Type the digits in <em>reverse order</em>.</li>
+      <li>Sequences get <strong>longer each round</strong> until you fail twice at the same length.</li>
+      <li>Your <strong>span score</strong> is the longest sequence you recalled correctly.</li>
+    </ul>
+    <div class="notice" style="margin-top:1rem">
+      💡 <strong>Tip:</strong> Chunking helps — group digits into pairs or triplets as you see them.
+    </div>
+    <button class="btn btn-primary mt-2" onclick="startGame()">Start Game</button>
+  </div>
+
+  <div id="game-area" class="hidden">
+    <div class="hud">
+      <div class="hud-item">
+        <div class="hud-value" id="span-len">3</div>
+        <div class="hud-label">Span Length</div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-value" id="round-mode" style="color:var(--accent2)">Forward</div>
+        <div class="hud-label">Mode</div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-value" id="best-forward" style="color:var(--success)">—</div>
+        <div class="hud-label">Best Forward</div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-value" id="best-backward" style="color:var(--warning)">—</div>
+        <div class="hud-label">Best Backward</div>
+      </div>
+    </div>
+
+    <div class="game-arena" id="arena">
+      <p id="phase-msg" style="font-size:1.1rem;color:var(--text-muted)">Get ready…</p>
+      <div id="digit-display" class="digit-display hidden">?</div>
+      <div id="input-area" class="hidden" style="width:100%;max-width:480px">
+        <p id="input-instruction" style="margin-bottom:0.75rem;color:var(--text-muted);font-size:0.9rem"></p>
+        <div id="digit-boxes" class="digit-input-row"></div>
+        <button class="btn btn-primary mt-2" onclick="checkAnswer()">Submit ↵</button>
+      </div>
+      <div id="feedback-msg" style="font-size:1.2rem;min-height:1.8rem;margin-top:0.5rem"></div>
+    </div>
+  </div>
+
+  <div id="results-area" class="hidden" style="text-align:center;padding:2rem">
+    <h2 style="font-size:1.8rem;margin-bottom:0.5rem">Memory Test Complete!</h2>
+    <p class="text-muted mb-2">Your working memory capacity scores</p>
+    <div class="results-grid" style="max-width:450px;margin:1.5rem auto">
+      <div class="result-card">
+        <div class="rc-value" id="r-forward" style="color:var(--success)">0</div>
+        <div class="rc-label">Forward Span</div>
+      </div>
+      <div class="result-card">
+        <div class="rc-value" id="r-backward" style="color:var(--warning)">0</div>
+        <div class="rc-label">Backward Span</div>
+      </div>
+      <div class="result-card">
+        <div class="rc-value" id="r-combined">0</div>
+        <div class="rc-label">Combined Score</div>
+      </div>
+      <div class="result-card">
+        <div class="rc-value" id="r-percentile">—</div>
+        <div class="rc-label">Percentile (est.)</div>
+      </div>
+    </div>
+    <div class="notice" id="result-desc" style="max-width:500px;margin:0 auto"></div>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button class="btn btn-outline" onclick="location.reload()">Play Again</button>
+      <a href="/" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  let spanLen = 3;
+  let mode = 'forward';   // 'forward' | 'backward'
+  let failures = 0;
+  let sequence = [];
+  let inputBoxes = [];
+  let bestForward = 0;
+  let bestBackward = 0;
+  let phase = 'idle'; // 'showing' | 'input' | 'idle'
+
+  function startGame() {
+    document.getElementById('instructions').classList.add('hidden');
+    document.getElementById('game-area').classList.remove('hidden');
+    beginRound();
+  }
+
+  function beginRound() {
+    failures = 0; // reset failures per mode/length pair — we do 2 attempts per length
+    updateHUD();
+    showSequence();
+  }
+
+  function updateHUD() {
+    document.getElementById('span-len').textContent = spanLen;
+    document.getElementById('round-mode').textContent = mode === 'forward' ? 'Forward ↦' : 'Backward ↤';
+    document.getElementById('best-forward').textContent = bestForward || '—';
+    document.getElementById('best-backward').textContent = bestBackward || '—';
+  }
+
+  function showSequence() {
+    phase = 'showing';
+    sequence = Array.from({length: spanLen}, () => Math.floor(Math.random() * 10));
+    document.getElementById('input-area').classList.add('hidden');
+    document.getElementById('feedback-msg').textContent = '';
+    document.getElementById('phase-msg').textContent = 'Watch the digits…';
+
+    const display = document.getElementById('digit-display');
+    display.classList.remove('hidden');
+    display.textContent = '';
+
+    let i = 0;
+    function showNext() {
+      if (i < sequence.length) {
+        display.textContent = sequence[i];
+        i++;
+        setTimeout(() => { display.textContent = ''; setTimeout(showNext, 300); }, 900);
+      } else {
+        display.classList.add('hidden');
+        showInputArea();
+      }
+    }
+    setTimeout(showNext, 600);
+  }
+
+  function showInputArea() {
+    phase = 'input';
+    document.getElementById('phase-msg').textContent = '';
+    const inputArea = document.getElementById('input-area');
+    inputArea.classList.remove('hidden');
+
+    const instr = mode === 'forward'
+      ? `Type the ${spanLen} digits in the order you saw them:`
+      : `Type the ${spanLen} digits in REVERSE order:`;
+    document.getElementById('input-instruction').textContent = instr;
+
+    const boxes = document.getElementById('digit-boxes');
+    boxes.innerHTML = '';
+    inputBoxes = [];
+    for (let i = 0; i < spanLen; i++) {
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.maxLength = 1;
+      inp.className = 'digit-input-box';
+      inp.inputMode = 'numeric';
+      inp.addEventListener('input', (e) => {
+        inp.value = inp.value.replace(/\D/g, '').slice(-1);
+        if (inp.value && i < inputBoxes.length - 1) inputBoxes[i+1].focus();
+      });
+      inp.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !inp.value && i > 0) inputBoxes[i-1].focus();
+        if (e.key === 'Enter') checkAnswer();
+      });
+      boxes.appendChild(inp);
+      inputBoxes.push(inp);
+    }
+    inputBoxes[0].focus();
+  }
+
+  function checkAnswer() {
+    if (phase !== 'input') return;
+    const answer = inputBoxes.map(b => b.value);
+    if (answer.some(v => v === '')) {
+      document.getElementById('feedback-msg').textContent = '⚠️ Please fill all boxes.';
+      document.getElementById('feedback-msg').style.color = 'var(--warning)';
+      return;
+    }
+
+    const expected = mode === 'forward' ? sequence.map(String) : sequence.map(String).reverse();
+    const correct = answer.every((v, i) => v === expected[i]);
+
+    const fb = document.getElementById('feedback-msg');
+    if (correct) {
+      fb.textContent = '✅ Correct!';
+      fb.style.color = 'var(--success)';
+      if (mode === 'forward') bestForward = Math.max(bestForward, spanLen);
+      else bestBackward = Math.max(bestBackward, spanLen);
+      failures = 0;
+      spanLen++;
+      updateHUD();
+      setTimeout(() => {
+        document.getElementById('input-area').classList.add('hidden');
+        showSequence();
+      }, 900);
+    } else {
+      fb.textContent = `✗ Incorrect. Expected: ${expected.join(' ')}`;
+      fb.style.color = 'var(--danger)';
+      failures++;
+      if (failures >= 2) {
+        // Switch mode or end
+        if (mode === 'forward') {
+          mode = 'backward';
+          spanLen = 3;
+          failures = 0;
+          setTimeout(() => {
+            document.getElementById('input-area').classList.add('hidden');
+            fb.textContent = '';
+            showSequence();
+          }, 1500);
+        } else {
+          setTimeout(endGame, 1200);
+        }
+      } else {
+        setTimeout(() => {
+          document.getElementById('input-area').classList.add('hidden');
+          showSequence();
+        }, 1500);
+      }
+    }
+  }
+
+  function endGame() {
+    document.getElementById('game-area').classList.add('hidden');
+    document.getElementById('results-area').classList.remove('hidden');
+
+    document.getElementById('r-forward').textContent = bestForward;
+    document.getElementById('r-backward').textContent = bestBackward;
+    const combined = bestForward + bestBackward;
+    document.getElementById('r-combined').textContent = combined;
+
+    // Average adult forward span ~7, backward ~5
+    let pct;
+    if (combined >= 18) pct = '99th';
+    else if (combined >= 15) pct = '~90th';
+    else if (combined >= 12) pct = '~75th';
+    else if (combined >= 10) pct = '~50th';
+    else if (combined >= 8) pct = '~25th';
+    else pct = '<25th';
+    document.getElementById('r-percentile').textContent = pct;
+
+    const desc = bestForward >= 8
+      ? "Outstanding working memory! You exceed average adult span significantly — a strong cognitive trait for analytical and detail-oriented roles."
+      : bestForward >= 6
+      ? "Your working memory is within the normal range. Consistent practice can push your span score higher."
+      : "Working memory can be improved with regular practice. Try chunking strategies and repeat this test daily.";
+    document.getElementById('result-desc').textContent = '🧠 ' + desc;
+  }
+</script>
+{% endblock %}

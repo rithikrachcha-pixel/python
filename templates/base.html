@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Assessment Games Simulator{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="nav-logo">
+      <span class="logo-icon">◈</span>
+      <span>AssessSim</span>
+    </a>
+    <div class="nav-links">
+      <a href="/#pymetrics">Pymetrics</a>
+      <a href="/#shl">SHL</a>
+      <a href="/#cappfinity">Cappfinity</a>
+    </div>
+  </nav>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="footer">
+    <p>AssessSim &mdash; Practice tool for internship assessment games. Not affiliated with Pymetrics, SHL, or Cappfinity.</p>
+  </footer>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
