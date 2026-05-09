@@ -1,6 +1,7 @@
 """Flask application for AssessSim — internship assessment game simulator."""
 import json
 import os
+import random
 import sqlite3
 from functools import wraps
 from flask import Flask, g, jsonify, render_template, request, session
@@ -106,18 +107,17 @@ BOT_PROFILES = [
     {'name': 'Aurora Davis', 'school': '2nd Year MORSE @ Imperial', 'avatar': 'AD'},
 ]
 
-def generate_bot_score(difficulty_level, game_type='general'):
+def generate_bot_score(difficulty_level, game_type='general'):  # pylint: disable=unused-argument
     """Generate a bot score using normal distribution based on difficulty tier.
-    
+
     Args:
         difficulty_level: 'easy', 'average', 'above_average', 'cut_throat'
         game_type: type of game (for future context-specific scoring)
-    
+
     Returns:
         float: score between 0-100
     """
-    import random
-    
+
     # Define difficulty tiers using mean and std deviation
     tiers = {
         'easy': {'mean': 45, 'std': 15},
@@ -125,21 +125,20 @@ def generate_bot_score(difficulty_level, game_type='general'):
         'above_average': {'mean': 82, 'std': 8},
         'cut_throat': {'mean': 94, 'std': 4},
     }
-    
+
     tier = tiers.get(difficulty_level, tiers['average'])
-    
+
     # Simple normal distribution approximation (Box-Muller)
     u1, u2 = random.random(), random.random()
     z = (-2 * (u1 ** 0.5)) * (2 * 3.14159 * u2) ** 0.5
     score = tier['mean'] + z * tier['std']
-    
+
     # Clamp score to 0-100
     return max(0, min(100, score))
 
 @app.route('/api/bot/profiles', methods=['GET'])
 def get_bot_profiles():
     """Return a sample of bot profiles."""
-    import random
     sample = random.sample(BOT_PROFILES, min(10, len(BOT_PROFILES)))
     return jsonify({'bots': sample})
 
@@ -151,12 +150,11 @@ def get_leaderboard():
     difficulty = data.get('difficulty', 'average')
     game_type = data.get('game', 'general')
     count = data.get('count', 10)
-    
-    import random
-    
+
+
     # Generate bot scores
     leaderboard = []
-    
+
     # Add user entry
     leaderboard.append({
         'rank': 0,
@@ -166,7 +164,7 @@ def get_leaderboard():
         'is_user': True,
         'avatar': 'YOU'
     })
-    
+
     # Generate bots
     bots_to_show = random.sample(BOT_PROFILES, min(count, len(BOT_PROFILES)))
     for bot in bots_to_show:
@@ -179,17 +177,17 @@ def get_leaderboard():
             'is_user': False,
             'avatar': bot['avatar']
         })
-    
+
     # Sort by score (descending) and assign ranks
     leaderboard.sort(key=lambda x: x['score'], reverse=True)
     for i, entry in enumerate(leaderboard):
         entry['rank'] = i + 1
-    
+
     # Calculate percentile for user
     user_entry = next((e for e in leaderboard if e['is_user']), None)
     user_rank = user_entry['rank'] if user_entry else 0
     percentile = 100 * (1 - (user_rank - 1) / len(leaderboard))
-    
+
     return jsonify({
         'leaderboard': leaderboard,
         'user_rank': user_rank,
@@ -408,4 +406,5 @@ with app.app_context():
     init_db()
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True, port=5001)
+    port = int(os.environ.get('PORT', 5001))
+    app.run(host='0.0.0.0', debug=False, port=port)
