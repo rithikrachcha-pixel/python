@@ -157,6 +157,20 @@ kbd{background:var(--bg3);border:1px solid var(--border);border-radius:4px;paddi
 </style>
 </head>
 <body>
+<div id="auth-bar" style="position:fixed;top:0;left:0;right:0;z-index:1000;background:var(--bg2);border-bottom:1px solid var(--border);padding:0.5rem 1rem;display:flex;justify-content:space-between;align-items:center;font-size:0.85rem">
+  <span style="font-weight:700;color:var(--accent)">AssessSim</span>
+  <div id="auth-bar-guest" style="display:flex;gap:0.5rem;align-items:center">
+    <a href="#login" class="btn btn-outline btn-sm">Login</a>
+    <a href="#register" class="btn btn-primary btn-sm">Register</a>
+  </div>
+  <div id="auth-bar-user" style="display:none;gap:0.5rem;align-items:center">
+    <span id="auth-bar-name" style="color:var(--text-muted)"></span>
+    <a href="#profile" class="btn btn-outline btn-sm">My Scores</a>
+    <button class="btn btn-outline btn-sm" onclick="authLogout()">Logout</button>
+  </div>
+</div>
+<div style="height:42px"></div>
+
 <nav class="navbar">
   <a href="#home" class="nav-logo"><span>◈</span><span>AssessSim</span></a>
   <div class="nav-links">
@@ -710,6 +724,7 @@ function bartEndGame(){
   else{p='High-Risk Taker';d='You pump aggressively, suggesting a very high risk appetite.';}
   document.getElementById('bart-r-profile').textContent=p;
   document.getElementById('bart-profile-desc').textContent='🧠 '+d;
+  gameEnded("BART",Math.round(bartTotalEarned),{pumps:avg,pops:bartPops,earned:bartTotalEarned,profile:p});
 }
 document.addEventListener('keydown',function(e){
   if(location.hash==='#bart'){
@@ -790,6 +805,7 @@ function gngEndGame(){
   document.getElementById('gng-r-dp').textContent=(gngProbit(hr)-gngProbit(far)).toFixed(2);
   var desc=gngFalseAlarms>15?'High impulsivity — you responded frequently to No-Go signals. Practice checking before pressing.':gngMisses>20?'You missed many Go signals. Try to stay alert throughout.':acc>=90?'Excellent impulse control. You respond accurately and consistently.':'Good performance. Continue practising speed and accuracy together.';
   document.getElementById('gng-desc').textContent='🧠 '+desc;
+  gameEnded("Go/No-Go",acc,{hits:gngHits,fa:gngFalseAlarms,rt:avgRT});
 }
 function gngProbit(p){
   var a=[-39.6968,220.946,-275.929,138.358,-30.6648,2.50663];
@@ -885,6 +901,7 @@ function dsEndGame(){
   document.getElementById('ds-r-pct').textContent=pct;
   var desc=dsBestFwd>=8?'Outstanding working memory! You exceed average adult span significantly.':dsBestFwd>=6?'Your working memory is within the normal range. Practice can push your span higher.':'Working memory can be improved. Try chunking and repeat this test daily.';
   document.getElementById('ds-desc').textContent='🧠 '+desc;
+  gameEnded("Digit Span",dsBestFwd+dsBestBwd,{forward:dsBestFwd,backward:dsBestBwd});
 }
 </script>
 <script>
@@ -972,6 +989,7 @@ function nbShowFinal(){
   document.getElementById('nb-r-acc').textContent=nbAllTotal?Math.round((nbAllCorrect/nbAllTotal)*100)+'%':'—';
   var desc=nbBestN>=4?'Exceptional working memory — 4-Back and above is elite performance.':nbBestN===3?'Strong working memory. 3-Back puts you well above average.':nbBestN===2?'Solid 2-Back performance. Keep practising to reach 3-Back.':'1-Back is the starting point. Daily N-Back training improves working memory.';
   document.getElementById('nb-desc').textContent='🧠 '+desc;
+  gameEnded("N-Back",nbBestN*20,{bestN:nbBestN,accuracy:nbAllTotal?Math.round((nbAllCorrect/nbAllTotal)*100):0});
 }
 document.addEventListener('keydown',function(e){if(location.hash==='#nback'&&e.code==='Space'){e.preventDefault();nbMatch();}});
 
@@ -1028,6 +1046,7 @@ function attEndGame(){
   document.getElementById('att-r-acc').textContent=acc+'%';
   var desc=avg<400&&acc>=95?'Elite reaction time and accuracy — excellent sustained attention.':avg<600&&acc>=85?'Good performance. Fast, accurate responses indicate strong attention.':attErrors>5?'Several errors suggest rushing. Slow down slightly for better accuracy.':'Average performance. Reduce distractions and warm up before the real assessment.';
   document.getElementById('att-desc').textContent='🧠 '+desc;
+  gameEnded("Attention",acc,{avgRT:avg,hits:attHits,errors:attErrors});
 }
 </script>
 <script>
@@ -1101,6 +1120,7 @@ function numSubmit(){
   });
   document.getElementById('num-final').textContent=score+' / '+numQuestions.length;
   document.getElementById('num-review').innerHTML=html;
+  gameEnded("SHL Numerical",Math.round(score/numQuestions.length*100),{correct:score,total:numQuestions.length});
 }
 </script>
 <script>
@@ -1170,6 +1190,7 @@ function verSubmit(){
   });
   document.getElementById('ver-final').textContent=score+' / '+verQuestions.length;
   document.getElementById('ver-review').innerHTML=html;
+  gameEnded("SHL Verbal",Math.round(score/verQuestions.length*100),{correct:score,total:verQuestions.length});
 }
 </script>
 <script>
@@ -1256,6 +1277,7 @@ function indSubmit(){
   });
   document.getElementById('ind-final').textContent=score+' / '+indQuestions.length;
   document.getElementById('ind-review').innerHTML=html;
+  gameEnded("SHL Inductive",Math.round(score/indQuestions.length*100),{correct:score,total:indQuestions.length});
 }
 </script>
 <script>
@@ -1331,6 +1353,7 @@ function sjtSubmit(){
   });
   document.getElementById('sjt-final').textContent=score+' / '+max;
   document.getElementById('sjt-review').innerHTML=html;
+  gameEnded("Cappfinity SJT",Math.round(score/max*100),{score:score,max:max});
 }
 </script>
 
@@ -1683,6 +1706,7 @@ function arcEndGame(){
   document.getElementById('arc-r-dec').textContent=decSpd+'ms avg';
   var desc='Your Arctic Shores profile shows: Emotional Recognition '+arcEmoScore+'% (avg 72%), Risk Appetite '+arcRiskScore+'% riskier choices (avg 45%). In the real assessment, your patterns across games are compared to successful employees at specific firms.';
   document.getElementById('arc-desc').textContent='🧠 '+desc;
+  gameEnded("Arctic Shores",Math.round((arcEmoScore+arcRiskScore+arcPlanScore)/3),{emotion:arcEmoScore,risk:arcRiskScore,planning:arcPlanScore});
 }
 </script>
 <script>
@@ -1840,6 +1864,7 @@ function hvgPatAns(i){if(i===hvgPatterns[hvgPatRound].ans){hvgPatCorrect++;docum
 function hvgEnd(){
   document.getElementById('hvg-game').classList.add('hidden');document.getElementById('hvg-results').classList.remove('hidden');
   document.getElementById('hvg-r1').textContent=hvgGame1Score+'%';document.getElementById('hvg-r2').textContent=hvgGame2Score+'%';document.getElementById('hvg-r3').textContent=hvgGame3Score+'%';
+  gameEnded("HireVue Games",Math.round((hvgGame1Score+hvgGame2Score+hvgGame3Score)/3),{cardSort:hvgGame1Score,digitRecall:hvgGame2Score,patternMatch:hvgGame3Score});
 }
 </script>
 
@@ -1946,6 +1971,7 @@ function mckShowResult(){
   document.getElementById('mck-final-score').textContent=pct+'%';
   document.getElementById('mck-result-sub').textContent=alive.length+' species thriving'+(extinct.length?' — '+extinct.length+' extinct: '+extinct.map(function(e){return e.emoji+' '+e.name;}).join(', '):'');
   document.getElementById('mck-desc').innerHTML='<strong>McKinsey Solve tip:</strong> Place producers first (plants → herbivores → carnivores). Watch the food chain — too many predators with too few prey causes crashes. Think in systems: every species affects every other.';
+  gameEnded("McKinsey Solve",pct,{alive:alive.length,extinct:extinct.length});
 }
 function mckReset(){
   document.getElementById('mck-results').classList.add('hidden');
@@ -2050,6 +2076,7 @@ function wgSubmit(){
   });
   html+='<div style="margin-top:1rem;padding:0.75rem;background:var(--bg3);border-radius:var(--radius);font-size:0.82rem;color:var(--text-muted)"><strong>Watson Glaser tip:</strong> Base answers ONLY on what is stated, not outside knowledge. "Probably True" ≠ "True". Distinguish what MUST be true vs what MIGHT be true.</div>';
   document.getElementById('wg-review').innerHTML=html;
+  gameEnded("Watson Glaser",Math.round(score/wgQs.length*100),{correct:score,total:wgQs.length});
 }
 function wgReset(){
   document.getElementById('wg-results').classList.add('hidden');
@@ -2134,6 +2161,7 @@ function codSubmit(){
   });
   html+='<div style="margin-top:1rem;padding:0.75rem;background:var(--bg3);border-radius:var(--radius);font-size:0.82rem;color:var(--text-muted)"><strong>Coding OA tip:</strong> Focus on Big-O complexity, Python gotchas (mutable defaults, list comprehensions), and core data structures. For real OAs, practice LeetCode Easy-Medium problems timed.</div>';
   document.getElementById('cod-review').innerHTML=html;
+  gameEnded("Coding OA",Math.round(score/codQs.length*100),{correct:score,total:codQs.length});
 }
 function codReset(){
   document.getElementById('cod-results').classList.add('hidden');
@@ -2141,6 +2169,202 @@ function codReset(){
 }
 </script>
 
+
+<!-- LOGIN PAGE -->
+<div id="page-login" class="page" style="display:none">
+<div class="game-page" style="max-width:420px;margin:0 auto">
+  <div class="game-header"><div class="game-header-icon" style="background:#6C5CE7">🔐</div><div><h1>Login</h1><p>Access your scores and track your progress</p></div></div>
+  <div class="question-card" style="margin-top:1rem">
+    <div id="login-error" style="display:none;padding:0.6rem 0.75rem;background:rgba(239,68,68,0.12);border-radius:var(--radius);color:var(--danger);font-size:0.85rem;margin-bottom:1rem"></div>
+    <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:0.25rem">Username</label>
+    <input id="login-user" type="text" autocomplete="username" style="width:100%;box-sizing:border-box;background:var(--bg3);border:2px solid var(--border);border-radius:var(--radius);padding:0.65rem 0.75rem;font-size:0.95rem;color:var(--text);outline:none;margin-bottom:0.75rem" placeholder="Your username">
+    <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:0.25rem">Password</label>
+    <input id="login-pass" type="password" autocomplete="current-password" style="width:100%;box-sizing:border-box;background:var(--bg3);border:2px solid var(--border);border-radius:var(--radius);padding:0.65rem 0.75rem;font-size:0.95rem;color:var(--text);outline:none;margin-bottom:1rem" placeholder="Your password">
+    <button class="btn btn-primary" style="width:100%" onclick="authLogin()">Login</button>
+    <p style="text-align:center;margin-top:1rem;font-size:0.85rem;color:var(--text-muted)">No account? <a href="#register" style="color:var(--accent)">Register</a></p>
+  </div>
+</div>
+</div>
+
+<!-- REGISTER PAGE -->
+<div id="page-register" class="page" style="display:none">
+<div class="game-page" style="max-width:420px;margin:0 auto">
+  <div class="game-header"><div class="game-header-icon" style="background:#00CEC9">✨</div><div><h1>Register</h1><p>Create a free account to track your assessment scores</p></div></div>
+  <div class="question-card" style="margin-top:1rem">
+    <div id="reg-error" style="display:none;padding:0.6rem 0.75rem;background:rgba(239,68,68,0.12);border-radius:var(--radius);color:var(--danger);font-size:0.85rem;margin-bottom:1rem"></div>
+    <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:0.25rem">Username</label>
+    <input id="reg-user" type="text" autocomplete="username" style="width:100%;box-sizing:border-box;background:var(--bg3);border:2px solid var(--border);border-radius:var(--radius);padding:0.65rem 0.75rem;font-size:0.95rem;color:var(--text);outline:none;margin-bottom:0.75rem" placeholder="Choose a username">
+    <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:0.25rem">Email</label>
+    <input id="reg-email" type="email" autocomplete="email" style="width:100%;box-sizing:border-box;background:var(--bg3);border:2px solid var(--border);border-radius:var(--radius);padding:0.65rem 0.75rem;font-size:0.95rem;color:var(--text);outline:none;margin-bottom:0.75rem" placeholder="your@email.com">
+    <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:0.25rem">Password</label>
+    <input id="reg-pass" type="password" autocomplete="new-password" style="width:100%;box-sizing:border-box;background:var(--bg3);border:2px solid var(--border);border-radius:var(--radius);padding:0.65rem 0.75rem;font-size:0.95rem;color:var(--text);outline:none;margin-bottom:1rem" placeholder="At least 6 characters">
+    <button class="btn btn-primary" style="width:100%" onclick="authRegister()">Create Account</button>
+    <p style="text-align:center;margin-top:1rem;font-size:0.85rem;color:var(--text-muted)">Already have an account? <a href="#login" style="color:var(--accent)">Login</a></p>
+  </div>
+</div>
+</div>
+
+<!-- PROFILE PAGE -->
+<div id="page-profile" class="page" style="display:none">
+<div class="game-page">
+  <div class="game-header"><div class="game-header-icon" style="background:#FDCB6E;color:#2d3436">📊</div><div><h1 id="profile-title">My Scores</h1><p>Your assessment history across all games</p></div></div>
+  <div id="profile-loading" style="text-align:center;padding:2rem;color:var(--text-muted)">Loading scores...</div>
+  <div id="profile-login-prompt" style="display:none;text-align:center;padding:2rem">
+    <p style="color:var(--text-muted);margin-bottom:1rem">Login to view your score history</p>
+    <a href="#login" class="btn btn-primary">Login</a>
+    <a href="#register" class="btn btn-outline" style="margin-left:0.5rem">Register</a>
+  </div>
+  <div id="profile-content" style="display:none">
+    <div id="profile-stats" style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1.5rem"></div>
+    <div id="profile-scores"></div>
+  </div>
+</div>
+</div>
+
+<script>
+// ===== AUTH SYSTEM =====
+var currentUser = null;
+
+function authUpdateBar(){
+  if(currentUser){
+    document.getElementById('auth-bar-guest').style.display='none';
+    document.getElementById('auth-bar-user').style.display='flex';
+    document.getElementById('auth-bar-name').textContent='Hi, '+currentUser.username+' 👋';
+  } else {
+    document.getElementById('auth-bar-guest').style.display='flex';
+    document.getElementById('auth-bar-user').style.display='none';
+  }
+}
+
+async function authFetchMe(){
+  try{
+    var r=await fetch('/api/me');
+    if(r.ok){var d=await r.json();currentUser=d.user;authUpdateBar();}
+    else{currentUser=null;authUpdateBar();}
+  }catch(e){currentUser=null;authUpdateBar();}
+}
+
+async function authLogin(){
+  var username=document.getElementById('login-user').value.trim();
+  var password=document.getElementById('login-pass').value;
+  var err=document.getElementById('login-error');
+  err.style.display='none';
+  if(!username||!password){err.textContent='Please fill in all fields.';err.style.display='block';return;}
+  try{
+    var r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:username,password:password})});
+    var d=await r.json();
+    if(r.ok){currentUser=d.user;authUpdateBar();location.hash='profile';}
+    else{err.textContent=d.error||'Login failed';err.style.display='block';}
+  }catch(e){err.textContent='Server error — is Flask running?';err.style.display='block';}
+}
+
+async function authRegister(){
+  var username=document.getElementById('reg-user').value.trim();
+  var email=document.getElementById('reg-email').value.trim();
+  var password=document.getElementById('reg-pass').value;
+  var err=document.getElementById('reg-error');
+  err.style.display='none';
+  if(!username||!email||!password){err.textContent='Please fill in all fields.';err.style.display='block';return;}
+  try{
+    var r=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:username,email:email,password:password})});
+    var d=await r.json();
+    if(r.ok){currentUser=d.user;authUpdateBar();location.hash='profile';}
+    else{err.textContent=d.error||'Registration failed';err.style.display='block';}
+  }catch(e){err.textContent='Server error — is Flask running?';err.style.display='block';}
+}
+
+async function authLogout(){
+  await fetch('/api/logout',{method:'POST'});
+  currentUser=null;authUpdateBar();location.hash='home';
+}
+
+async function gameEnded(gameName, score, details){
+  if(!currentUser) return;
+  try{
+    await fetch('/api/save-score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:gameName,score:score,details:details})});
+    showSaveBadge();
+  }catch(e){}
+}
+
+function showSaveBadge(){
+  var b=document.createElement('div');
+  b.textContent='✅ Score saved!';
+  b.style.cssText='position:fixed;bottom:1.5rem;right:1.5rem;background:var(--success);color:#fff;padding:0.6rem 1rem;border-radius:var(--radius);font-size:0.85rem;font-weight:600;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);animation:fadeIn 0.3s ease';
+  document.body.appendChild(b);
+  setTimeout(function(){b.remove();},2500);
+}
+
+async function profileLoad(){
+  var loading=document.getElementById('profile-loading');
+  var prompt=document.getElementById('profile-login-prompt');
+  var content=document.getElementById('profile-content');
+  loading.style.display='block';prompt.style.display='none';content.style.display='none';
+
+  if(!currentUser){
+    loading.style.display='none';prompt.style.display='block';return;
+  }
+  document.getElementById('profile-title').textContent=currentUser.username+"'s Scores";
+
+  try{
+    var r=await fetch('/api/scores');
+    if(!r.ok){loading.style.display='none';prompt.style.display='block';return;}
+    var d=await r.json();
+    var scores=d.scores||[];
+    loading.style.display='none';content.style.display='block';
+
+    // Summary stats
+    var byGame={};
+    scores.forEach(function(s){
+      if(!byGame[s.game])byGame[s.game]={best:s.score,count:0,latest:s.score};
+      byGame[s.game].best=Math.max(byGame[s.game].best,s.score);
+      byGame[s.game].count++;
+    });
+    var statsHtml='<div style="background:var(--bg3);padding:0.75rem 1rem;border-radius:var(--radius);text-align:center;min-width:100px"><div style="font-size:1.5rem;font-weight:800;color:var(--accent)">'+scores.length+'</div><div style="font-size:0.75rem;color:var(--text-muted)">Total Attempts</div></div>';
+    statsHtml+='<div style="background:var(--bg3);padding:0.75rem 1rem;border-radius:var(--radius);text-align:center;min-width:100px"><div style="font-size:1.5rem;font-weight:800;color:var(--accent)">'+Object.keys(byGame).length+'</div><div style="font-size:0.75rem;color:var(--text-muted)">Games Tried</div></div>';
+    if(scores.length>0){
+      var best=scores.reduce(function(a,b){return a.score>b.score?a:b;});
+      statsHtml+='<div style="background:var(--bg3);padding:0.75rem 1rem;border-radius:var(--radius);text-align:center;min-width:120px"><div style="font-size:1rem;font-weight:700;color:var(--success)">'+best.game+'</div><div style="font-size:0.75rem;color:var(--text-muted)">Highest Score ('+Math.round(best.score)+')</div></div>';
+    }
+    document.getElementById('profile-stats').innerHTML=statsHtml;
+
+    // Per-game bests
+    var bestHtml='<h3 style="font-size:0.9rem;color:var(--text-muted);margin-bottom:0.75rem;text-transform:uppercase;letter-spacing:0.05em">Best Scores by Game</h3>';
+    bestHtml+='<div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1.5rem">';
+    Object.keys(byGame).forEach(function(g){
+      var b=byGame[g];
+      bestHtml+='<div style="background:var(--bg3);padding:0.6rem 0.9rem;border-radius:var(--radius);min-width:140px"><div style="font-weight:600;font-size:0.85rem">'+g+'</div><div style="font-size:1.1rem;font-weight:800;color:var(--accent)">'+Math.round(b.best)+'</div><div style="font-size:0.7rem;color:var(--text-muted)">'+b.count+' attempt'+(b.count===1?'':'s')+'</div></div>';
+    });
+    bestHtml+='</div>';
+
+    // Full history
+    bestHtml+='<h3 style="font-size:0.9rem;color:var(--text-muted);margin-bottom:0.75rem;text-transform:uppercase;letter-spacing:0.05em">Recent History</h3>';
+    if(scores.length===0){bestHtml+='<p style="color:var(--text-muted)">No scores yet — play some games!</p>';}
+    else{
+      scores.slice(0,50).forEach(function(s){
+        var dt=new Date(s.played_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+        bestHtml+='<div style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem 0.75rem;background:var(--bg3);border-radius:var(--radius);margin-bottom:0.4rem"><div><div style="font-weight:600;font-size:0.85rem">'+s.game+'</div><div style="font-size:0.72rem;color:var(--text-muted)">'+dt+'</div></div><div style="font-size:1.2rem;font-weight:800;color:var(--accent)">'+Math.round(s.score)+'</div></div>';
+      });
+    }
+    document.getElementById('profile-scores').innerHTML=bestHtml;
+  }catch(e){loading.style.display='none';prompt.style.display='block';}
+}
+
+// Load auth state and wire profile on hash change
+authFetchMe();
+window.addEventListener('hashchange',function(){
+  if(location.hash==='#profile')profileLoad();
+});
+window.addEventListener('load',function(){
+  if(location.hash==='#profile')profileLoad();
+  // Enter key for login/register
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Enter'){
+      if(location.hash==='#login')authLogin();
+      else if(location.hash==='#register')authRegister();
+    }
+  });
+});
+</script>
 
 </body>
 </html>
