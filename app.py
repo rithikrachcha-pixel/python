@@ -1,5 +1,6 @@
 """Flask application for AssessSim — internship assessment game simulator."""
 import json
+import os
 import sqlite3
 from functools import wraps
 from flask import Flask, g, jsonify, render_template, request, session
@@ -8,7 +9,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 app = Flask(__name__)
 app.secret_key = 'assessment-sim-secret-2024'
-DATABASE = 'assesssim.db'
+DATABASE = os.path.join(os.path.dirname(__file__), 'assesssim.db')
 
 
 # ---------------------------------------------------------------------------
@@ -277,4 +278,4 @@ with app.app_context():
     init_db()
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True, port=5000)
+    app.run(host='0.0.0.0', debug=True, port=5001)
