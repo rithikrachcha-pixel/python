@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>AssessSim — Internship Assessment Game Simulator</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--pymetrics:#FF6B6B;--shl:#6C5CE7;--cappfinity:#00B894;--bg:#0F0F1A;--bg2:#16162A;--bg3:#1E1E35;--card:#1A1A2E;--border:rgba(255,255,255,0.08);--text:#E8E8F0;--text-muted:#8888AA;--accent:#4D9FFF;--accent2:#A29BFE;--success:#00D2A0;--danger:#FF5E7A;--warning:#FFB347;--radius:12px;--radius-lg:20px;--shadow:0 4px 24px rgba(0,0,0,0.4)}
+html{scroll-behavior:smooth}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh;display:flex;flex-direction:column}
+a{color:inherit;text-decoration:none}
+.navbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 2rem;background:rgba(15,15,26,0.95);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;backdrop-filter:blur(10px)}
+.nav-logo{display:flex;align-items:center;gap:0.5rem;font-size:1.2rem;font-weight:700;color:var(--accent)}
+.nav-links{display:flex;gap:1.5rem}
+.nav-links a{color:var(--text-muted);font-size:0.9rem;transition:color 0.2s}
+.nav-links a:hover{color:var(--text)}
+.hero{text-align:center;padding:5rem 2rem 4rem;background:radial-gradient(ellipse at 50% 0%,rgba(77,159,255,0.12) 0%,transparent 70%)}
+.hero h1{font-size:clamp(2rem,5vw,3.5rem);font-weight:800;line-height:1.2;margin-bottom:1rem}
+.highlight{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{color:var(--text-muted);font-size:1.1rem;max-width:600px;margin:0 auto 2rem}
+.hero-badges{display:flex;justify-content:center;gap:0.75rem;margin-top:2rem}
+.btn{display:inline-flex;align-items:center;gap:0.5rem;padding:0.75rem 2rem;border-radius:var(--radius);font-size:1rem;font-weight:600;cursor:pointer;border:none;transition:all 0.2s}
+.btn-primary{background:linear-gradient(135deg,var(--accent),#6B8CFF);color:#fff;box-shadow:0 4px 20px rgba(77,159,255,0.3)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(77,159,255,0.45)}
+.btn-success{background:linear-gradient(135deg,var(--success),#00A87C);color:#fff}
+.btn-success:hover{transform:translateY(-2px)}
+.btn-danger{background:linear-gradient(135deg,var(--danger),#CC3355);color:#fff}
+.btn-outline{background:transparent;color:var(--accent);border:1.5px solid var(--accent)}
+.btn-outline:hover{background:rgba(77,159,255,0.1)}
+.btn-lg{padding:1rem 2.5rem;font-size:1.1rem}
+.btn-sm{padding:0.4rem 1rem;font-size:0.85rem}
+.btn:disabled{opacity:0.4;cursor:not-allowed;transform:none!important}
+.badge{padding:0.35rem 1rem;border-radius:50px;font-size:0.85rem;font-weight:600}
+.badge-pymetrics{background:rgba(255,107,107,0.15);color:var(--pymetrics);border:1px solid rgba(255,107,107,0.3)}
+.badge-shl{background:rgba(108,92,231,0.15);color:#A29BFE;border:1px solid rgba(108,92,231,0.3)}
+.badge-cappfinity{background:rgba(0,184,148,0.15);color:var(--cappfinity);border:1px solid rgba(0,184,148,0.3)}
+.platform-tag{display:inline-block;padding:0.25rem 0.75rem;border-radius:50px;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.75rem}
+.tag-pymetrics{background:rgba(255,107,107,0.15);color:var(--pymetrics)}
+.tag-shl{background:rgba(108,92,231,0.15);color:#A29BFE}
+.tag-cappfinity{background:rgba(0,184,148,0.15);color:var(--cappfinity)}
+.game-tag{display:inline-block;padding:0.2rem 0.6rem;border-radius:50px;font-size:0.72rem;background:rgba(255,255,255,0.08);color:var(--text-muted);margin:0.15rem 0.15rem 0 0}
+.section{padding:4rem 2rem;max-width:1100px;margin:0 auto;width:100%}
+.section-header{text-align:center;margin-bottom:2.5rem}
+.section-header h2{font-size:2rem;font-weight:700;margin-bottom:0.5rem}
+.section-header p{color:var(--text-muted);max-width:600px;margin:0 auto}
+.game-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.25rem}
+.game-card{display:flex;align-items:flex-start;gap:1rem;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;transition:all 0.25s;cursor:pointer}
+.game-card:hover{border-color:rgba(77,159,255,0.35);background:var(--bg3);transform:translateY(-3px);box-shadow:var(--shadow)}
+.game-icon{width:56px;height:56px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:1.8rem;flex-shrink:0}
+.game-info h3{font-size:1rem;font-weight:700;margin-bottom:0.35rem}
+.game-info p{color:var(--text-muted);font-size:0.85rem;margin-bottom:0.5rem;line-height:1.5}
+.tips-section{background:var(--bg2);padding:4rem 2rem;text-align:center}
+.tips-section h2{font-size:1.8rem;font-weight:700;margin-bottom:2rem}
+.tips-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1.25rem;max-width:1000px;margin:0 auto}
+.tip-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem}
+.tip-icon{font-size:2rem;display:block;margin-bottom:0.75rem}
+.tip-card h3{font-size:1rem;font-weight:700;margin-bottom:0.4rem}
+.tip-card p{color:var(--text-muted);font-size:0.85rem}
+.footer{margin-top:auto;padding:1.5rem 2rem;text-align:center;color:var(--text-muted);font-size:0.8rem;border-top:1px solid var(--border);background:var(--bg2)}
+.game-page{max-width:860px;margin:0 auto;padding:2rem 1.5rem}
+.game-header{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem}
+.game-header-icon{width:52px;height:52px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:1.8rem}
+.game-header h1{font-size:1.5rem;font-weight:700}
+.game-header p{color:var(--text-muted);font-size:0.9rem}
+.game-meta{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem}
+.game-meta-item{display:flex;align-items:center;gap:0.4rem;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:0.4rem 0.85rem;font-size:0.82rem;color:var(--text-muted)}
+.game-meta-item strong{color:var(--text)}
+.instructions{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.75rem;margin-bottom:1.5rem}
+.instructions h2{font-size:1.1rem;font-weight:700;margin-bottom:1rem}
+.instructions ul{padding-left:1.25rem;color:var(--text-muted)}
+.instructions li{margin-bottom:0.45rem;font-size:0.9rem}
+.instructions li strong{color:var(--text)}
+.game-arena{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2rem;text-align:center;min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
+.hud{display:flex;justify-content:space-around;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:0.85rem 1.5rem;margin-bottom:1.25rem}
+.hud-item{text-align:center}
+.hud-item .hud-value{font-size:1.4rem;font-weight:700;color:var(--accent)}
+.hud-item .hud-label{font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em}
+.score-display{font-size:2.5rem;font-weight:800;color:var(--success);margin:0.5rem 0}
+.balloon-container{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;height:300px}
+.balloon{border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(255,255,255,0.4),transparent 60%),linear-gradient(135deg,#FF6B6B,#FF4444);transition:width 0.15s,height 0.15s;position:relative;box-shadow:inset -8px -8px 20px rgba(0,0,0,0.25),0 0 30px rgba(255,107,107,0.3)}
+.balloon::after{content:'';position:absolute;bottom:-12px;left:50%;transform:translateX(-50%);width:3px;height:12px;background:#ccc}
+.balloon-pop{font-size:4rem;animation:popAnim 0.5s ease-out forwards}
+@keyframes popAnim{0%{transform:scale(1);opacity:1}50%{transform:scale(1.8);opacity:0.5}100%{transform:scale(0);opacity:0}}
+.balloon-controls{display:flex;gap:1rem;margin-top:1.5rem}
+.gonogo-stimulus{width:160px;height:160px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:3.5rem;font-weight:800;transition:all 0.1s;margin:1rem auto;box-shadow:0 0 40px rgba(255,255,255,0.1)}
+.gonogo-go{background:var(--success);box-shadow:0 0 50px rgba(0,210,160,0.4)}
+.gonogo-nogo{background:var(--danger);box-shadow:0 0 50px rgba(255,94,122,0.4)}
+.gonogo-blank{background:var(--bg3)}
+.digit-display{font-size:5rem;font-weight:800;color:var(--accent);width:120px;height:120px;display:flex;align-items:center;justify-content:center;background:var(--bg3);border:2px solid var(--accent);border-radius:var(--radius-lg);margin:1rem auto;box-shadow:0 0 30px rgba(77,159,255,0.2)}
+.digit-input-row{display:flex;gap:0.5rem;justify-content:center;flex-wrap:wrap;margin:1rem 0}
+.digit-input-box{width:52px;height:60px;background:var(--bg3);border:2px solid var(--border);border-radius:var(--radius);text-align:center;font-size:1.6rem;font-weight:700;color:var(--text);outline:none;transition:border-color 0.2s}
+.digit-input-box:focus{border-color:var(--accent)}
+.nback-letter{font-size:7rem;font-weight:900;color:var(--accent2);width:160px;height:160px;display:flex;align-items:center;justify-content:center;background:var(--bg3);border:2px solid rgba(162,155,254,0.3);border-radius:var(--radius-lg);margin:1rem auto;transition:all 0.15s}
+.nback-match{border-color:var(--success);color:var(--success);box-shadow:0 0 40px rgba(0,210,160,0.3)}
+.attention-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:0.75rem;margin:1rem auto;max-width:400px}
+.attention-cell{aspect-ratio:1;border-radius:var(--radius);background:var(--bg3);border:2px solid var(--border);cursor:pointer;transition:all 0.1s;display:flex;align-items:center;justify-content:center;font-size:1.5rem}
+.attention-cell:hover{border-color:var(--accent)}
+.attention-cell.atgt{background:var(--success);border-color:var(--success);box-shadow:0 0 20px rgba(0,210,160,0.5)}
+.attention-cell.awrong{background:var(--danger);border-color:var(--danger)}
+.question-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.75rem;margin-bottom:1.25rem;text-align:left}
+.question-number{font-size:0.8rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--accent);margin-bottom:0.75rem}
+.question-text{font-size:1rem;line-height:1.6;margin-bottom:1.25rem}
+.passage-box{background:var(--bg3);border-left:3px solid var(--accent);border-radius:0 var(--radius) var(--radius) 0;padding:1rem 1.25rem;margin-bottom:1.25rem;font-size:0.9rem;line-height:1.7;color:var(--text-muted)}
+.options-list{list-style:none;display:flex;flex-direction:column;gap:0.6rem}
+.option-btn{display:flex;align-items:center;gap:0.75rem;padding:0.85rem 1.1rem;background:var(--bg3);border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;text-align:left;color:var(--text);font-size:0.9rem;transition:all 0.2s;width:100%}
+.option-btn:hover{border-color:var(--accent);background:rgba(77,159,255,0.07)}
+.option-btn.selected{border-color:var(--accent);background:rgba(77,159,255,0.12)}
+.option-letter{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;flex-shrink:0}
+.data-table{width:100%;border-collapse:collapse;margin-bottom:1.25rem;font-size:0.85rem}
+.data-table th{background:var(--bg3);padding:0.6rem 0.85rem;text-align:right;color:var(--text-muted);border:1px solid var(--border);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.05em}
+.data-table th:first-child{text-align:left}
+.data-table td{padding:0.6rem 0.85rem;border:1px solid var(--border);text-align:right}
+.data-table td:first-child{text-align:left;color:var(--text-muted)}
+.data-table tr:hover td{background:rgba(255,255,255,0.03)}
+.inductive-options{display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;margin-top:1.5rem}
+.inductive-option{padding:0.75rem;background:var(--bg3);border:2px solid var(--border);border-radius:var(--radius);cursor:pointer;text-align:center;font-size:1.8rem;transition:all 0.2s}
+.inductive-option:hover{border-color:var(--accent);background:rgba(77,159,255,0.07)}
+.inductive-option.selected{border-color:var(--accent)}
+.progress-bar-wrap{width:100%;height:6px;background:var(--bg3);border-radius:99px;margin-bottom:1.5rem;overflow:hidden}
+.progress-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width 0.4s ease}
+.timer{font-size:1.1rem;font-weight:700;color:var(--warning);font-variant-numeric:tabular-nums}
+.timer.urgent{color:var(--danger);animation:pulse 0.8s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.feedback-overlay{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:5rem;font-weight:900;pointer-events:none;z-index:999;animation:feedbackAnim 0.6s ease-out forwards}
+@keyframes feedbackAnim{0%{transform:translate(-50%,-50%) scale(0.5);opacity:1}70%{transform:translate(-50%,-70%) scale(1.2);opacity:1}100%{transform:translate(-50%,-90%) scale(1);opacity:0}}
+.results-page{max-width:700px;margin:0 auto;padding:2rem 1.5rem;text-align:center}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem;margin:1.5rem 0}
+.result-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem}
+.result-card .rc-value{font-size:1.8rem;font-weight:800;color:var(--accent)}
+.result-card .rc-label{font-size:0.75rem;color:var(--text-muted);margin-top:0.25rem;text-transform:uppercase;letter-spacing:0.05em}
+.trait-bars{margin:1.5rem 0;text-align:left}
+.trait-bar-row{margin-bottom:0.85rem}
+.trait-bar-label{display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:0.3rem}
+.trait-bar-bg{height:8px;background:var(--bg3);border-radius:99px;overflow:hidden}
+.trait-bar-fill{height:100%;border-radius:99px;transition:width 1s ease}
+.text-center{text-align:center}
+.text-muted{color:var(--text-muted)}
+.mt-1{margin-top:0.5rem}
+.mt-2{margin-top:1rem}
+.mb-2{margin-bottom:1rem}
+.hidden{display:none!important}
+.notice{background:rgba(77,159,255,0.08);border:1px solid rgba(77,159,255,0.2);border-radius:var(--radius);padding:0.75rem 1rem;font-size:0.85rem;color:var(--text-muted);margin-bottom:1rem}
+kbd{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:0.15rem 0.45rem;font-size:0.75rem;font-family:inherit}
+.key-hint{display:inline-flex;align-items:center;gap:0.3rem;font-size:0.8rem;color:var(--text-muted);margin-top:0.5rem}
+.sjt-options{display:flex;flex-direction:column;gap:0.6rem;margin-top:1rem}
+.sjt-option{display:flex;align-items:center;gap:0.75rem;padding:0.9rem 1.1rem;background:var(--bg3);border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;color:var(--text);font-size:0.88rem;transition:all 0.2s;text-align:left}
+.sjt-option:hover{border-color:var(--accent);background:rgba(77,159,255,0.07)}
+.sjt-option.best{border-color:var(--success);background:rgba(0,210,160,0.1)}
+.sjt-option.worst{border-color:var(--danger);background:rgba(255,94,122,0.1)}
+.sjt-rank-badge{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;flex-shrink:0;background:rgba(255,255,255,0.08)}
+.best .sjt-rank-badge{background:var(--success);color:#000}
+.worst .sjt-rank-badge{background:var(--danger);color:#fff}
+.sjt-instruction{font-size:0.8rem;color:var(--text-muted);margin-bottom:0.75rem;font-style:italic}
+.question-nav{display:flex;align-items:center;justify-content:space-between;margin-top:1.5rem}
+@media(max-width:600px){.game-grid{grid-template-columns:1fr}.tips-grid{grid-template-columns:1fr 1fr}.inductive-options{grid-template-columns:repeat(2,1fr)}.attention-grid{max-width:280px}.hud{flex-wrap:wrap;gap:0.5rem}}
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <a href="#home" class="nav-logo"><span>◈</span><span>AssessSim</span></a>
+  <div class="nav-links">
+    <a href="#home">Pymetrics</a>
+    <a href="#home">SHL</a>
+    <a href="#home">Cappfinity</a>
+  </div>
+</nav>
+
+<!-- HOME PAGE -->
+<div id="page-home" class="page">
+<div class="hero">
+  <h1>Internship Assessment<br><span class="highlight">Game Simulator</span></h1>
+  <p class="hero-sub">Practice the cognitive and behavioral games used by top firms. Train for Pymetrics, SHL, and Cappfinity assessments.</p>
+  <a href="#home" class="btn btn-primary">Start Practicing ↓</a>
+  <div class="hero-badges">
+    <span class="badge badge-pymetrics">Pymetrics</span>
+    <span class="badge badge-shl">SHL</span>
+    <span class="badge badge-cappfinity">Cappfinity</span>
+  </div>
+</div>
+<div class="section">
+  <div class="section-header"><span class="platform-tag tag-pymetrics">Pymetrics</span><h2>Pymetrics Games</h2><p>Neuroscience-based games measuring cognitive and emotional traits. Used by Goldman Sachs, JPMorgan, Unilever, and more.</p></div>
+  <div class="game-grid">
+    <a href="#bart" class="game-card"><div class="game-icon" style="background:#FF6B6B">🎈</div><div class="game-info"><h3>Balloon Risk (BART)</h3><p>Pump balloons to earn money — but pop one and lose it all.</p><span class="game-tag">Risk</span><span class="game-tag">Decision Making</span></div></a>
+    <a href="#gonogo" class="game-card"><div class="game-icon" style="background:#4ECDC4">⚡</div><div class="game-info"><h3>Go / No-Go</h3><p>Respond to targets, ignore distractors. Measures impulse control.</p><span class="game-tag">Impulse Control</span><span class="game-tag">Attention</span></div></a>
+    <a href="#digitspan" class="game-card"><div class="game-icon" style="background:#45B7D1">🔢</div><div class="game-info"><h3>Digit Span</h3><p>Memorize and recall sequences of numbers forwards and backwards.</p><span class="game-tag">Working Memory</span><span class="game-tag">Recall</span></div></a>
+    <a href="#nback" class="game-card"><div class="game-icon" style="background:#96CEB4">🧠</div><div class="game-info"><h3>N-Back Task</h3><p>Identify when a stimulus matches one from N steps earlier.</p><span class="game-tag">Fluid Intelligence</span><span class="game-tag">Memory</span></div></a>
+    <a href="#attention" class="game-card"><div class="game-icon" style="background:#FFEAA7">👁️</div><div class="game-info"><h3>Attention &amp; Focus</h3><p>React to targets appearing on screen as fast as possible.</p><span class="game-tag">Reaction Time</span><span class="game-tag">Focus</span></div></a>
+  </div>
+</div>
+<div class="section">
+  <div class="section-header"><span class="platform-tag tag-shl">SHL</span><h2>SHL Assessments</h2><p>Industry-standard aptitude tests used globally for graduate and intern recruitment.</p></div>
+  <div class="game-grid">
+    <a href="#numerical" class="game-card"><div class="game-icon" style="background:#6C5CE7">📊</div><div class="game-info"><h3>Numerical Reasoning</h3><p>Interpret tables and graphs to answer numerical questions.</p><span class="game-tag">Maths</span><span class="game-tag">Data Interpretation</span></div></a>
+    <a href="#verbal" class="game-card"><div class="game-icon" style="background:#A29BFE">📝</div><div class="game-info"><h3>Verbal Reasoning</h3><p>True, False, or Cannot Say — based only on the passage.</p><span class="game-tag">Comprehension</span><span class="game-tag">Critical Reading</span></div></a>
+    <a href="#inductive" class="game-card"><div class="game-icon" style="background:#FD79A8">🔷</div><div class="game-info"><h3>Inductive Reasoning</h3><p>Identify rules behind sequences of shapes and patterns.</p><span class="game-tag">Pattern Recognition</span><span class="game-tag">Abstract Logic</span></div></a>
+  </div>
+</div>
+<div class="section">
+  <div class="section-header"><span class="platform-tag tag-cappfinity">Cappfinity</span><h2>Cappfinity Assessments</h2><p>Strength-based assessments used by KPMG, EY, Clifford Chance, and more.</p></div>
+  <div class="game-grid">
+    <a href="#sjt" class="game-card"><div class="game-icon" style="background:#00B894">💼</div><div class="game-info"><h3>Situational Judgment Test</h3><p>Rate responses to realistic workplace scenarios.</p><span class="game-tag">Judgment</span><span class="game-tag">Workplace Skills</span></div></a>
+  </div>
+</div>
+<div class="tips-section">
+  <h2>Tips for Assessment Games</h2>
+  <div class="tips-grid">
+    <div class="tip-card"><span class="tip-icon">🎯</span><h3>Be Authentic</h3><p>Pymetrics games measure natural traits — trying to "game" them often backfires.</p></div>
+    <div class="tip-card"><span class="tip-icon">⏱️</span><h3>Practice Speed</h3><p>SHL tests are timed. Practice until answering quickly feels natural.</p></div>
+    <div class="tip-card"><span class="tip-icon">🧘</span><h3>Stay Calm</h3><p>Anxiety hurts reaction time and working memory. Take a breath first.</p></div>
+    <div class="tip-card"><span class="tip-icon">🔁</span><h3>Repeat Often</h3><p>Cognitive assessments improve with practice. Repeat each game over several days.</p></div>
+  </div>
+</div>
+</div><!-- end page-home -->
+
+<!-- BART PAGE -->
+<div id="page-bart" class="page" style="display:none">
+<div class="game-page">
+  <div class="game-header"><div class="game-header-icon" style="background:#FF6B6B">🎈</div><div><h1>Balloon Risk Task (BART)</h1><p>Pymetrics — Risk Tolerance &amp; Decision Making</p></div></div>
+  <div class="game-meta"><div class="game-meta-item">🎈 <strong>20</strong>&nbsp;balloons</div><div class="game-meta-item">💰 <strong>$0.05</strong>&nbsp;per pump</div><div class="game-meta-item">⏱️ <strong>No time limit</strong></div></div>
+  <div id="bart-instructions" class="instructions">
+    <h2>📋 How It Works</h2>
+    <ul><li>You have <strong>20 balloons</strong> to inflate.</li><li>Each pump earns <strong>$0.05</strong> and grows the balloon.</li><li>Click <strong>"Collect &amp; Next"</strong> to bank earnings and move on.</li><li>Each pump has a random chance of popping — more pumps = higher risk.</li><li>If the balloon <strong>pops</strong>, you lose earnings from that round.</li></ul>
+    <div class="notice" style="margin-top:1rem">💡 <strong>Tip:</strong> Neither extremely cautious nor reckless scores best. Find your balance.</div>
+    <button class="btn btn-primary mt-2" onclick="bartStart()">Start Game</button>
+  </div>
+  <div id="bart-game" class="hidden">
+    <div class="hud">
+      <div class="hud-item"><div class="hud-value" id="bart-balloon-num">1</div><div class="hud-label">Balloon</div></div>
+      <div class="hud-item"><div class="hud-value" id="bart-pumps">0</div><div class="hud-label">Pumps</div></div>
+      <div class="hud-item"><div class="hud-value" id="bart-cur-earn" style="color:var(--warning)">$0.00</div><div class="hud-label">This Balloon</div></div>
+      <div class="hud-item"><div class="hud-value" id="bart-total-earn" style="color:var(--success)">$0.00</div><div class="hud-label">Total Banked</div></div>
+    </div>
+    <div class="game-arena" id="bart-arena"><div class="balloon-container"><div id="bart-balloon" class="balloon" style="width:80px;height:80px"></div></div></div>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button id="bart-btn-pump" class="btn btn-primary btn-lg" onclick="bartPump()">💨 Pump (+$0.05)</button>
+      <button id="bart-btn-collect" class="btn btn-success btn-lg" onclick="bartCollect()">✅ Collect &amp; Next</button>
+    </div>
+    <p class="text-center text-muted mt-1" style="font-size:0.82rem">Press <kbd>Space</kbd> to pump · <kbd>Enter</kbd> to collect</p>
+  </div>
+  <div id="bart-results" class="hidden" style="text-align:center;padding:2rem">
+    <h2 style="font-size:1.8rem;margin-bottom:0.5rem">Game Complete!</h2>
+    <div class="score-display" id="bart-final-total">$0.00</div><p class="text-muted">Total Earned</p>
+    <div class="results-grid" style="max-width:500px;margin:1.5rem auto">
+      <div class="result-card"><div class="rc-value" id="bart-r-avg">0</div><div class="rc-label">Avg Pumps / Balloon</div></div>
+      <div class="result-card"><div class="rc-value" id="bart-r-pops">0</div><div class="rc-label">Balloons Popped</div></div>
+      <div class="result-card"><div class="rc-value" id="bart-r-collects">0</div><div class="rc-label">Successful Collects</div></div>
+      <div class="result-card"><div class="rc-value" id="bart-r-profile">—</div><div class="rc-label">Risk Profile</div></div>
+    </div>
+    <div class="notice" id="bart-profile-desc" style="max-width:500px;margin:0 auto"></div>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button class="btn btn-outline" onclick="bartReset()">Play Again</button>
+      <a href="#home" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- GO/NO-GO PAGE -->
+<div id="page-gonogo" class="page" style="display:none">
+<div class="game-page">
+  <div class="game-header"><div class="game-header-icon" style="background:#4ECDC4">⚡</div><div><h1>Go / No-Go Task</h1><p>Pymetrics — Impulse Control &amp; Attention</p></div></div>
+  <div class="game-meta"><div class="game-meta-item">🎯 <strong>100</strong>&nbsp;trials</div><div class="game-meta-item">🟢 <strong>70%</strong>&nbsp;Go</div><div class="game-meta-item">🔴 <strong>30%</strong>&nbsp;No-Go</div><div class="game-meta-item">⏱️ <strong>~5 min</strong></div></div>
+  <div id="gng-instructions" class="instructions">
+    <h2>📋 How It Works</h2>
+    <ul><li><strong>Green ● = Go</strong> — press <kbd>Space</kbd> or the button.</li><li><strong>Red ● = No-Go</strong> — do nothing.</li><li>React as fast as possible — you have <strong>600ms</strong>.</li><li>100 trials total.</li></ul>
+    <div class="notice" style="margin-top:1rem">💡 Commission errors (pressing for No-Go) are penalised more than slow responses.</div>
+    <button class="btn btn-primary mt-2" onclick="gngStart()">Start Game</button>
+  </div>
+  <div id="gng-game" class="hidden">
+    <div class="hud">
+      <div class="hud-item"><div class="hud-value" id="gng-trial">1</div><div class="hud-label">Trial</div></div>
+      <div class="hud-item"><div class="hud-value" id="gng-hits" style="color:var(--success)">0</div><div class="hud-label">Hits</div></div>
+      <div class="hud-item"><div class="hud-value" id="gng-fa" style="color:var(--danger)">0</div><div class="hud-label">False Alarms</div></div>
+      <div class="hud-item"><div class="hud-value" id="gng-rt" style="color:var(--warning)">—</div><div class="hud-label">Avg RT (ms)</div></div>
+    </div>
+    <div class="game-arena">
+      <p id="gng-countdown" class="text-muted" style="font-size:1.5rem"></p>
+      <div id="gng-stimulus" class="gonogo-blank gonogo-stimulus hidden"></div>
+      <div id="gng-msg" style="font-size:1.1rem;color:var(--text-muted);min-height:2rem;margin-top:0.5rem"></div>
+    </div>
+    <div style="text-align:center;margin-top:1.5rem">
+      <button class="btn btn-success btn-lg" onclick="gngRespond()">GO ⚡</button>
+      <p class="key-hint mt-1">or press <kbd>Space</kbd></p>
+    </div>
+  </div>
+  <div id="gng-results" class="hidden" style="text-align:center;padding:2rem">
+    <h2 style="font-size:1.8rem;margin-bottom:0.5rem">Task Complete!</h2>
+    <div class="score-display" id="gng-final">0%</div><p class="text-muted">Accuracy Score</p>
+    <div class="results-grid" style="max-width:600px;margin:1.5rem auto">
+      <div class="result-card"><div class="rc-value" id="gng-r-hits">0</div><div class="rc-label">Hits</div></div>
+      <div class="result-card"><div class="rc-value" id="gng-r-miss">0</div><div class="rc-label">Misses</div></div>
+      <div class="result-card"><div class="rc-value" id="gng-r-fa">0</div><div class="rc-label">False Alarms</div></div>
+      <div class="result-card"><div class="rc-value" id="gng-r-cr">0</div><div class="rc-label">Correct Rejections</div></div>
+      <div class="result-card"><div class="rc-value" id="gng-r-rt">0ms</div><div class="rc-label">Avg Reaction Time</div></div>
+      <div class="result-card"><div class="rc-value" id="gng-r-dp">0</div><div class="rc-label">d' Sensitivity</div></div>
+    </div>
+    <div class="notice" id="gng-desc" style="max-width:500px;margin:0 auto"></div>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button class="btn btn-outline" onclick="gngReset()">Play Again</button>
+      <a href="#home" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- DIGIT SPAN PAGE -->
+<div id="page-digitspan" class="page" style="display:none">
+<div class="game-page">
+  <div class="game-header"><div class="game-header-icon" style="background:#45B7D1">🔢</div><div><h1>Digit Span</h1><p>Pymetrics — Working Memory Capacity</p></div></div>
+  <div class="game-meta"><div class="game-meta-item">🔢 Starts at <strong>3</strong>&nbsp;digits</div><div class="game-meta-item">📈 Increases each round</div><div class="game-meta-item">↩️ Forward &amp; Backward</div><div class="game-meta-item">❌ 2 failures = end</div></div>
+  <div id="ds-instructions" class="instructions">
+    <h2>📋 How It Works</h2>
+    <ul><li>Digits appear one at a time.</li><li><strong>Forward Span:</strong> Type in the same order.</li><li><strong>Backward Span:</strong> Type in reverse order.</li><li>2 failures at same length → switch mode or end.</li></ul>
+    <div class="notice" style="margin-top:1rem">💡 Chunking digits into pairs helps memory.</div>
+    <button class="btn btn-primary mt-2" onclick="dsStart()">Start Game</button>
+  </div>
+  <div id="ds-game" class="hidden">
+    <div class="hud">
+      <div class="hud-item"><div class="hud-value" id="ds-len">3</div><div class="hud-label">Span Length</div></div>
+      <div class="hud-item"><div class="hud-value" id="ds-mode" style="color:var(--accent2)">Forward</div><div class="hud-label">Mode</div></div>
+      <div class="hud-item"><div class="hud-value" id="ds-bf" style="color:var(--success)">—</div><div class="hud-label">Best Forward</div></div>
+      <div class="hud-item"><div class="hud-value" id="ds-bb" style="color:var(--warning)">—</div><div class="hud-label">Best Backward</div></div>
+    </div>
+    <div class="game-arena" id="ds-arena">
+      <p id="ds-phase-msg" style="font-size:1.1rem;color:var(--text-muted)">Get ready…</p>
+      <div id="ds-display" class="digit-display hidden">?</div>
+      <div id="ds-input-area" class="hidden" style="width:100%;max-width:480px">
+        <p id="ds-input-instr" style="margin-bottom:0.75rem;color:var(--text-muted);font-size:0.9rem"></p>
+        <div id="ds-boxes" class="digit-input-row"></div>
+        <button class="btn btn-primary mt-2" onclick="dsCheck()">Submit ↵</button>
+      </div>
+      <div id="ds-feedback" style="font-size:1.2rem;min-height:1.8rem;margin-top:0.5rem"></div>
+    </div>
+  </div>
+  <div id="ds-results" class="hidden" style="text-align:center;padding:2rem">
+    <h2 style="font-size:1.8rem;margin-bottom:0.5rem">Memory Test Complete!</h2>
+    <div class="results-grid" style="max-width:450px;margin:1.5rem auto">
+      <div class="result-card"><div class="rc-value" id="ds-r-fwd" style="color:var(--success)">0</div><div class="rc-label">Forward Span</div></div>
+      <div class="result-card"><div class="rc-value" id="ds-r-bwd" style="color:var(--warning)">0</div><div class="rc-label">Backward Span</div></div>
+      <div class="result-card"><div class="rc-value" id="ds-r-comb">0</div><div class="rc-label">Combined</div></div>
+      <div class="result-card"><div class="rc-value" id="ds-r-pct">—</div><div class="rc-label">Percentile (est.)</div></div>
+    </div>
+    <div class="notice" id="ds-desc" style="max-width:500px;margin:0 auto"></div>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button class="btn btn-outline" onclick="dsReset()">Play Again</button>
+      <a href="#home" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- NBACK PAGE -->
+<div id="page-nback" class="page" style="display:none">
+<div class="game-page">
+  <div class="game-header"><div class="game-header-icon" style="background:#96CEB4">🧠</div><div><h1>N-Back Task</h1><p>Pymetrics — Fluid Intelligence &amp; Working Memory</p></div></div>
+  <div class="game-meta"><div class="game-meta-item">🔤 Letters</div><div class="game-meta-item">🔢 Starts <strong>1-Back</strong></div><div class="game-meta-item">🎯 <strong>30</strong>&nbsp;trials per level</div><div class="game-meta-item">📈 Adaptive</div></div>
+  <div id="nb-instructions" class="instructions">
+    <h2>📋 How It Works</h2>
+    <ul><li>Letters appear one at a time.</li><li>Press <kbd>Space</kbd> when the current letter <strong>matches the one N steps back</strong>.</li><li>Score ≥75% to advance to N+1-Back.</li></ul>
+    <div class="notice" style="margin-top:1rem">💡 Mentally say each letter aloud and drop the oldest one each step.</div>
+    <div style="margin-top:1rem;display:flex;gap:0.75rem;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="nbStart(1)">Start 1-Back</button>
+      <button class="btn btn-outline" onclick="nbStart(2)">2-Back</button>
+      <button class="btn btn-outline" onclick="nbStart(3)">3-Back (Hard)</button>
+    </div>
+  </div>
+  <div id="nb-game" class="hidden">
+    <div class="hud">
+      <div class="hud-item"><div class="hud-value" id="nb-level" style="color:var(--accent2)">1-Back</div><div class="hud-label">Level</div></div>
+      <div class="hud-item"><div class="hud-value" id="nb-trial">1</div><div class="hud-label">Trial</div></div>
+      <div class="hud-item"><div class="hud-value" id="nb-correct" style="color:var(--success)">0</div><div class="hud-label">Correct</div></div>
+      <div class="hud-item"><div class="hud-value" id="nb-acc">—</div><div class="hud-label">Accuracy</div></div>
+    </div>
+    <div class="game-arena">
+      <p id="nb-wait" style="font-size:1rem;color:var(--text-muted)">Get ready…</p>
+      <div id="nb-letter" class="nback-letter hidden">A</div>
+      <div id="nb-fb" style="min-height:1.5rem;font-size:1rem;margin-top:0.5rem"></div>
+    </div>
+    <div style="text-align:center;margin-top:1.5rem">
+      <button class="btn btn-primary btn-lg" onclick="nbMatch()">MATCH ✓</button>
+      <p class="key-hint mt-1">Press <kbd>Space</kbd> if current letter matches <span id="nb-nlabel">1</span> step(s) back</p>
+    </div>
+  </div>
+  <div id="nb-levelend" class="hidden" style="text-align:center;padding:2rem">
+    <h2 id="nb-lc-title" style="font-size:1.8rem"></h2>
+    <div class="score-display" id="nb-lc-score"></div>
+    <p id="nb-lc-msg" class="text-muted mt-1"></p>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button id="nb-lc-btn" class="btn btn-primary">Next Level →</button>
+      <a href="#home" class="btn btn-outline">Back to Home</a>
+    </div>
+  </div>
+  <div id="nb-results" class="hidden" style="text-align:center;padding:2rem">
+    <h2 style="font-size:1.8rem;margin-bottom:0.5rem">N-Back Complete!</h2>
+    <div class="score-display" id="nb-final-level">1-Back</div><p class="text-muted">Highest Level</p>
+    <div class="results-grid" style="max-width:500px;margin:1.5rem auto">
+      <div class="result-card"><div class="rc-value" id="nb-r-best">1</div><div class="rc-label">Best N-Level</div></div>
+      <div class="result-card"><div class="rc-value" id="nb-r-acc">0%</div><div class="rc-label">Overall Accuracy</div></div>
+    </div>
+    <div class="notice" id="nb-desc" style="max-width:500px;margin:0 auto"></div>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button class="btn btn-outline" onclick="nbReset()">Play Again</button>
+      <a href="#home" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ATTENTION PAGE -->
+<div id="page-attention" class="page" style="display:none">
+<div class="game-page">
+  <div class="game-header"><div class="game-header-icon" style="background:#FFEAA7">👁️</div><div><h1>Attention &amp; Focus</h1><p>Pymetrics — Sustained Attention &amp; Reaction Time</p></div></div>
+  <div class="game-meta"><div class="game-meta-item">🎯 <strong>40</strong>&nbsp;targets</div><div class="game-meta-item">⚡ Reaction time measured</div><div class="game-meta-item">🔵 Click the <strong>★ star</strong></div></div>
+  <div id="att-instructions" class="instructions">
+    <h2>📋 How It Works</h2>
+    <ul><li>A 5×5 grid of symbols appears. One cell contains a <strong>★ star</strong>.</li><li><strong>Click the star as fast as possible.</strong></li><li>40 rounds total. Reaction time and accuracy are tracked.</li></ul>
+    <div class="notice" style="margin-top:1rem">💡 Scan row by row from top-left to build a consistent pattern.</div>
+    <button class="btn btn-primary mt-2" onclick="attStart()">Start Game</button>
+  </div>
+  <div id="att-game" class="hidden">
+    <div class="hud">
+      <div class="hud-item"><div class="hud-value" id="att-round">1</div><div class="hud-label">Round</div></div>
+      <div class="hud-item"><div class="hud-value" id="att-hits" style="color:var(--success)">0</div><div class="hud-label">Correct</div></div>
+      <div class="hud-item"><div class="hud-value" id="att-errors" style="color:var(--danger)">0</div><div class="hud-label">Errors</div></div>
+      <div class="hud-item"><div class="hud-value" id="att-rt" style="color:var(--warning)">—</div><div class="hud-label">Last RT</div></div>
+    </div>
+    <div class="game-arena" id="att-arena" style="padding:1.5rem">
+      <p id="att-ready" style="color:var(--text-muted);font-size:1.1rem">Loading…</p>
+      <div id="att-grid" class="attention-grid hidden"></div>
+      <p style="font-size:0.85rem;color:var(--text-muted);margin-top:0.75rem">Click the ★ star</p>
+    </div>
+  </div>
+  <div id="att-results" class="hidden" style="text-align:center;padding:2rem">
+    <h2 style="font-size:1.8rem;margin-bottom:0.5rem">Complete!</h2>
+    <div class="score-display" id="att-final-rt">0ms</div><p class="text-muted">Average Reaction Time</p>
+    <div class="results-grid" style="max-width:550px;margin:1.5rem auto">
+      <div class="result-card"><div class="rc-value" id="att-r-hits">0</div><div class="rc-label">Correct Hits</div></div>
+      <div class="result-card"><div class="rc-value" id="att-r-errors">0</div><div class="rc-label">Errors</div></div>
+      <div class="result-card"><div class="rc-value" id="att-r-best">0ms</div><div class="rc-label">Best RT</div></div>
+      <div class="result-card"><div class="rc-value" id="att-r-acc">0%</div><div class="rc-label">Accuracy</div></div>
+    </div>
+    <div class="notice" id="att-desc" style="max-width:500px;margin:0 auto"></div>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button class="btn btn-outline" onclick="attReset()">Play Again</button>
+      <a href="#home" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- NUMERICAL PAGE -->
+<div id="page-numerical" class="page" style="display:none">
+<div class="game-page">
+  <div class="game-header"><div class="game-header-icon" style="background:#6C5CE7">📊</div><div><h1>Numerical Reasoning</h1><p>SHL Style — Data Interpretation &amp; Calculation</p></div></div>
+  <div class="game-meta"><div class="game-meta-item">📋 <strong>12</strong>&nbsp;questions</div><div class="game-meta-item">⏱️ <strong>20 min</strong></div><div class="game-meta-item">📊 Tables &amp; percentages</div></div>
+  <div id="num-instructions" class="instructions">
+    <h2>📋 Instructions</h2>
+    <ul><li>Read each table carefully, then answer the question.</li><li>You may use a <strong>calculator</strong> — this tests interpretation, not mental arithmetic.</li><li><strong>20 minutes</strong> for 12 questions.</li></ul>
+    <div class="notice" style="margin-top:1rem">💡 Read the question before the table — know what you're looking for first.</div>
+    <button class="btn btn-primary mt-2" onclick="numStart()">Start Test (20 min timer)</button>
+  </div>
+  <div id="num-game" class="hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <div class="progress-bar-wrap" style="flex:1;margin-right:1rem;margin-bottom:0"><div class="progress-bar-fill" id="num-progress" style="width:0%"></div></div>
+      <div class="timer" id="num-timer">20:00</div>
+    </div>
+    <div id="num-question-area"></div>
+    <div class="question-nav">
+      <button id="num-prev" class="btn btn-outline btn-sm" onclick="numNav(-1)">← Previous</button>
+      <span id="num-counter" class="text-muted" style="font-size:0.85rem"></span>
+      <button id="num-next" class="btn btn-primary btn-sm" onclick="numNav(1)">Next →</button>
+    </div>
+    <div style="text-align:center;margin-top:1.5rem"><button class="btn btn-success" onclick="numSubmit()">Submit Test</button></div>
+  </div>
+  <div id="num-results" class="hidden" style="text-align:center;padding:2rem">
+    <h2 style="font-size:1.8rem;margin-bottom:0.5rem">Test Complete!</h2>
+    <div class="score-display" id="num-final"></div><p class="text-muted">Correct Answers</p>
+    <div id="num-review" style="max-width:700px;margin:1.5rem auto;text-align:left"></div>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button class="btn btn-outline" onclick="numReset()">Retake</button>
+      <a href="#home" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- VERBAL PAGE -->
+<div id="page-verbal" class="page" style="display:none">
+<div class="game-page">
+  <div class="game-header"><div class="game-header-icon" style="background:#A29BFE">📝</div><div><h1>Verbal Reasoning</h1><p>SHL Style — Critical Reading &amp; Comprehension</p></div></div>
+  <div class="game-meta"><div class="game-meta-item">📋 <strong>12</strong>&nbsp;questions</div><div class="game-meta-item">⏱️ <strong>17 min</strong></div><div class="game-meta-item">✅ True / False / Cannot Say</div></div>
+  <div id="ver-instructions" class="instructions">
+    <h2>📋 Instructions</h2>
+    <ul><li><strong>True</strong> — statement follows logically from the passage.</li><li><strong>False</strong> — statement contradicts the passage.</li><li><strong>Cannot Say</strong> — cannot determine from the passage alone.</li><li>Base your answer <em>only</em> on the text.</li></ul>
+    <div class="notice" style="margin-top:1rem">💡 "Cannot Say" is very common. If the passage neither confirms nor denies, Cannot Say is correct.</div>
+    <button class="btn btn-primary mt-2" onclick="verStart()">Start Test (17 min timer)</button>
+  </div>
+  <div id="ver-game" class="hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <div class="progress-bar-wrap" style="flex:1;margin-right:1rem;margin-bottom:0"><div class="progress-bar-fill" id="ver-progress" style="width:0%"></div></div>
+      <div class="timer" id="ver-timer">17:00</div>
+    </div>
+    <div id="ver-question-area"></div>
+    <div class="question-nav">
+      <button id="ver-prev" class="btn btn-outline btn-sm" onclick="verNav(-1)">← Previous</button>
+      <span id="ver-counter" class="text-muted" style="font-size:0.85rem"></span>
+      <button id="ver-next" class="btn btn-primary btn-sm" onclick="verNav(1)">Next →</button>
+    </div>
+    <div style="text-align:center;margin-top:1.5rem"><button class="btn btn-success" onclick="verSubmit()">Submit Test</button></div>
+  </div>
+  <div id="ver-results" class="hidden" style="text-align:center;padding:2rem">
+    <h2 style="font-size:1.8rem;margin-bottom:0.5rem">Test Complete!</h2>
+    <div class="score-display" id="ver-final"></div><p class="text-muted">Correct Answers</p>
+    <div id="ver-review" style="max-width:700px;margin:1.5rem auto;text-align:left"></div>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button class="btn btn-outline" onclick="verReset()">Retake</button>
+      <a href="#home" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- INDUCTIVE PAGE -->
+<div id="page-inductive" class="page" style="display:none">
+<div class="game-page">
+  <div class="game-header"><div class="game-header-icon" style="background:#FD79A8">🔷</div><div><h1>Inductive Reasoning</h1><p>SHL / Cappfinity — Pattern Recognition &amp; Abstract Logic</p></div></div>
+  <div class="game-meta"><div class="game-meta-item">🔷 <strong>15</strong>&nbsp;questions</div><div class="game-meta-item">⏱️ <strong>25 min</strong></div><div class="game-meta-item">🧩 Shape sequences &amp; matrices</div></div>
+  <div id="ind-instructions" class="instructions">
+    <h2>📋 Instructions</h2>
+    <ul><li>Each question shows a sequence or matrix of shapes.</li><li>Find the <strong>rule</strong> and identify the missing piece.</li><li>Rules may involve: rotation, colour, count, position, or combinations.</li></ul>
+    <div class="notice" style="margin-top:1rem">💡 Check each dimension separately — shape, size, shade, position.</div>
+    <button class="btn btn-primary mt-2" onclick="indStart()">Start Test (25 min timer)</button>
+  </div>
+  <div id="ind-game" class="hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <div class="progress-bar-wrap" style="flex:1;margin-right:1rem;margin-bottom:0"><div class="progress-bar-fill" id="ind-progress" style="width:0%"></div></div>
+      <div class="timer" id="ind-timer">25:00</div>
+    </div>
+    <div id="ind-question-area"></div>
+    <div class="question-nav">
+      <button id="ind-prev" class="btn btn-outline btn-sm" onclick="indNav(-1)">← Previous</button>
+      <span id="ind-counter" class="text-muted" style="font-size:0.85rem"></span>
+      <button id="ind-next" class="btn btn-primary btn-sm" onclick="indNav(1)">Next →</button>
+    </div>
+    <div style="text-align:center;margin-top:1.5rem"><button class="btn btn-success" onclick="indSubmit()">Submit Test</button></div>
+  </div>
+  <div id="ind-results" class="hidden" style="text-align:center;padding:2rem">
+    <h2 style="font-size:1.8rem;margin-bottom:0.5rem">Test Complete!</h2>
+    <div class="score-display" id="ind-final"></div><p class="text-muted">Correct Answers</p>
+    <div id="ind-review" style="max-width:700px;margin:1.5rem auto;text-align:left"></div>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button class="btn btn-outline" onclick="indReset()">Retake</button>
+      <a href="#home" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- SJT PAGE -->
+<div id="page-sjt" class="page" style="display:none">
+<div class="game-page">
+  <div class="game-header"><div class="game-header-icon" style="background:#00B894">💼</div><div><h1>Situational Judgment Test</h1><p>Cappfinity — Professional Judgment &amp; Workplace Values</p></div></div>
+  <div class="game-meta"><div class="game-meta-item">📋 <strong>10</strong>&nbsp;scenarios</div><div class="game-meta-item">⏱️ <strong>30 min</strong></div><div class="game-meta-item">🎯 Best &amp; Worst response</div></div>
+  <div id="sjt-instructions" class="instructions">
+    <h2>📋 Instructions</h2>
+    <ul><li>Read each workplace scenario.</li><li>Select the <strong>Most Effective</strong> and <strong>Least Effective</strong> response.</li><li>Consider what a competent professional would do.</li></ul>
+    <div class="notice" style="margin-top:1rem">💡 Avoid extremes — neither passive nor confrontational approaches score well.</div>
+    <button class="btn btn-primary mt-2" onclick="sjtStart()">Start Test (30 min timer)</button>
+  </div>
+  <div id="sjt-game" class="hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <div class="progress-bar-wrap" style="flex:1;margin-right:1rem;margin-bottom:0"><div class="progress-bar-fill" id="sjt-progress" style="width:0%"></div></div>
+      <div class="timer" id="sjt-timer">30:00</div>
+    </div>
+    <div id="sjt-question-area"></div>
+    <div class="question-nav">
+      <button id="sjt-prev" class="btn btn-outline btn-sm" onclick="sjtNav(-1)">← Previous</button>
+      <span id="sjt-counter" class="text-muted" style="font-size:0.85rem"></span>
+      <button id="sjt-next" class="btn btn-primary btn-sm" onclick="sjtNav(1)">Next →</button>
+    </div>
+    <div style="text-align:center;margin-top:1.5rem"><button class="btn btn-success" onclick="sjtSubmit()">Submit Test</button></div>
+  </div>
+  <div id="sjt-results" class="hidden" style="text-align:center;padding:2rem">
+    <h2 style="font-size:1.8rem;margin-bottom:0.5rem">SJT Complete!</h2>
+    <div class="score-display" id="sjt-final"></div><p class="text-muted">Score (2 pts per scenario)</p>
+    <div id="sjt-review" style="max-width:700px;margin:1.5rem auto;text-align:left"></div>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button class="btn btn-outline" onclick="sjtReset()">Retake</button>
+      <a href="#home" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</div>
+</div>
+
+<footer class="footer"><p>AssessSim — Practice tool for internship assessment games. Not affiliated with Pymetrics, SHL, or Cappfinity.</p></footer>
+
+<script>
+// ===== ROUTER =====
+function router(){
+  var hash=location.hash.slice(1)||'home';
+  document.querySelectorAll('.page').forEach(function(p){p.style.display='none';});
+  var page=document.getElementById('page-'+hash);
+  if(page)page.style.display='';
+  else document.getElementById('page-home').style.display='';
+  window.scrollTo(0,0);
+}
+window.addEventListener('hashchange',router);
+window.addEventListener('load',router);
+
+// ===== BART =====
+var bartBalloonNum,bartPumps,bartCurrentEarn,bartTotalEarned,bartPops,bartCollects,bartAllPumps,bartGameRunning;
+function bartReset(){
+  bartBalloonNum=0;bartPumps=0;bartCurrentEarn=0;bartTotalEarned=0;bartPops=0;bartCollects=0;bartAllPumps=[];bartGameRunning=false;
+  document.getElementById('bart-instructions').classList.remove('hidden');
+  document.getElementById('bart-game').classList.add('hidden');
+  document.getElementById('bart-results').classList.add('hidden');
+}
+function bartStart(){
+  document.getElementById('bart-instructions').classList.add('hidden');
+  document.getElementById('bart-game').classList.remove('hidden');
+  bartGameRunning=true;
+  bartNextBalloon();
+}
+function bartNextBalloon(){
+  bartBalloonNum++;
+  if(bartBalloonNum>20){bartEndGame();return;}
+  bartPumps=0;bartCurrentEarn=0;
+  bartUpdateHUD();bartResetBalloon();
+  document.getElementById('bart-btn-pump').disabled=false;
+  document.getElementById('bart-btn-collect').disabled=false;
+}
+function bartResetBalloon(){
+  document.getElementById('bart-arena').innerHTML='<div class="balloon-container"><div id="bart-balloon" class="balloon" style="width:80px;height:80px"></div></div>';
+}
+function bartUpdateHUD(){
+  document.getElementById('bart-balloon-num').textContent=Math.min(bartBalloonNum,20);
+  document.getElementById('bart-pumps').textContent=bartPumps;
+  document.getElementById('bart-cur-earn').textContent='$'+bartCurrentEarn.toFixed(2);
+  document.getElementById('bart-total-earn').textContent='$'+bartTotalEarned.toFixed(2);
+}
+function bartUpdateSize(){
+  var b=document.getElementById('bart-balloon');if(!b)return;
+  var size=Math.min(80+bartPumps*8,280);
+  b.style.width=size+'px';b.style.height=size+'px';
+  var r=Math.min(255,180+bartPumps*3),g=Math.max(30,107-bartPumps*4);
+  b.style.background='radial-gradient(circle at 35% 35%,rgba(255,255,255,0.4),transparent 60%),linear-gradient(135deg,rgb('+r+','+g+',80),rgb('+(r-20)+','+(g-20)+',40))';
+}
+function bartPump(){
+  if(!bartGameRunning)return;
+  if(Math.random()<1-Math.pow(0.95,bartPumps+1)){bartPopBalloon();}
+  else{bartPumps++;bartCurrentEarn=bartPumps*0.05;bartUpdateHUD();bartUpdateSize();}
+}
+function bartPopBalloon(){
+  bartAllPumps.push(bartPumps);bartPops++;
+  document.getElementById('bart-btn-pump').disabled=true;
+  document.getElementById('bart-btn-collect').disabled=true;
+  document.getElementById('bart-arena').innerHTML='<div class="balloon-pop">💥</div>';
+  bartShowFeedback('💥');
+  setTimeout(function(){bartPumps=0;bartCurrentEarn=0;bartUpdateHUD();if(bartBalloonNum<20)bartNextBalloon();else bartEndGame();},1200);
+}
+function bartCollect(){
+  if(!bartGameRunning||bartPumps===0)return;
+  bartAllPumps.push(bartPumps);bartCollects++;bartTotalEarned+=bartCurrentEarn;
+  bartShowFeedback('✅');bartUpdateHUD();
+  document.getElementById('bart-btn-pump').disabled=true;
+  document.getElementById('bart-btn-collect').disabled=true;
+  setTimeout(function(){if(bartBalloonNum<20)bartNextBalloon();else bartEndGame();},600);
+}
+function bartShowFeedback(e){var el=document.createElement('div');el.className='feedback-overlay';el.textContent=e;document.body.appendChild(el);setTimeout(function(){el.remove();},700);}
+function bartEndGame(){
+  bartGameRunning=false;
+  document.getElementById('bart-game').classList.add('hidden');
+  document.getElementById('bart-results').classList.remove('hidden');
+  var avg=bartAllPumps.length?(bartAllPumps.reduce(function(a,b){return a+b;},0)/bartAllPumps.length).toFixed(1):0;
+  document.getElementById('bart-final-total').textContent='$'+bartTotalEarned.toFixed(2);
+  document.getElementById('bart-r-avg').textContent=avg;
+  document.getElementById('bart-r-pops').textContent=bartPops;
+  document.getElementById('bart-r-collects').textContent=bartCollects;
+  var p,d;
+  if(avg<5){p='Risk-Averse';d='You tend to be very cautious and prefer certainty over potential gain.';}
+  else if(avg<12){p='Balanced';d='You show a healthy balance between caution and risk-taking — valued across most roles.';}
+  else if(avg<20){p='Risk-Tolerant';d='You are comfortable with risk and pursue higher rewards — valued in trading and consulting.';}
+  else{p='High-Risk Taker';d='You pump aggressively, suggesting a very high risk appetite.';}
+  document.getElementById('bart-r-profile').textContent=p;
+  document.getElementById('bart-profile-desc').textContent='🧠 '+d;
+}
+document.addEventListener('keydown',function(e){
+  if(location.hash==='#bart'){
+    if(e.code==='Space'){e.preventDefault();bartPump();}
+    if(e.code==='Enter'){e.preventDefault();bartCollect();}
+  }
+});
+
+// ===== GO/NO-GO =====
+var gngTrials,gngTrialIdx,gngIsGo,gngStimActive,gngStimStart,gngStimTimer,gngItiTimer;
+var gngHits,gngMisses,gngFalseAlarms,gngCR,gngRTs,gngResponded;
+function gngReset(){
+  gngTrialIdx=0;gngHits=0;gngMisses=0;gngFalseAlarms=0;gngCR=0;gngRTs=[];gngResponded=false;gngStimActive=false;
+  clearTimeout(gngStimTimer);clearTimeout(gngItiTimer);
+  document.getElementById('gng-instructions').classList.remove('hidden');
+  document.getElementById('gng-game').classList.add('hidden');
+  document.getElementById('gng-results').classList.add('hidden');
+}
+function gngStart(){
+  gngTrials=[];
+  for(var i=0;i<100;i++)gngTrials.push(Math.random()<0.7);
+  for(var i=gngTrials.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=gngTrials[i];gngTrials[i]=gngTrials[j];gngTrials[j]=t;}
+  gngHits=0;gngMisses=0;gngFalseAlarms=0;gngCR=0;gngRTs=[];gngTrialIdx=0;
+  document.getElementById('gng-instructions').classList.add('hidden');
+  document.getElementById('gng-game').classList.remove('hidden');
+  var cnt=3,msg=document.getElementById('gng-countdown');
+  msg.textContent=cnt;
+  var iv=setInterval(function(){cnt--;if(cnt<=0){clearInterval(iv);msg.textContent='';gngNextTrial();}else msg.textContent=cnt;},800);
+}
+function gngNextTrial(){
+  if(gngTrialIdx>=100){gngEndGame();return;}
+  document.getElementById('gng-trial').textContent=gngTrialIdx+1;
+  gngResponded=false;gngIsGo=gngTrials[gngTrialIdx];gngTrialIdx++;
+  gngItiTimer=setTimeout(gngShowStim,800+Math.random()*800);
+}
+function gngShowStim(){
+  var el=document.getElementById('gng-stimulus');
+  el.className=gngIsGo?'gonogo-go gonogo-stimulus':'gonogo-nogo gonogo-stimulus';
+  el.textContent='●';el.classList.remove('hidden');
+  gngStimActive=true;gngStimStart=performance.now();
+  document.getElementById('gng-msg').textContent='';
+  gngStimTimer=setTimeout(function(){
+    el.classList.add('hidden');gngStimActive=false;
+    if(!gngResponded){if(gngIsGo){gngMisses++;gngShowMsg('Miss ✗','var(--danger)');}else{gngCR++;}}
+    gngUpdateHUD();gngNextTrial();
+  },600);
+}
+function gngRespond(){
+  if(gngResponded||!gngStimActive)return;
+  gngResponded=true;clearTimeout(gngStimTimer);
+  document.getElementById('gng-stimulus').classList.add('hidden');gngStimActive=false;
+  var rt=Math.round(performance.now()-gngStimStart);
+  if(gngIsGo){gngHits++;gngRTs.push(rt);gngShowMsg('Hit! '+rt+'ms','var(--success)');}
+  else{gngFalseAlarms++;gngShowMsg('False Alarm ✗','var(--danger)');}
+  gngUpdateHUD();gngNextTrial();
+}
+function gngShowMsg(m,c){var el=document.getElementById('gng-msg');el.textContent=m;el.style.color=c;}
+function gngUpdateHUD(){
+  document.getElementById('gng-hits').textContent=gngHits;
+  document.getElementById('gng-fa').textContent=gngFalseAlarms;
+  var avg=gngRTs.length?Math.round(gngRTs.reduce(function(a,b){return a+b;},0)/gngRTs.length):'—';
+  document.getElementById('gng-rt').textContent=avg+(gngRTs.length?'ms':'');
+}
+function gngEndGame(){
+  document.getElementById('gng-game').classList.add('hidden');
+  document.getElementById('gng-results').classList.remove('hidden');
+  var totalGo=gngTrials.filter(function(t){return t;}).length,totalNoGo=100-totalGo;
+  var acc=Math.round(((gngHits+gngCR)/100)*100);
+  document.getElementById('gng-final').textContent=acc+'%';
+  document.getElementById('gng-r-hits').textContent=gngHits;
+  document.getElementById('gng-r-miss').textContent=gngMisses;
+  document.getElementById('gng-r-fa').textContent=gngFalseAlarms;
+  document.getElementById('gng-r-cr').textContent=gngCR;
+  var avgRT=gngRTs.length?Math.round(gngRTs.reduce(function(a,b){return a+b;},0)/gngRTs.length):0;
+  document.getElementById('gng-r-rt').textContent=avgRT+'ms';
+  var hr=Math.max(0.01,Math.min(0.99,gngHits/Math.max(totalGo,1)));
+  var far=Math.max(0.01,Math.min(0.99,gngFalseAlarms/Math.max(totalNoGo,1)));
+  document.getElementById('gng-r-dp').textContent=(gngProbit(hr)-gngProbit(far)).toFixed(2);
+  var desc=gngFalseAlarms>15?'High impulsivity — you responded frequently to No-Go signals. Practice checking before pressing.':gngMisses>20?'You missed many Go signals. Try to stay alert throughout.':acc>=90?'Excellent impulse control. You respond accurately and consistently.':'Good performance. Continue practising speed and accuracy together.';
+  document.getElementById('gng-desc').textContent='🧠 '+desc;
+}
+function gngProbit(p){
+  var a=[-39.6968,220.946,-275.929,138.358,-30.6648,2.50663];
+  var b=[-54.4761,161.586,-155.699,66.8013,-13.2808];
+  var c=[-0.00778,-0.32240,-2.40076,-2.54973,4.37466,2.93816];
+  var d=[0.00778,0.32247,2.44514,3.75408];
+  var plow=0.02425,phigh=1-plow,q,r;
+  if(p<plow){q=Math.sqrt(-2*Math.log(p));return(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
+  else if(p<=phigh){q=p-0.5;r=q*q;return(((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);}
+  else{q=Math.sqrt(-2*Math.log(1-p));return-(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
+}
+document.addEventListener('keydown',function(e){if(location.hash==='#gonogo'&&e.code==='Space'){e.preventDefault();gngRespond();}});
+
+// ===== DIGIT SPAN =====
+var dsSpanLen,dsMode,dsFailures,dsSequence,dsInputBoxes,dsBestFwd,dsBestBwd,dsPhase;
+function dsReset(){
+  dsSpanLen=3;dsMode='forward';dsFailures=0;dsBestFwd=0;dsBestBwd=0;dsPhase='idle';
+  document.getElementById('ds-instructions').classList.remove('hidden');
+  document.getElementById('ds-game').classList.add('hidden');
+  document.getElementById('ds-results').classList.add('hidden');
+}
+function dsStart(){
+  dsSpanLen=3;dsMode='forward';dsFailures=0;dsBestFwd=0;dsBestBwd=0;
+  document.getElementById('ds-instructions').classList.add('hidden');
+  document.getElementById('ds-game').classList.remove('hidden');
+  dsUpdateHUD();dsShowSequence();
+}
+function dsUpdateHUD(){
+  document.getElementById('ds-len').textContent=dsSpanLen;
+  document.getElementById('ds-mode').textContent=dsMode==='forward'?'Forward ↦':'Backward ↤';
+  document.getElementById('ds-bf').textContent=dsBestFwd||'—';
+  document.getElementById('ds-bb').textContent=dsBestBwd||'—';
+}
+function dsShowSequence(){
+  dsPhase='showing';
+  dsSequence=Array.from({length:dsSpanLen},function(){return Math.floor(Math.random()*10);});
+  document.getElementById('ds-input-area').classList.add('hidden');
+  document.getElementById('ds-feedback').textContent='';
+  document.getElementById('ds-phase-msg').textContent='Watch the digits…';
+  var disp=document.getElementById('ds-display');disp.classList.remove('hidden');disp.textContent='';
+  var i=0;
+  function showNext(){
+    if(i<dsSequence.length){disp.textContent=dsSequence[i];i++;setTimeout(function(){disp.textContent='';setTimeout(showNext,300);},900);}
+    else{disp.classList.add('hidden');dsShowInput();}
+  }
+  setTimeout(showNext,600);
+}
+function dsShowInput(){
+  dsPhase='input';
+  document.getElementById('ds-phase-msg').textContent='';
+  var ia=document.getElementById('ds-input-area');ia.classList.remove('hidden');
+  document.getElementById('ds-input-instr').textContent=dsMode==='forward'?'Type the '+dsSpanLen+' digits in the order you saw them:':'Type the '+dsSpanLen+' digits in REVERSE order:';
+  var boxes=document.getElementById('ds-boxes');boxes.innerHTML='';dsInputBoxes=[];
+  for(var i=0;i<dsSpanLen;i++){
+    var inp=document.createElement('input');inp.type='text';inp.maxLength=1;inp.className='digit-input-box';inp.inputMode='numeric';
+    (function(idx){
+      inp.addEventListener('input',function(){inp.value=inp.value.replace(/\D/g,'').slice(-1);if(inp.value&&idx<dsInputBoxes.length-1)dsInputBoxes[idx+1].focus();});
+      inp.addEventListener('keydown',function(e){if(e.key==='Backspace'&&!inp.value&&idx>0)dsInputBoxes[idx-1].focus();if(e.key==='Enter')dsCheck();});
+    })(i);
+    boxes.appendChild(inp);dsInputBoxes.push(inp);
+  }
+  dsInputBoxes[0].focus();
+}
+function dsCheck(){
+  if(dsPhase!=='input')return;
+  var answer=dsInputBoxes.map(function(b){return b.value;});
+  if(answer.some(function(v){return v==='';})){
+    var fb=document.getElementById('ds-feedback');fb.textContent='⚠️ Fill all boxes.';fb.style.color='var(--warning)';return;
+  }
+  var expected=dsMode==='forward'?dsSequence.map(String):dsSequence.map(String).reverse();
+  var correct=answer.every(function(v,i){return v===expected[i];});
+  var fb=document.getElementById('ds-feedback');
+  if(correct){
+    fb.textContent='✅ Correct!';fb.style.color='var(--success)';
+    if(dsMode==='forward')dsBestFwd=Math.max(dsBestFwd,dsSpanLen);else dsBestBwd=Math.max(dsBestBwd,dsSpanLen);
+    dsFailures=0;dsSpanLen++;dsUpdateHUD();
+    setTimeout(function(){document.getElementById('ds-input-area').classList.add('hidden');dsShowSequence();},900);
+  }else{
+    fb.textContent='✗ Incorrect. Expected: '+expected.join(' ');fb.style.color='var(--danger)';dsFailures++;
+    if(dsFailures>=2){
+      if(dsMode==='forward'){dsMode='backward';dsSpanLen=3;dsFailures=0;setTimeout(function(){document.getElementById('ds-input-area').classList.add('hidden');fb.textContent='';dsShowSequence();},1500);}
+      else{setTimeout(dsEndGame,1200);}
+    }else{setTimeout(function(){document.getElementById('ds-input-area').classList.add('hidden');dsShowSequence();},1500);}
+  }
+}
+function dsEndGame(){
+  document.getElementById('ds-game').classList.add('hidden');
+  document.getElementById('ds-results').classList.remove('hidden');
+  document.getElementById('ds-r-fwd').textContent=dsBestFwd;
+  document.getElementById('ds-r-bwd').textContent=dsBestBwd;
+  var comb=dsBestFwd+dsBestBwd;document.getElementById('ds-r-comb').textContent=comb;
+  var pct=comb>=18?'99th':comb>=15?'~90th':comb>=12?'~75th':comb>=10?'~50th':comb>=8?'~25th':'<25th';
+  document.getElementById('ds-r-pct').textContent=pct;
+  var desc=dsBestFwd>=8?'Outstanding working memory! You exceed average adult span significantly.':dsBestFwd>=6?'Your working memory is within the normal range. Practice can push your span higher.':'Working memory can be improved. Try chunking and repeat this test daily.';
+  document.getElementById('ds-desc').textContent='🧠 '+desc;
+}
+</script>
+<script>
+// ===== N-BACK =====
+var nbN,nbHistory,nbTrials,nbTrialIdx,nbCorrect,nbTotal,nbAllCorrect,nbAllTotal,nbBestN,nbResponded,nbStimTimer,nbCurrentIsMatch;
+function nbReset(){
+  clearTimeout(nbStimTimer);
+  document.getElementById('nb-instructions').classList.remove('hidden');
+  document.getElementById('nb-game').classList.add('hidden');
+  document.getElementById('nb-levelend').classList.add('hidden');
+  document.getElementById('nb-results').classList.add('hidden');
+}
+function nbStart(level){
+  nbN=level;nbAllCorrect=0;nbAllTotal=0;nbBestN=level;
+  document.getElementById('nb-instructions').classList.add('hidden');
+  document.getElementById('nb-levelend').classList.add('hidden');
+  document.getElementById('nb-game').classList.remove('hidden');
+  nbNewLevel();
+}
+function nbBuildTrials(n){
+  var LETTERS='BCDFGHJKLMNPQRSTVWXZ',seq=[];
+  for(var i=0;i<30;i++){
+    if(i>=n&&Math.random()<0.33){seq.push({letter:seq[i-n].letter,isMatch:true});}
+    else{var l;do{l=LETTERS[Math.floor(Math.random()*LETTERS.length)];}while(i>=n&&l===seq[i-n].letter);seq.push({letter:l,isMatch:false});}
+  }
+  return seq;
+}
+function nbNewLevel(){
+  nbTrials=nbBuildTrials(nbN);nbTrialIdx=0;nbCorrect=0;nbTotal=0;nbHistory=[];
+  document.getElementById('nb-level').textContent=nbN+'-Back';
+  document.getElementById('nb-nlabel').textContent=nbN;
+  document.getElementById('nb-trial').textContent=1;
+  document.getElementById('nb-correct').textContent=0;
+  document.getElementById('nb-acc').textContent='—';
+  document.getElementById('nb-wait').textContent='Starting…';
+  document.getElementById('nb-letter').classList.add('hidden');
+  setTimeout(nbRunTrial,800);
+}
+function nbRunTrial(){
+  if(nbTrialIdx>=30){nbLevelEnd();return;}
+  var t=nbTrials[nbTrialIdx];nbCurrentIsMatch=t.isMatch;nbResponded=false;
+  document.getElementById('nb-trial').textContent=nbTrialIdx+1;
+  document.getElementById('nb-wait').textContent='';
+  document.getElementById('nb-fb').textContent='';
+  var el=document.getElementById('nb-letter');
+  el.textContent=t.letter;el.className='nback-letter';el.classList.remove('hidden');
+  nbStimTimer=setTimeout(function(){
+    el.classList.add('hidden');
+    if(!nbResponded){if(nbCurrentIsMatch){nbRecord(false,'miss');}else{nbRecord(true,'cr');}}
+    nbTrialIdx++;setTimeout(nbRunTrial,500);
+  },500);
+}
+function nbMatch(){
+  if(nbResponded)return;nbResponded=true;
+  if(nbCurrentIsMatch){document.getElementById('nb-letter').classList.add('nback-match');nbRecord(true,'hit');}
+  else{nbRecord(false,'fa');}
+}
+function nbRecord(ok,type){
+  if(ok)nbCorrect++;nbTotal++;nbAllTotal++;if(ok)nbAllCorrect++;
+  var fb=document.getElementById('nb-fb');
+  if(type==='hit'){fb.textContent='✅ Match!';fb.style.color='var(--success)';}
+  else if(type==='cr'){fb.textContent='';}
+  else if(type==='fa'){fb.textContent='✗ False alarm';fb.style.color='var(--danger)';}
+  else{fb.textContent='✗ Missed';fb.style.color='var(--danger)';}
+  document.getElementById('nb-correct').textContent=nbCorrect;
+  document.getElementById('nb-acc').textContent=Math.round((nbCorrect/nbTotal)*100)+'%';
+}
+function nbLevelEnd(){
+  document.getElementById('nb-game').classList.add('hidden');
+  document.getElementById('nb-levelend').classList.remove('hidden');
+  var acc=Math.round((nbCorrect/nbTotal)*100),passed=acc>=75;
+  nbBestN=Math.max(nbBestN,nbN);
+  document.getElementById('nb-lc-score').textContent=acc+'%';
+  document.getElementById('nb-lc-title').textContent=passed?nbN+'-Back Passed! 🎉':nbN+'-Back Complete';
+  document.getElementById('nb-lc-msg').textContent=passed?'You scored '+acc+'% — advancing to '+(nbN+1)+'-Back!':'You scored '+acc+'% — need ≥75% to advance.';
+  var btn=document.getElementById('nb-lc-btn');
+  if(passed&&nbN<5){btn.textContent='Start '+(nbN+1)+'-Back →';btn.onclick=function(){nbN++;document.getElementById('nb-levelend').classList.add('hidden');document.getElementById('nb-game').classList.remove('hidden');nbNewLevel();};}
+  else{btn.textContent=nbN>=5?'🏆 See Results':'Try Again';btn.onclick=function(){if(!passed){nbStart(nbN);}else{nbShowFinal();}};if(nbN>=5)btn.onclick=nbShowFinal;}
+}
+function nbShowFinal(){
+  document.getElementById('nb-levelend').classList.add('hidden');
+  document.getElementById('nb-results').classList.remove('hidden');
+  document.getElementById('nb-final-level').textContent=nbBestN+'-Back';
+  document.getElementById('nb-r-best').textContent=nbBestN;
+  document.getElementById('nb-r-acc').textContent=nbAllTotal?Math.round((nbAllCorrect/nbAllTotal)*100)+'%':'—';
+  var desc=nbBestN>=4?'Exceptional working memory — 4-Back and above is elite performance.':nbBestN===3?'Strong working memory. 3-Back puts you well above average.':nbBestN===2?'Solid 2-Back performance. Keep practising to reach 3-Back.':'1-Back is the starting point. Daily N-Back training improves working memory.';
+  document.getElementById('nb-desc').textContent='🧠 '+desc;
+}
+document.addEventListener('keydown',function(e){if(location.hash==='#nback'&&e.code==='Space'){e.preventDefault();nbMatch();}});
+
+// ===== ATTENTION =====
+var attRound,attHits,attErrors,attRTs,attTargetIdx,attActive;
+var ATT_SYMBOLS=['●','■','▲','◆','▼','▶','◀'],ATT_TARGET='★';
+function attReset(){
+  attRound=0;attHits=0;attErrors=0;attRTs=[];attActive=false;
+  document.getElementById('att-instructions').classList.remove('hidden');
+  document.getElementById('att-game').classList.add('hidden');
+  document.getElementById('att-results').classList.add('hidden');
+}
+function attStart(){
+  attRound=0;attHits=0;attErrors=0;attRTs=[];attActive=false;
+  document.getElementById('att-instructions').classList.add('hidden');
+  document.getElementById('att-game').classList.remove('hidden');
+  var cnt=3,msg=document.getElementById('att-ready');msg.textContent=cnt;
+  var iv=setInterval(function(){cnt--;if(cnt<=0){clearInterval(iv);msg.textContent='';attShowGrid();}else msg.textContent=cnt;},700);
+}
+function attShowGrid(){
+  if(attRound>=40){attEndGame();return;}
+  attRound++;attActive=true;
+  document.getElementById('att-round').textContent=attRound;
+  var grid=document.getElementById('att-grid');grid.innerHTML='';grid.classList.remove('hidden');
+  attTargetIdx=Math.floor(Math.random()*25);
+  var start=performance.now();
+  for(var i=0;i<25;i++){
+    var cell=document.createElement('div');cell.className='attention-cell';
+    if(i===attTargetIdx){cell.textContent=ATT_TARGET;cell.style.color='#FFD700';cell.style.fontSize='1.8rem';}
+    else{cell.textContent=ATT_SYMBOLS[Math.floor(Math.random()*ATT_SYMBOLS.length)];}
+    (function(idx,c){c.addEventListener('click',function(){attHandleClick(idx,c,start);});})(i,cell);
+    grid.appendChild(cell);
+  }
+}
+function attHandleClick(idx,cell,start){
+  if(!attActive)return;attActive=false;
+  var rt=Math.round(performance.now()-start);
+  if(idx===attTargetIdx){attHits++;attRTs.push(rt);cell.classList.add('atgt');document.getElementById('att-rt').textContent=rt+'ms';}
+  else{attErrors++;cell.classList.add('awrong');document.getElementById('att-grid').children[attTargetIdx].classList.add('atgt');document.getElementById('att-rt').textContent='—';}
+  document.getElementById('att-hits').textContent=attHits;
+  document.getElementById('att-errors').textContent=attErrors;
+  setTimeout(attShowGrid,400);
+}
+function attEndGame(){
+  document.getElementById('att-game').classList.add('hidden');
+  document.getElementById('att-results').classList.remove('hidden');
+  var avg=attRTs.length?Math.round(attRTs.reduce(function(a,b){return a+b;},0)/attRTs.length):0;
+  var best=attRTs.length?Math.min.apply(null,attRTs):0;
+  var acc=Math.round((attHits/40)*100);
+  document.getElementById('att-final-rt').textContent=avg+'ms';
+  document.getElementById('att-r-hits').textContent=attHits;
+  document.getElementById('att-r-errors').textContent=attErrors;
+  document.getElementById('att-r-best').textContent=best+'ms';
+  document.getElementById('att-r-acc').textContent=acc+'%';
+  var desc=avg<400&&acc>=95?'Elite reaction time and accuracy — excellent sustained attention.':avg<600&&acc>=85?'Good performance. Fast, accurate responses indicate strong attention.':attErrors>5?'Several errors suggest rushing. Slow down slightly for better accuracy.':'Average performance. Reduce distractions and warm up before the real assessment.';
+  document.getElementById('att-desc').textContent='🧠 '+desc;
+}
+</script>
+<script>
+// ===== NUMERICAL =====
+var numQuestions=[
+  {table:{title:"Global Tech Solutions — Revenue by Region (£m)",headers:["Region","2020","2021","2022","2023"],rows:[["North America","142","158","171","189"],["Europe","98","104","117","128"],["Asia Pacific","67","81","95","112"],["Rest of World","23","27","31","35"],["Total","330","370","414","464"]]},question:"What was the percentage increase in Asia Pacific revenue from 2020 to 2023?",options:["52%","58%","67%","72%","78%"],answer:2,explanation:"(112 − 67) ÷ 67 × 100 = 67.2% ≈ 67%"},
+  {table:{title:"Global Tech Solutions — Revenue by Region (£m)",headers:["Region","2020","2021","2022","2023"],rows:[["North America","142","158","171","189"],["Europe","98","104","117","128"],["Asia Pacific","67","81","95","112"],["Rest of World","23","27","31","35"],["Total","330","370","414","464"]]},question:"In 2022, Europe's revenue was approximately what percentage of the total?",options:["24%","26%","28%","30%","32%"],answer:2,explanation:"117 ÷ 414 × 100 = 28.3% ≈ 28%"},
+  {table:{title:"Meridian Bank — Loan Portfolio (£bn)",headers:["Loan Type","Q1","Q2","Q3","Q4"],rows:[["Mortgages","45.2","46.8","48.1","49.5"],["Personal Loans","12.4","13.1","13.8","14.2"],["Business Loans","28.6","29.4","30.2","31.8"],["Auto Finance","8.9","9.2","9.6","10.1"],["Total","95.1","98.5","101.7","105.6"]]},question:"Between Q1 and Q4, which loan type grew the most in absolute terms?",options:["Mortgages","Personal Loans","Business Loans","Auto Finance","All grew equally"],answer:0,explanation:"Mortgages grew by £4.3bn (49.5 − 45.2), the largest absolute increase."},
+  {table:{title:"Meridian Bank — Loan Portfolio (£bn)",headers:["Loan Type","Q1","Q2","Q3","Q4"],rows:[["Mortgages","45.2","46.8","48.1","49.5"],["Personal Loans","12.4","13.1","13.8","14.2"],["Business Loans","28.6","29.4","30.2","31.8"],["Auto Finance","8.9","9.2","9.6","10.1"],["Total","95.1","98.5","101.7","105.6"]]},question:"If Business Loans grow at the same rate from Q4 as Q3→Q4, what will Business Loans be in Q5?",options:["£33.0bn","£33.4bn","£33.8bn","£34.2bn","£34.6bn"],answer:1,explanation:"Q3→Q4 growth = 31.8 − 30.2 = 1.6bn. Q5 = 31.8 + 1.6 = £33.4bn"},
+  {table:{title:"NovaCorp — Headcount by Department",headers:["Department","2021","2022","2023","Budget 2024"],rows:[["Engineering","340","380","430","470"],["Sales","210","225","240","250"],["Marketing","85","90","105","120"],["Operations","150","155","160","175"],["Finance & Legal","60","65","70","72"]]},question:"What is the ratio of Engineering to Sales headcount in 2023?",options:["16:9","43:24","9:5","7:3","5:3"],answer:1,explanation:"430:240 = 43:24 (simplest non-divisible form)"},
+  {table:{title:"NovaCorp — Headcount by Department",headers:["Department","2021","2022","2023","Budget 2024"],rows:[["Engineering","340","380","430","470"],["Sales","210","225","240","250"],["Marketing","85","90","105","120"],["Operations","150","155","160","175"],["Finance & Legal","60","65","70","72"]]},question:"If the 2024 budget headcount for Marketing is met, what is the percentage increase over 2022?",options:["25%","28%","31%","33%","36%"],answer:3,explanation:"(120 − 90) ÷ 90 × 100 = 33.3% ≈ 33%"},
+  {table:{title:"Falcon Retail — Monthly Sales (£000s)",headers:["Month","Clothing","Electronics","Homeware","Food"],rows:[["January","42","88","35","124"],["February","38","72","31","118"],["March","55","65","44","132"],["April","61","60","48","128"],["May","68","58","52","135"]]},question:"In which month did total sales across all categories peak?",options:["January","February","March","April","May"],answer:4,explanation:"May total = 68+58+52+135 = 313 (highest). Jan=289, Mar=296, Apr=297."},
+  {table:{title:"Falcon Retail — Monthly Sales (£000s)",headers:["Month","Clothing","Electronics","Homeware","Food"],rows:[["January","42","88","35","124"],["February","38","72","31","118"],["March","55","65","44","132"],["April","61","60","48","128"],["May","68","58","52","135"]]},question:"Electronics sales fell by what percentage from January to May?",options:["30%","32%","34%","36%","38%"],answer:2,explanation:"(88 − 58) ÷ 88 × 100 = 34.1% ≈ 34%"},
+  {table:{title:"Vertex Asset Management — Fund Returns (%)",headers:["Fund","Year 1","Year 2","Year 3","Year 4"],rows:[["Growth Fund","+12.4","+8.2","-3.1","+15.6"],["Balanced Fund","+7.8","+6.5","+2.4","+9.1"],["Income Fund","+4.2","+4.8","+3.9","+5.3"],["Global Equity","+18.2","-2.4","+6.8","+21.3"],["Fixed Income","+3.1","+3.4","+3.2","+3.0"]]},question:"Which fund had the highest average annual return over the 4 years?",options:["Growth Fund","Balanced Fund","Income Fund","Global Equity","Fixed Income"],answer:3,explanation:"Global Equity avg = (18.2−2.4+6.8+21.3)÷4 = 10.975% (highest)"},
+  {table:{title:"Vertex Asset Management — Fund Returns (%)",headers:["Fund","Year 1","Year 2","Year 3","Year 4"],rows:[["Growth Fund","+12.4","+8.2","-3.1","+15.6"],["Balanced Fund","+7.8","+6.5","+2.4","+9.1"],["Income Fund","+4.2","+4.8","+3.9","+5.3"],["Global Equity","+18.2","-2.4","+6.8","+21.3"],["Fixed Income","+3.1","+3.4","+3.2","+3.0"]]},question:"If £10,000 was invested in Fixed Income at start of Year 1, approximately how much after 4 years?",options:["£11,200","£11,320","£11,480","£11,600","£11,740"],answer:1,explanation:"Compounding: 10000 × 1.031 × 1.034 × 1.032 × 1.030 ≈ £11,320"},
+  {table:{title:"ClearPath Logistics — Delivery Performance",headers:["Quarter","On-Time (%)","Late (%)","Total Deliveries"],rows:[["Q1 2023","91.2","8.8","24,500"],["Q2 2023","89.6","10.4","26,200"],["Q3 2023","93.4","6.6","28,800"],["Q4 2023","94.8","5.2","31,400"]]},question:"How many deliveries were late in Q2 2023?",options:["2,480","2,565","2,725","2,808","2,945"],answer:2,explanation:"26,200 × 0.104 = 2,724.8 ≈ 2,725"},
+  {table:{title:"ClearPath Logistics — Delivery Performance",headers:["Quarter","On-Time (%)","Late (%)","Total Deliveries"],rows:[["Q1 2023","91.2","8.8","24,500"],["Q2 2023","89.6","10.4","26,200"],["Q3 2023","93.4","6.6","28,800"],["Q4 2023","94.8","5.2","31,400"]]},question:"Total on-time deliveries across all four quarters were approximately:",options:["98,200","100,400","102,600","104,800","106,400"],answer:2,explanation:"Sum: 22,344+23,475+26,899+29,755 = 102,473 ≈ 102,600"}
+];
+var numCurrentQ,numAnswers,numTimerInterval,numSecondsLeft;
+function numReset(){
+  clearInterval(numTimerInterval);numCurrentQ=0;numAnswers=new Array(numQuestions.length).fill(null);numSecondsLeft=1200;
+  document.getElementById('num-instructions').classList.remove('hidden');
+  document.getElementById('num-game').classList.add('hidden');
+  document.getElementById('num-results').classList.add('hidden');
+}
+function numStart(){
+  numCurrentQ=0;numAnswers=new Array(numQuestions.length).fill(null);numSecondsLeft=1200;
+  document.getElementById('num-instructions').classList.add('hidden');
+  document.getElementById('num-game').classList.remove('hidden');
+  numRenderQ(0);numStartTimer();
+}
+function numStartTimer(){
+  numTimerInterval=setInterval(function(){
+    numSecondsLeft--;
+    var m=Math.floor(numSecondsLeft/60).toString().padStart(2,'0'),s=(numSecondsLeft%60).toString().padStart(2,'0');
+    var el=document.getElementById('num-timer');el.textContent=m+':'+s;
+    if(numSecondsLeft<=60)el.classList.add('urgent');
+    if(numSecondsLeft<=0){clearInterval(numTimerInterval);numSubmit();}
+  },1000);
+}
+function numRenderQ(idx){
+  numCurrentQ=idx;var q=numQuestions[idx];
+  document.getElementById('num-counter').textContent='Question '+(idx+1)+' of '+numQuestions.length;
+  document.getElementById('num-progress').style.width=((idx+1)/numQuestions.length*100)+'%';
+  document.getElementById('num-prev').disabled=idx===0;
+  document.getElementById('num-next').disabled=idx===numQuestions.length-1;
+  var html='<div class="question-card"><div class="question-number">Question '+(idx+1)+'</div><table class="data-table"><thead><tr>';
+  q.table.headers.forEach(function(h){html+='<th>'+h+'</th>';});
+  html+='</tr></thead><tbody>';
+  q.table.rows.forEach(function(row){html+='<tr>';row.forEach(function(cell,i){html+='<td>'+(i===0?'<span style="color:var(--text-muted)">'+cell+'</span>':cell)+'</td>';});html+='</tr>';});
+  html+='</tbody></table><div class="question-text">'+q.question+'</div><ul class="options-list">';
+  q.options.forEach(function(opt,i){
+    var sel=numAnswers[idx]===i?'selected':'';
+    html+='<li><button class="option-btn '+sel+'" onclick="numSelect('+idx+','+i+',this)"><span class="option-letter">'+String.fromCharCode(65+i)+'</span>'+opt+'</button></li>';
+  });
+  html+='</ul></div>';
+  document.getElementById('num-question-area').innerHTML=html;
+}
+function numSelect(qi,oi,btn){numAnswers[qi]=oi;document.querySelectorAll('.option-btn').forEach(function(b){b.classList.remove('selected');});btn.classList.add('selected');}
+function numNav(d){var n=numCurrentQ+d;if(n>=0&&n<numQuestions.length)numRenderQ(n);}
+function numSubmit(){
+  clearInterval(numTimerInterval);
+  document.getElementById('num-game').classList.add('hidden');
+  document.getElementById('num-results').classList.remove('hidden');
+  var score=0,html='';
+  numQuestions.forEach(function(q,i){
+    var ua=numAnswers[i],ok=ua===q.answer;if(ok)score++;
+    html+='<div class="question-card" style="margin-bottom:1rem"><div class="question-number" style="color:'+(ok?'var(--success)':'var(--danger)')+'">Q'+(i+1)+' — '+(ok?'✅ Correct':'✗ Incorrect')+'</div><div class="question-text" style="font-size:0.9rem">'+q.question+'</div><div style="margin-top:0.5rem;font-size:0.85rem"><span style="color:var(--text-muted)">Your answer: </span><strong style="color:'+(ok?'var(--success)':'var(--danger)')+'">'+( ua!==null?q.options[ua]:'Not answered')+'</strong></div>';
+    if(!ok)html+='<div style="font-size:0.85rem;margin-top:0.25rem"><span style="color:var(--text-muted)">Correct: </span><strong style="color:var(--success)">'+q.options[q.answer]+'</strong></div>';
+    html+='<div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.35rem">💡 '+q.explanation+'</div></div>';
+  });
+  document.getElementById('num-final').textContent=score+' / '+numQuestions.length;
+  document.getElementById('num-review').innerHTML=html;
+}
+</script>
+<script>
+// ===== VERBAL =====
+var verQuestions=[
+  {passage:"Agile methodology has transformed modern software development by emphasising iterative delivery and cross-functional collaboration. Unlike traditional waterfall approaches, Agile breaks projects into short sprints — typically two weeks — allowing teams to incorporate feedback continuously. Studies suggest that organisations adopting Agile see a 37% reduction in time-to-market on average. However, Agile is not universally effective; highly regulated industries such as aerospace and pharmaceuticals often require rigorous upfront documentation that Agile practices can undermine.",statement:"Traditional waterfall methodology is faster than Agile for most projects.",answer:"False",explanation:"The passage states Agile reduces time-to-market by 37%, indicating waterfall is slower."},
+  {passage:"Agile methodology has transformed modern software development by emphasising iterative delivery and cross-functional collaboration. Unlike traditional waterfall approaches, Agile breaks projects into short sprints — typically two weeks — allowing teams to incorporate feedback continuously. Studies suggest that organisations adopting Agile see a 37% reduction in time-to-market on average. However, Agile is not universally effective; highly regulated industries such as aerospace and pharmaceuticals often require rigorous upfront documentation that Agile practices can undermine.",statement:"Agile methodology may be less suitable for the pharmaceutical industry.",answer:"True",explanation:"The passage explicitly states pharmaceutical industries require upfront documentation that Agile can undermine."},
+  {passage:"Agile methodology has transformed modern software development by emphasising iterative delivery and cross-functional collaboration. Unlike traditional waterfall approaches, Agile breaks projects into short sprints — typically two weeks — allowing teams to incorporate feedback continuously. Studies suggest that organisations adopting Agile see a 37% reduction in time-to-market on average. However, Agile is not universally effective; highly regulated industries such as aerospace and pharmaceuticals often require rigorous upfront documentation that Agile practices can undermine.",statement:"The majority of software companies globally have adopted Agile.",answer:"Cannot Say",explanation:"The passage says Agile has 'transformed' development but gives no data on global adoption rates."},
+  {passage:"Carbon capture and storage (CCS) technology involves capturing CO₂ emissions from industrial sources and storing them underground. Proponents argue that CCS is essential for meeting net-zero targets, particularly for hard-to-abate sectors like cement and steel production. Critics contend that CCS is prohibitively expensive — currently costing between $50–$100 per tonne of CO₂ — and that investment would be better directed at renewable energy. The International Energy Agency estimates that CCS could contribute up to 15% of required emission reductions by 2050.",statement:"CCS technology is currently cost-free for industrial operators.",answer:"False",explanation:"The passage explicitly states CCS currently costs $50–$100 per tonne of CO₂."},
+  {passage:"Carbon capture and storage (CCS) technology involves capturing CO₂ emissions from industrial sources and storing them underground. Proponents argue that CCS is essential for meeting net-zero targets, particularly for hard-to-abate sectors like cement and steel production. Critics contend that CCS is prohibitively expensive — currently costing between $50–$100 per tonne of CO₂ — and that investment would be better directed at renewable energy. The International Energy Agency estimates that CCS could contribute up to 15% of required emission reductions by 2050.",statement:"Without CCS, net-zero targets cannot be achieved in the cement and steel industries.",answer:"Cannot Say",explanation:"Proponents argue CCS is 'essential' — but the passage does not confirm this as fact."},
+  {passage:"Carbon capture and storage (CCS) technology involves capturing CO₂ emissions from industrial sources and storing them underground. Proponents argue that CCS is essential for meeting net-zero targets, particularly for hard-to-abate sectors like cement and steel production. Critics contend that CCS is prohibitively expensive — currently costing between $50–$100 per tonne of CO₂ — and that investment would be better directed at renewable energy. The International Energy Agency estimates that CCS could contribute up to 15% of required emission reductions by 2050.",statement:"The IEA believes CCS will play some role in reducing emissions by 2050.",answer:"True",explanation:"The passage states the IEA estimates CCS could contribute up to 15% of required emission reductions."},
+  {passage:"Remote work adoption accelerated dramatically during COVID-19, with many companies maintaining hybrid arrangements permanently. Research from Stanford University found that remote workers were 13% more productive than office-based counterparts, though this effect was partially offset by feelings of isolation reported by 24% of remote employees. Not all roles are suited to remote work; positions requiring physical presence or specialised equipment remain predominantly office-based. Companies implementing hybrid models report challenges in maintaining a unified corporate culture.",statement:"All employees working remotely report higher productivity.",answer:"False",explanation:"The 13% productivity gain was an average, and isolation was reported by 24%, suggesting varied experiences."},
+  {passage:"Remote work adoption accelerated dramatically during COVID-19, with many companies maintaining hybrid arrangements permanently. Research from Stanford University found that remote workers were 13% more productive than office-based counterparts, though this effect was partially offset by feelings of isolation reported by 24% of remote employees. Not all roles are suited to remote work; positions requiring physical presence or specialised equipment remain predominantly office-based. Companies implementing hybrid models report challenges in maintaining a unified corporate culture.",statement:"Stanford University conducted research into the productivity of remote workers.",answer:"True",explanation:"The passage directly states 'Research from Stanford University found that remote workers were 13% more productive'."},
+  {passage:"Remote work adoption accelerated dramatically during COVID-19, with many companies maintaining hybrid arrangements permanently. Research from Stanford University found that remote workers were 13% more productive than office-based counterparts, though this effect was partially offset by feelings of isolation reported by 24% of remote employees. Not all roles are suited to remote work; positions requiring physical presence or specialised equipment remain predominantly office-based. Companies implementing hybrid models report challenges in maintaining a unified corporate culture.",statement:"Hybrid working models have been shown to resolve corporate culture challenges.",answer:"False",explanation:"The passage states hybrid models 'report challenges in maintaining a unified corporate culture' — problems persist."},
+  {passage:"Quantitative easing (QE) is a monetary policy tool whereby central banks purchase government bonds to inject money into the economy. First widely used during the 2008 global financial crisis, QE aims to lower interest rates and stimulate lending. Critics argue that QE primarily benefits asset owners — inflating stock and property prices — while doing little for those without assets. Supporters counter that without QE, credit markets could have frozen entirely in 2008. The long-term effects of extended QE on inflation remain a subject of active academic debate.",statement:"QE was first used as a monetary policy tool in the 2008 global financial crisis.",answer:"Cannot Say",explanation:"The passage says QE was 'first widely used' in 2008 — not that it was first invented then."},
+  {passage:"Quantitative easing (QE) is a monetary policy tool whereby central banks purchase government bonds to inject money into the economy. First widely used during the 2008 global financial crisis, QE aims to lower interest rates and stimulate lending. Critics argue that QE primarily benefits asset owners — inflating stock and property prices — while doing little for those without assets. Supporters counter that without QE, credit markets could have frozen entirely in 2008. The long-term effects of extended QE on inflation remain a subject of active academic debate.",statement:"According to critics, QE disproportionately benefits wealthier individuals.",answer:"True",explanation:"Critics argue QE 'primarily benefits asset owners' by inflating asset prices while doing little for those without assets."},
+  {passage:"Quantitative easing (QE) is a monetary policy tool whereby central banks purchase government bonds to inject money into the economy. First widely used during the 2008 global financial crisis, QE aims to lower interest rates and stimulate lending. Critics argue that QE primarily benefits asset owners — inflating stock and property prices — while doing little for those without assets. Supporters counter that without QE, credit markets could have frozen entirely in 2008. The long-term effects of extended QE on inflation remain a subject of active academic debate.",statement:"Academic consensus holds that prolonged QE definitively causes inflation.",answer:"False",explanation:"The passage states the effects 'remain a subject of active academic debate' — no definitive consensus."}
+];
+var verCurrentQ,verAnswers,verTimerInterval,verSecondsLeft;
+var VER_OPTS=["True","False","Cannot Say"];
+function verReset(){
+  clearInterval(verTimerInterval);verCurrentQ=0;verAnswers=new Array(verQuestions.length).fill(null);verSecondsLeft=1020;
+  document.getElementById('ver-instructions').classList.remove('hidden');
+  document.getElementById('ver-game').classList.add('hidden');
+  document.getElementById('ver-results').classList.add('hidden');
+}
+function verStart(){
+  verCurrentQ=0;verAnswers=new Array(verQuestions.length).fill(null);verSecondsLeft=1020;
+  document.getElementById('ver-instructions').classList.add('hidden');
+  document.getElementById('ver-game').classList.remove('hidden');
+  verRenderQ(0);
+  verTimerInterval=setInterval(function(){
+    verSecondsLeft--;
+    var m=Math.floor(verSecondsLeft/60).toString().padStart(2,'0'),s=(verSecondsLeft%60).toString().padStart(2,'0');
+    var el=document.getElementById('ver-timer');el.textContent=m+':'+s;
+    if(verSecondsLeft<=60)el.classList.add('urgent');
+    if(verSecondsLeft<=0){clearInterval(verTimerInterval);verSubmit();}
+  },1000);
+}
+function verRenderQ(idx){
+  verCurrentQ=idx;var q=verQuestions[idx];
+  document.getElementById('ver-counter').textContent='Question '+(idx+1)+' of '+verQuestions.length;
+  document.getElementById('ver-progress').style.width=((idx+1)/verQuestions.length*100)+'%';
+  document.getElementById('ver-prev').disabled=idx===0;
+  document.getElementById('ver-next').disabled=idx===verQuestions.length-1;
+  var html='<div class="question-card"><div class="question-number">Question '+(idx+1)+'</div><div class="passage-box">'+q.passage+'</div><div class="question-text"><strong>Statement:</strong> "'+q.statement+'"</div><ul class="options-list">';
+  var cols=['var(--success)','var(--danger)','var(--warning)'];
+  VER_OPTS.forEach(function(opt,i){
+    var sel=verAnswers[idx]===i?'selected':'';
+    html+='<li><button class="option-btn '+sel+'" onclick="verSelect('+idx+','+i+',this)"><span class="option-letter" style="background:'+cols[i]+';color:#000">'+opt[0]+'</span>'+opt+'</button></li>';
+  });
+  html+='</ul></div>';
+  document.getElementById('ver-question-area').innerHTML=html;
+}
+function verSelect(qi,oi,btn){verAnswers[qi]=oi;document.querySelectorAll('.option-btn').forEach(function(b){b.classList.remove('selected');});btn.classList.add('selected');}
+function verNav(d){var n=verCurrentQ+d;if(n>=0&&n<verQuestions.length)verRenderQ(n);}
+function verSubmit(){
+  clearInterval(verTimerInterval);
+  document.getElementById('ver-game').classList.add('hidden');
+  document.getElementById('ver-results').classList.remove('hidden');
+  var score=0,html='';
+  verQuestions.forEach(function(q,i){
+    var ui=verAnswers[i],ua=ui!==null?VER_OPTS[ui]:null,ok=ua===q.answer;if(ok)score++;
+    html+='<div class="question-card" style="margin-bottom:1rem"><div class="question-number" style="color:'+(ok?'var(--success)':'var(--danger)')+'">Q'+(i+1)+' — '+(ok?'✅ Correct':'✗ Incorrect')+'</div><div class="passage-box" style="font-size:0.8rem">'+q.passage+'</div><div style="font-size:0.88rem;margin-bottom:0.5rem"><strong>Statement:</strong> "'+q.statement+'"</div><div style="font-size:0.85rem"><span style="color:var(--text-muted)">Your answer: </span><strong style="color:'+(ok?'var(--success)':'var(--danger)')+'">'+( ua||'Not answered')+'</strong></div>';
+    if(!ok)html+='<div style="font-size:0.85rem;margin-top:0.2rem"><span style="color:var(--text-muted)">Correct: </span><strong style="color:var(--success)">'+q.answer+'</strong></div>';
+    html+='<div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.3rem">💡 '+q.explanation+'</div></div>';
+  });
+  document.getElementById('ver-final').textContent=score+' / '+verQuestions.length;
+  document.getElementById('ver-review').innerHTML=html;
+}
+</script>
+<script>
+// ===== INDUCTIVE =====
+var indQuestions=[
+  {type:"sequence",label:"What comes next in the sequence?",sequence:["🔴","🟠","🟡","?"],options:["🟢","🔵","🟡","🟣"],answer:0,explanation:"Rainbow order: Red → Orange → Yellow → Green."},
+  {type:"sequence",label:"What comes next in the sequence?",sequence:["▲","▲▲","▲▲▲","?"],options:["▲▲▲▲","▲","▲▲","▲▲▲▲▲"],answer:0,explanation:"Each step adds one triangle. After 3 comes 4."},
+  {type:"matrix3x3",label:"Which shape completes the 3×3 matrix?",grid:[["🔵","🔵","🔵"],["🔵","🔵","🔵"],["🔵","🔵","?"]],options:["🔵","🔴","🟡","⬛"],answer:0,explanation:"All cells are blue circles — the missing cell must also be blue."},
+  {type:"matrix3x3",label:"Which shape completes the 3×3 matrix?",grid:[["🔴","🟠","🟡"],["🟢","🔵","🟣"],["⚫","⬜","?"]],options:["🟤","🔴","🟡","🟢"],answer:0,explanation:"Matrix moves through spectrum colours. After black and white comes brown."},
+  {type:"sequence",label:"What comes next in the sequence?",sequence:["⬜","🔲","⬛","?"],options:["⬜","🔲","⬛","🟦"],answer:0,explanation:"Cycle: white → grey → black → white (restart)."},
+  {type:"matrix3x3",label:"Which shape completes the 3×3 matrix?",grid:[["◼","◼◼","◼◼◼"],["●","●●","●●●"],["▲","▲▲","?"]],options:["▲▲▲","▲","▲▲▲▲","●●●"],answer:0,explanation:"Each row: count increases 1→2→3. Row 3: ▲, ▲▲, ▲▲▲."},
+  {type:"sequence",label:"What comes next in the sequence?",sequence:["1️⃣","2️⃣","4️⃣","?"],options:["5️⃣","6️⃣","7️⃣","8️⃣"],answer:3,explanation:"Doubles: 1 → 2 → 4 → 8."},
+  {type:"matrix3x3",label:"Which shape completes the 3×3 matrix?",grid:[["🔺","🔺","🔺"],["🔶","🔶","🔶"],["🔷","🔷","?"]],options:["🔷","🔺","🔶","🔹"],answer:0,explanation:"Each row contains the same shape. Row 3 uses 🔷."},
+  {type:"sequence",label:"What comes next in the sequence?",sequence:["🌑","🌒","🌓","?"],options:["🌔","🌕","🌙","🌑"],answer:0,explanation:"Moon phases: new → crescent → half → gibbous (🌔)."},
+  {type:"matrix3x3",label:"Which shape completes the 3×3 matrix?",grid:[["⬛","⬛","⬛"],["⬜","⬜","⬜"],["⬛","⬜","?"]],options:["⬛","⬜","🟦","🟥"],answer:0,explanation:"Column pattern: Col 1=⬛⬜⬛, Col 2=⬛⬜⬜, Col 3 follows ⬛⬜⬛."},
+  {type:"sequence",label:"What comes next in the sequence?",sequence:["🟦🟦🟦","🟦🟦","🟦","?"],options:["🟦🟦🟦🟦","🟦","(empty)","🟥"],answer:2,explanation:"Decreases by one each step: 3 → 2 → 1 → 0 (empty)."},
+  {type:"matrix3x3",label:"Which shape completes the 3×3 matrix?",grid:[["🔴🔵","🔵🔴","🔴🔵"],["🟡🟢","🟢🟡","🟡🟢"],["🟠🟣","🟣🟠","?"]],options:["🟠🟣","🟣🟠","🔴🔵","🟡🟢"],answer:0,explanation:"Each row alternates AB, BA, AB. Row 3: 🟠🟣, 🟣🟠, 🟠🟣."},
+  {type:"sequence",label:"What comes next in the sequence?",sequence:["⬆️","➡️","⬇️","?"],options:["⬅️","⬆️","↗️","↩️"],answer:0,explanation:"Arrows rotate 90° clockwise: up → right → down → left."},
+  {type:"matrix3x3",label:"Which shape completes the 3×3 matrix?",grid:[["1️⃣","2️⃣","3️⃣"],["4️⃣","5️⃣","6️⃣"],["7️⃣","8️⃣","?"]],options:["9️⃣","0️⃣","1️⃣","🔟"],answer:0,explanation:"Consecutive numbers 1–9. Missing cell is 9."},
+  {type:"sequence",label:"What comes next in the sequence?",sequence:["🌱","🌿","🌲","?"],options:["🌳","🌵","🍂","🌾"],answer:0,explanation:"Plant growth stages: sprout → herb → pine → large tree."}
+];
+var indCurrentQ,indAnswers,indTimerInterval,indSecondsLeft;
+function indReset(){
+  clearInterval(indTimerInterval);indCurrentQ=0;indAnswers=new Array(indQuestions.length).fill(null);indSecondsLeft=1500;
+  document.getElementById('ind-instructions').classList.remove('hidden');
+  document.getElementById('ind-game').classList.add('hidden');
+  document.getElementById('ind-results').classList.add('hidden');
+}
+function indStart(){
+  indCurrentQ=0;indAnswers=new Array(indQuestions.length).fill(null);indSecondsLeft=1500;
+  document.getElementById('ind-instructions').classList.add('hidden');
+  document.getElementById('ind-game').classList.remove('hidden');
+  indRenderQ(0);
+  indTimerInterval=setInterval(function(){
+    indSecondsLeft--;
+    var m=Math.floor(indSecondsLeft/60).toString().padStart(2,'0'),s=(indSecondsLeft%60).toString().padStart(2,'0');
+    var el=document.getElementById('ind-timer');el.textContent=m+':'+s;
+    if(indSecondsLeft<=60)el.classList.add('urgent');
+    if(indSecondsLeft<=0){clearInterval(indTimerInterval);indSubmit();}
+  },1000);
+}
+function indRenderQ(idx){
+  indCurrentQ=idx;var q=indQuestions[idx];
+  document.getElementById('ind-counter').textContent='Question '+(idx+1)+' of '+indQuestions.length;
+  document.getElementById('ind-progress').style.width=((idx+1)/indQuestions.length*100)+'%';
+  document.getElementById('ind-prev').disabled=idx===0;
+  document.getElementById('ind-next').disabled=idx===indQuestions.length-1;
+  var pat='';
+  if(q.type==='sequence'){
+    pat='<div style="display:flex;gap:0.5rem;justify-content:center;flex-wrap:wrap;margin-bottom:1.5rem">';
+    q.sequence.forEach(function(cell){
+      var isQ=cell==='?';
+      pat+='<div style="width:72px;height:72px;background:'+(isQ?'rgba(77,159,255,0.1)':'var(--bg3)')+';border:2px '+(isQ?'dashed rgba(77,159,255,0.6)':'solid var(--border)')+';border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;color:'+(isQ?'var(--accent)':'inherit')+'">'+(isQ?'?':cell)+'</div>';
+    });
+    pat+='</div>';
+  }else{
+    pat='<div style="display:inline-grid;grid-template-columns:repeat(3,72px);gap:4px;margin-bottom:1.5rem">';
+    q.grid.forEach(function(row){row.forEach(function(cell){
+      var isQ=cell==='?';
+      pat+='<div style="width:72px;height:72px;background:'+(isQ?'rgba(77,159,255,0.1)':'var(--bg3)')+';border:2px '+(isQ?'dashed rgba(77,159,255,0.6)':'solid var(--border)')+';border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.5rem">'+(isQ?'?':cell)+'</div>';
+    });});
+    pat+='</div>';
+  }
+  var html='<div class="question-card" style="text-align:center"><div class="question-number" style="text-align:left">Question '+(idx+1)+'</div><p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:1rem">'+q.label+'</p>'+pat+'<div class="inductive-options">';
+  q.options.forEach(function(opt,i){
+    var sel=indAnswers[idx]===i?'selected':'';
+    html+='<div class="inductive-option '+sel+'" onclick="indSelect('+idx+','+i+',this)" style="font-size:1.4rem">'+opt+'</div>';
+  });
+  html+='</div></div>';
+  document.getElementById('ind-question-area').innerHTML=html;
+}
+function indSelect(qi,oi,el){indAnswers[qi]=oi;document.querySelectorAll('.inductive-option').forEach(function(e){e.classList.remove('selected');});el.classList.add('selected');}
+function indNav(d){var n=indCurrentQ+d;if(n>=0&&n<indQuestions.length)indRenderQ(n);}
+function indSubmit(){
+  clearInterval(indTimerInterval);
+  document.getElementById('ind-game').classList.add('hidden');
+  document.getElementById('ind-results').classList.remove('hidden');
+  var score=0,html='';
+  indQuestions.forEach(function(q,i){
+    var ua=indAnswers[i],ok=ua===q.answer;if(ok)score++;
+    html+='<div class="question-card" style="margin-bottom:1rem;text-align:center"><div class="question-number" style="text-align:left;color:'+(ok?'var(--success)':'var(--danger)')+'">Q'+(i+1)+' — '+(ok?'✅ Correct':'✗ Incorrect')+'</div><p style="font-size:0.85rem;color:var(--text-muted)">'+q.label+'</p><div style="font-size:0.85rem;margin-top:0.5rem;text-align:left"><span style="color:var(--text-muted)">Your answer: </span><strong style="color:'+(ok?'var(--success)':'var(--danger)')+'">'+( ua!==null?q.options[ua]:'Not answered')+'</strong></div>';
+    if(!ok)html+='<div style="font-size:0.85rem;text-align:left"><span style="color:var(--text-muted)">Correct: </span><strong style="color:var(--success)">'+q.options[q.answer]+'</strong></div>';
+    html+='<div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.3rem;text-align:left">💡 '+q.explanation+'</div></div>';
+  });
+  document.getElementById('ind-final').textContent=score+' / '+indQuestions.length;
+  document.getElementById('ind-review').innerHTML=html;
+}
+</script>
+<script>
+// ===== SJT =====
+var sjtScenarios=[
+  {scenario:"You are a first-year analyst. Your manager asks you to prepare a client presentation for tomorrow. You notice the brief includes data that appears to be outdated by 6 months. The presentation is due in 3 hours.",options:["Update the data yourself using the most recent sources, and flag the changes to your manager.","Use the data as given — your manager knows the client and you don't want to overstep.","Email your manager immediately highlighting the issue, ask for guidance, and prepare a version with updated data as an alternative.","Delay the presentation and spend all 3 hours finding the exact latest figures.","Tell the client directly during the presentation that some data may be outdated."],best:2,worst:4,explanation:"Option C is best: raises the issue promptly with a solution. Option E is worst: going to the client directly undermines your manager."},
+  {scenario:"Working remotely, a colleague messages asking for urgent help — it will take ~1 hour. Your deadline is in 4 hours and you need at least 3 hours to finish your own work.",options:["Ignore the message and focus entirely on your deadline.","Help your colleague immediately — they asked first.","Respond promptly, explain your situation, offer to help after your deadline, and suggest another colleague who might assist sooner.","Agree to help and work on both simultaneously.","Tell your manager about the conflict so they can decide."],best:2,worst:1,explanation:"Option C demonstrates time management and communication. Option B sacrifices your priority without communicating and may cause both tasks to fail."},
+  {scenario:"During a team meeting, a senior colleague makes an error in their analysis that could lead to significant resource misallocation. The meeting continues with decisions being made based on the flawed analysis.",options:["Stay silent — it's not your place to challenge a senior in public.","Interrupt loudly and correct the error in front of everyone.","Make a note and raise it with your manager privately after the meeting.","Politely speak up: 'I just want to double-check one figure — I may be missing something, but I calculated X differently.'","Send a follow-up email to all attendees correcting the error."],best:3,worst:1,explanation:"Option D is best: respectful and timely. Option B is worst: confrontational and damages team dynamics."},
+  {scenario:"You've been assigned a project you find deeply uninteresting but important to the team. Three days in, your motivation is low and work quality has started to slip.",options:["Push through — motivation is irrelevant to professionalism.","Ask your manager to reassign the project to someone more engaged.","Break it into small goals, reward yourself for milestones, and remind yourself of its importance.","Do the minimum required to technically complete it on time.","Tell a colleague you find it boring and see if they want to swap.","Speak with your manager, acknowledge the quality issue, and discuss strategies to improve your engagement."],best:5,worst:3,explanation:"Option F is best: self-aware and proactive. Option D is worst: deliberately minimising effort is neither professional nor helpful."},
+  {scenario:"You are the only analyst who knows a critical software tool your team relies on. You've been asked to document the process, but documentation takes time away from billable work. Your performance review weights billable hours heavily.",options:["Prioritise billable work entirely — documentation can wait indefinitely.","Document the process fully in your own time to avoid affecting billable hours.","Raise the conflict with your manager, explain the team risk of a single point of failure, and agree on a schedule balancing both.","Create only minimal documentation — just enough to say you've done it.","Teach a colleague verbally instead of writing anything down."],best:2,worst:0,explanation:"Option C is best: communicates the business risk and finds a balanced solution. Option A ignores a real team dependency risk."},
+  {scenario:"A client sends an aggressive email complaining about your team's work — some complaints are valid, others unfair. Your manager is travelling and unreachable for 4 hours.",options:["Forward the email to your manager and wait 4 hours before responding.","Reply defensively, addressing each of the client's points.","Acknowledge the email promptly, thank the client for their feedback, confirm you are reviewing concerns and will respond within the hour, then brief your manager when reachable.","Escalate immediately to your manager's manager.","Call the client to discuss verbally without involving your manager."],best:2,worst:3,explanation:"Option C buys time professionally and keeps the client engaged. Option D is unnecessary escalation over your manager's head."},
+  {scenario:"Midway through an internship you realise you've been using the wrong methodology for two weeks. Restarting will take another week. You're not sure if anyone else knows.",options:["Quietly restart using the correct method and hope no one notices the delay.","Inform your manager immediately, explain what happened, and present a correction plan.","Submit the work knowing it uses the wrong method — the outcome might still be acceptable.","Ask a colleague if they think anyone will notice, and decide based on their response.","Ask to extend the deadline and restart without explaining why."],best:1,worst:2,explanation:"Option B is best: honest, proactive, and solution-oriented. Option C is worst: knowingly submitting flawed work is professionally dishonest."},
+  {scenario:"A colleague consistently takes credit for the team's ideas in group meetings. It's affecting morale and several people have mentioned it privately. The colleague is well-regarded by management.",options:["Raise a formal complaint with HR immediately.","Do nothing — getting involved could harm your reputation.","Speak privately and constructively with the colleague, sharing your observations and their impact on the team.","Bring it up in the next team meeting in front of everyone.","Mention it to your manager in a one-to-one as a team dynamic concern, framing it as a process issue rather than a personal attack."],best:4,worst:3,explanation:"Option E is best: professional and addresses the structural issue without drama. Option D would embarrass the colleague and escalate conflict."},
+  {scenario:"A client tells you your written communication style is 'too technical and hard to follow'. You believe your level of technical detail is appropriate and necessary.",options:["Continue as you have — the client needs to raise their technical literacy.","Adjust your style for this client — add plain-language summaries, define jargon, and ask for specific feedback on what is unclear.","Ask your manager to handle all written communication with this client.","Send simpler future documents but include the detailed version as an appendix.","Tell the client the technical detail is required and cannot be removed."],best:1,worst:0,explanation:"Option B adapts to the client while preserving quality. Option A dismisses client feedback, which is unprofessional."},
+  {scenario:"It is 10pm before a major deliverable is due. You finished your section with good work. A teammate messages saying they are significantly behind and the whole submission may be incomplete.",options:["It's their problem — you finished your part on time.","Offer to help for an hour, then review your own work to ensure your contribution is still strong.","Take over their section entirely and do it yourself.","Tell your manager straight away so they're not surprised.","Stay up all night helping without telling anyone, even if quality suffers."],best:1,worst:4,explanation:"Option B is collaborative and bounded. Option E sacrifices sleep and quality without communication, leading to worse outcomes for everyone."}
+];
+var sjtCurrentQ,sjtAnswers,sjtTimerInterval,sjtSecondsLeft;
+function sjtReset(){
+  clearInterval(sjtTimerInterval);sjtCurrentQ=0;sjtAnswers=sjtScenarios.map(function(){return{best:null,worst:null};});sjtSecondsLeft=1800;
+  document.getElementById('sjt-instructions').classList.remove('hidden');
+  document.getElementById('sjt-game').classList.add('hidden');
+  document.getElementById('sjt-results').classList.add('hidden');
+}
+function sjtStart(){
+  sjtCurrentQ=0;sjtAnswers=sjtScenarios.map(function(){return{best:null,worst:null};});sjtSecondsLeft=1800;
+  document.getElementById('sjt-instructions').classList.add('hidden');
+  document.getElementById('sjt-game').classList.remove('hidden');
+  sjtRenderQ(0);
+  sjtTimerInterval=setInterval(function(){
+    sjtSecondsLeft--;
+    var m=Math.floor(sjtSecondsLeft/60).toString().padStart(2,'0'),s=(sjtSecondsLeft%60).toString().padStart(2,'0');
+    var el=document.getElementById('sjt-timer');el.textContent=m+':'+s;
+    if(sjtSecondsLeft<=60)el.classList.add('urgent');
+    if(sjtSecondsLeft<=0){clearInterval(sjtTimerInterval);sjtSubmit();}
+  },1000);
+}
+function sjtRenderQ(idx){
+  sjtCurrentQ=idx;var q=sjtScenarios[idx],saved=sjtAnswers[idx];
+  document.getElementById('sjt-counter').textContent='Scenario '+(idx+1)+' of '+sjtScenarios.length;
+  document.getElementById('sjt-progress').style.width=((idx+1)/sjtScenarios.length*100)+'%';
+  document.getElementById('sjt-prev').disabled=idx===0;
+  document.getElementById('sjt-next').disabled=idx===sjtScenarios.length-1;
+  var letters='ABCDEFGHIJ';
+  var html='<div class="question-card"><div class="question-number">Scenario '+(idx+1)+'</div><div style="background:var(--bg3);border-left:3px solid var(--cappfinity,#00B894);padding:1rem;border-radius:0 var(--radius) var(--radius) 0;margin-bottom:1rem;font-size:0.92rem;line-height:1.7">'+q.scenario+'</div><p class="sjt-instruction">Select the <strong style="color:var(--success)">Most Effective</strong> and <strong style="color:var(--danger)">Least Effective</strong> response:</p><div class="sjt-options">';
+  q.options.forEach(function(opt,i){
+    var cls='',badge=letters[i];
+    if(saved.best===i){cls='best';badge='✓ Best';}
+    else if(saved.worst===i){cls='worst';badge='✗ Worst';}
+    html+='<button class="sjt-option '+cls+'" onclick="sjtSelect('+idx+','+i+',this)"><span class="sjt-rank-badge">'+badge+'</span>'+opt+'</button>';
+  });
+  html+='</div></div>';
+  document.getElementById('sjt-question-area').innerHTML=html;
+}
+function sjtSelect(qi,oi,el){
+  var saved=sjtAnswers[qi],letters='ABCDEFGHIJ';
+  if(saved.best===oi){saved.best=null;el.classList.remove('best');el.querySelector('.sjt-rank-badge').textContent=letters[oi];}
+  else if(saved.worst===oi){saved.worst=null;el.classList.remove('worst');el.querySelector('.sjt-rank-badge').textContent=letters[oi];}
+  else if(saved.best===null){saved.best=oi;el.classList.add('best');el.querySelector('.sjt-rank-badge').textContent='✓ Best';}
+  else if(saved.worst===null&&saved.best!==oi){saved.worst=oi;el.classList.add('worst');el.querySelector('.sjt-rank-badge').textContent='✗ Worst';}
+}
+function sjtNav(d){var n=sjtCurrentQ+d;if(n>=0&&n<sjtScenarios.length)sjtRenderQ(n);}
+function sjtSubmit(){
+  clearInterval(sjtTimerInterval);
+  document.getElementById('sjt-game').classList.add('hidden');
+  document.getElementById('sjt-results').classList.remove('hidden');
+  var score=0,max=sjtScenarios.length*2,html='';
+  sjtScenarios.forEach(function(q,i){
+    var a=sjtAnswers[i],bc=a.best===q.best,wc=a.worst===q.worst,pts=(bc?1:0)+(wc?1:0);score+=pts;
+    html+='<div class="question-card" style="margin-bottom:1rem"><div class="question-number" style="color:'+(pts===2?'var(--success)':pts===1?'var(--warning)':'var(--danger)')+'">Scenario '+(i+1)+' — '+pts+'/2 points</div><div style="font-size:0.85rem;background:var(--bg3);padding:0.75rem;border-radius:var(--radius);margin-bottom:0.75rem;line-height:1.6">'+q.scenario+'</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;font-size:0.82rem"><div><div style="color:var(--text-muted);margin-bottom:0.25rem">Your Best:</div><strong style="color:'+(bc?'var(--success)':'var(--danger)')+'">'+( a.best!==null?q.options[a.best]:'Not selected')+'</strong></div><div><div style="color:var(--text-muted);margin-bottom:0.25rem">Your Worst:</div><strong style="color:'+(wc?'var(--success)':'var(--danger)')+'">'+( a.worst!==null?q.options[a.worst]:'Not selected')+'</strong></div>';
+    if(!bc)html+='<div><div style="color:var(--text-muted)">Correct Best:</div><strong style="color:var(--success)">'+q.options[q.best]+'</strong></div>';
+    if(!wc)html+='<div><div style="color:var(--text-muted)">Correct Worst:</div><strong style="color:var(--success)">'+q.options[q.worst]+'</strong></div>';
+    html+='</div><div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.5rem">💡 '+q.explanation+'</div></div>';
+  });
+  document.getElementById('sjt-final').textContent=score+' / '+max;
+  document.getElementById('sjt-review').innerHTML=html;
+}
+</script>
+</body>
+</html>
