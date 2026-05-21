@@ -1172,7 +1172,13 @@ var numQuestions=[
   {table:{title:"Vertex Asset Management — Fund Returns (%)",headers:["Fund","Year 1","Year 2","Year 3","Year 4"],rows:[["Growth Fund","+12.4","+8.2","-3.1","+15.6"],["Balanced Fund","+7.8","+6.5","+2.4","+9.1"],["Income Fund","+4.2","+4.8","+3.9","+5.3"],["Global Equity","+18.2","-2.4","+6.8","+21.3"],["Fixed Income","+3.1","+3.4","+3.2","+3.0"]]},question:"Which fund had the highest average annual return over the 4 years?",options:["Growth Fund","Balanced Fund","Income Fund","Global Equity","Fixed Income"],answer:3,explanation:"Global Equity avg = (18.2−2.4+6.8+21.3)÷4 = 10.975% (highest)"},
   {table:{title:"Vertex Asset Management — Fund Returns (%)",headers:["Fund","Year 1","Year 2","Year 3","Year 4"],rows:[["Growth Fund","+12.4","+8.2","-3.1","+15.6"],["Balanced Fund","+7.8","+6.5","+2.4","+9.1"],["Income Fund","+4.2","+4.8","+3.9","+5.3"],["Global Equity","+18.2","-2.4","+6.8","+21.3"],["Fixed Income","+3.1","+3.4","+3.2","+3.0"]]},question:"If £10,000 was invested in Fixed Income at start of Year 1, approximately how much after 4 years?",options:["£11,200","£11,320","£11,480","£11,600","£11,740"],answer:1,explanation:"Compounding: 10000 × 1.031 × 1.034 × 1.032 × 1.030 ≈ £11,320"},
   {table:{title:"ClearPath Logistics — Delivery Performance",headers:["Quarter","On-Time (%)","Late (%)","Total Deliveries"],rows:[["Q1 2023","91.2","8.8","24,500"],["Q2 2023","89.6","10.4","26,200"],["Q3 2023","93.4","6.6","28,800"],["Q4 2023","94.8","5.2","31,400"]]},question:"How many deliveries were late in Q2 2023?",options:["2,480","2,565","2,725","2,808","2,945"],answer:2,explanation:"26,200 × 0.104 = 2,724.8 ≈ 2,725"},
-  {table:{title:"ClearPath Logistics — Delivery Performance",headers:["Quarter","On-Time (%)","Late (%)","Total Deliveries"],rows:[["Q1 2023","91.2","8.8","24,500"],["Q2 2023","89.6","10.4","26,200"],["Q3 2023","93.4","6.6","28,800"],["Q4 2023","94.8","5.2","31,400"]]},question:"Total on-time deliveries across all four quarters were approximately:",options:["98,200","100,400","102,600","104,800","106,400"],answer:2,explanation:"Sum: 22,344+23,475+26,899+29,755 = 102,473 ≈ 102,600"}
+  {table:{title:"ClearPath Logistics — Delivery Performance",headers:["Quarter","On-Time (%)","Late (%)","Total Deliveries"],rows:[["Q1 2023","91.2","8.8","24,500"],["Q2 2023","89.6","10.4","26,200"],["Q3 2023","93.4","6.6","28,800"],["Q4 2023","94.8","5.2","31,400"]]},question:"Total on-time deliveries across all four quarters were approximately:",options:["98,200","100,400","102,600","104,800","106,400"],answer:2,explanation:"Sum: 22,344+23,475+26,899+29,755 = 102,473 ≈ 102,600"},
+  {table:{title:"Arcadia Capital — AUM by Strategy (£bn)",headers:["Strategy","2020","2021","2022","2023"],rows:[["Long/Short Equity","4.2","5.1","4.8","6.3"],["Global Macro","2.8","3.4","3.9","4.1"],["Credit","1.9","2.2","2.6","3.0"],["Quant","0.8","1.2","1.8","2.7"],["Total","9.7","11.9","13.1","16.1"]]},question:"Which strategy had the highest compound annual growth rate from 2020 to 2023?",options:["Long/Short Equity","Global Macro","Credit","Quant","All grew equally"],answer:3,explanation:"Quant: 0.8 to 2.7 = 50% CAGR. Long/Short: ~14.7%. Macro: ~13.6%. Credit: ~16.5%. Quant is highest."},
+  {table:{title:"Arcadia Capital — AUM by Strategy (£bn)",headers:["Strategy","2020","2021","2022","2023"],rows:[["Long/Short Equity","4.2","5.1","4.8","6.3"],["Global Macro","2.8","3.4","3.9","4.1"],["Credit","1.9","2.2","2.6","3.0"],["Quant","0.8","1.2","1.8","2.7"],["Total","9.7","11.9","13.1","16.1"]]},question:"In 2022, what was the combined share of Global Macro and Credit as a percentage of total AUM?",options:["44%","47%","50%","53%","56%"],answer:2,explanation:"(3.9 + 2.6) / 13.1 = 6.5 / 13.1 = 49.6% ≈ 50%"},
+  {table:{title:"Helix Pharma — Pipeline Revenue Forecast (£m)",headers:["Drug","Phase","2024E","2025E","2026E"],rows:[["HX-101","III","0","180","420"],["HX-202","II","0","0","90"],["HX-303","Approved","340","380","410"],["HX-404","III","0","220","350"],["Total","","340","780","1,270"]]},question:"Between 2024 and 2026, by how much does total forecast revenue grow in absolute terms?",options:["£820m","£870m","£920m","£930m","£960m"],answer:3,explanation:"1,270 − 340 = £930m absolute growth over the two-year period."},
+  {table:{title:"Helix Pharma — Pipeline Revenue Forecast (£m)",headers:["Drug","Phase","2024E","2025E","2026E"],rows:[["HX-101","III","0","180","420"],["HX-202","II","0","0","90"],["HX-303","Approved","340","380","410"],["HX-404","III","0","220","350"],["Total","","340","780","1,270"]]},question:"In 2025, what percentage of total forecast revenue comes from already-approved drugs?",options:["44%","49%","52%","56%","61%"],answer:1,explanation:"380 / 780 = 48.7% ≈ 49%"},
+  {table:{title:"TerraFund REIT — Property Portfolio (£m)",headers:["Sector","Value","Annual Yield (%)","Occupancy (%)"],rows:[["Office","1,240","5.8","87"],["Retail","680","6.4","79"],["Industrial","940","7.1","96"],["Residential","420","4.2","99"],["Total","3,280","","90"]]},question:"Which sector generates the highest absolute annual income?",options:["Office","Retail","Industrial","Residential","Cannot determine"],answer:0,explanation:"Office: 1,240 × 5.8% = £71.9m. Industrial: 940 × 7.1% = £66.7m. Office is highest."},
+  {table:{title:"TerraFund REIT — Property Portfolio (£m)",headers:["Sector","Value","Annual Yield (%)","Occupancy (%)"],rows:[["Office","1,240","5.8","87"],["Retail","680","6.4","79"],["Industrial","940","7.1","96"],["Residential","420","4.2","99"],["Total","3,280","","90"]]},question:"If Retail occupancy improved from 79% to 95%, and yield scales proportionally, what would be the new Retail yield?",options:["7.1%","7.7%","7.9%","8.0%","8.2%"],answer:1,explanation:"6.4% × (95/79) = 6.4% × 1.2025 ≈ 7.7%"}
 ];
 var numCurrentQ,numAnswers,numTimerInterval,numSecondsLeft;
 function numReset(){
@@ -1245,7 +1251,13 @@ var verQuestions=[
   {passage:"Remote work adoption accelerated dramatically during COVID-19, with many companies maintaining hybrid arrangements permanently. Research from Stanford University found that remote workers were 13% more productive than office-based counterparts, though this effect was partially offset by feelings of isolation reported by 24% of remote employees. Not all roles are suited to remote work; positions requiring physical presence or specialised equipment remain predominantly office-based. Companies implementing hybrid models report challenges in maintaining a unified corporate culture.",statement:"Hybrid working models have been shown to resolve corporate culture challenges.",answer:"False",explanation:"The passage states hybrid models 'report challenges in maintaining a unified corporate culture' — problems persist."},
   {passage:"Quantitative easing (QE) is a monetary policy tool whereby central banks purchase government bonds to inject money into the economy. First widely used during the 2008 global financial crisis, QE aims to lower interest rates and stimulate lending. Critics argue that QE primarily benefits asset owners — inflating stock and property prices — while doing little for those without assets. Supporters counter that without QE, credit markets could have frozen entirely in 2008. The long-term effects of extended QE on inflation remain a subject of active academic debate.",statement:"QE was first used as a monetary policy tool in the 2008 global financial crisis.",answer:"Cannot Say",explanation:"The passage says QE was 'first widely used' in 2008 — not that it was first invented then."},
   {passage:"Quantitative easing (QE) is a monetary policy tool whereby central banks purchase government bonds to inject money into the economy. First widely used during the 2008 global financial crisis, QE aims to lower interest rates and stimulate lending. Critics argue that QE primarily benefits asset owners — inflating stock and property prices — while doing little for those without assets. Supporters counter that without QE, credit markets could have frozen entirely in 2008. The long-term effects of extended QE on inflation remain a subject of active academic debate.",statement:"According to critics, QE disproportionately benefits wealthier individuals.",answer:"True",explanation:"Critics argue QE 'primarily benefits asset owners' by inflating asset prices while doing little for those without assets."},
-  {passage:"Quantitative easing (QE) is a monetary policy tool whereby central banks purchase government bonds to inject money into the economy. First widely used during the 2008 global financial crisis, QE aims to lower interest rates and stimulate lending. Critics argue that QE primarily benefits asset owners — inflating stock and property prices — while doing little for those without assets. Supporters counter that without QE, credit markets could have frozen entirely in 2008. The long-term effects of extended QE on inflation remain a subject of active academic debate.",statement:"Academic consensus holds that prolonged QE definitively causes inflation.",answer:"False",explanation:"The passage states the effects 'remain a subject of active academic debate' — no definitive consensus."}
+  {passage:"Quantitative easing (QE) is a monetary policy tool whereby central banks purchase government bonds to inject money into the economy. First widely used during the 2008 global financial crisis, QE aims to lower interest rates and stimulate lending. Critics argue that QE primarily benefits asset owners — inflating stock and property prices — while doing little for those without assets. Supporters counter that without QE, credit markets could have frozen entirely in 2008. The long-term effects of extended QE on inflation remain a subject of active academic debate.",statement:"Academic consensus holds that prolonged QE definitively causes inflation.",answer:"False",explanation:"The passage states the effects 'remain a subject of active academic debate' — no definitive consensus."},
+  {passage:"Artificial intelligence in healthcare has shown considerable promise, particularly in diagnostic imaging. Algorithms trained on millions of labelled scans have demonstrated sensitivity rates exceeding 95% for certain cancers — outperforming average radiologist benchmarks in controlled studies. However, deployment in clinical settings has lagged behind research findings due to regulatory requirements, liability concerns, and the need for explainability in clinical decisions. The NHS has piloted AI diagnostic tools in three trusts with mixed early results.",statement:"AI diagnostic tools are currently deployed across all NHS trusts.",answer:"False",explanation:"The passage states the NHS piloted tools in three trusts only, not all trusts."},
+  {passage:"Artificial intelligence in healthcare has shown considerable promise, particularly in diagnostic imaging. Algorithms trained on millions of labelled scans have demonstrated sensitivity rates exceeding 95% for certain cancers — outperforming average radiologist benchmarks in controlled studies. However, deployment in clinical settings has lagged behind research findings due to regulatory requirements, liability concerns, and the need for explainability in clinical decisions. The NHS has piloted AI diagnostic tools in three trusts with mixed early results.",statement:"Regulatory hurdles are among the reasons AI tools have not been more widely deployed clinically.",answer:"True",explanation:"The passage explicitly cites regulatory requirements as one reason clinical deployment has lagged."},
+  {passage:"Artificial intelligence in healthcare has shown considerable promise, particularly in diagnostic imaging. Algorithms trained on millions of labelled scans have demonstrated sensitivity rates exceeding 95% for certain cancers — outperforming average radiologist benchmarks in controlled studies. However, deployment in clinical settings has lagged behind research findings due to regulatory requirements, liability concerns, and the need for explainability in clinical decisions. The NHS has piloted AI diagnostic tools in three trusts with mixed early results.",statement:"The NHS pilot programmes have been deemed successful by independent evaluators.",answer:"Cannot Say",explanation:"The passage says results were mixed, but says nothing about independent evaluators or success determinations."},
+  {passage:"Private equity buyouts involve acquiring a company using a combination of equity and significant debt financing. The debt is typically placed on the acquired company's balance sheet, with the expectation that strong cash flows will service the debt while management improvements drive equity value. Critics argue this model prioritises financial engineering over operational value creation and can lead to job losses. Proponents counter that PE-backed companies benefit from active ownership and access to strategic resources not available to public-market peers.",statement:"In a private equity buyout, the acquiring firm directly bears all debt obligations on its own balance sheet.",answer:"False",explanation:"The debt is placed on the acquired company's balance sheet, not the acquiring firm's."},
+  {passage:"Private equity buyouts involve acquiring a company using a combination of equity and significant debt financing. The debt is typically placed on the acquired company's balance sheet, with the expectation that strong cash flows will service the debt while management improvements drive equity value. Critics argue this model prioritises financial engineering over operational value creation and can lead to job losses. Proponents counter that PE-backed companies benefit from active ownership and access to strategic resources not available to public-market peers.",statement:"Private equity firms provide portfolio companies with strategic resources that publicly listed companies may lack access to.",answer:"True",explanation:"Proponents are cited as arguing PE-backed companies get 'strategic resources not available to public-market peers'."},
+  {passage:"Private equity buyouts involve acquiring a company using a combination of equity and significant debt financing. The debt is typically placed on the acquired company's balance sheet, with the expectation that strong cash flows will service the debt while management improvements drive equity value. Critics argue this model prioritises financial engineering over operational value creation and can lead to job losses. Proponents counter that PE-backed companies benefit from active ownership and access to strategic resources not available to public-market peers.",statement:"The majority of PE buyouts result in net job losses at acquired companies.",answer:"Cannot Say",explanation:"Critics argue PE can lead to job losses, but no data on the majority of outcomes is provided."}
 ];
 var verCurrentQ,verAnswers,verTimerInterval,verSecondsLeft;
 var VER_OPTS=["True","False","Cannot Say"];
@@ -1398,7 +1410,11 @@ var sjtScenarios=[
   {scenario:"Midway through an internship you realise you've been using the wrong methodology for two weeks. Restarting will take another week. You're not sure if anyone else knows.",options:["Quietly restart using the correct method and hope no one notices the delay.","Inform your manager immediately, explain what happened, and present a correction plan.","Submit the work knowing it uses the wrong method — the outcome might still be acceptable.","Ask a colleague if they think anyone will notice, and decide based on their response.","Ask to extend the deadline and restart without explaining why."],best:1,worst:2,explanation:"Option B is best: honest, proactive, and solution-oriented. Option C is worst: knowingly submitting flawed work is professionally dishonest."},
   {scenario:"A colleague consistently takes credit for the team's ideas in group meetings. It's affecting morale and several people have mentioned it privately. The colleague is well-regarded by management.",options:["Raise a formal complaint with HR immediately.","Do nothing — getting involved could harm your reputation.","Speak privately and constructively with the colleague, sharing your observations and their impact on the team.","Bring it up in the next team meeting in front of everyone.","Mention it to your manager in a one-to-one as a team dynamic concern, framing it as a process issue rather than a personal attack."],best:4,worst:3,explanation:"Option E is best: professional and addresses the structural issue without drama. Option D would embarrass the colleague and escalate conflict."},
   {scenario:"A client tells you your written communication style is 'too technical and hard to follow'. You believe your level of technical detail is appropriate and necessary.",options:["Continue as you have — the client needs to raise their technical literacy.","Adjust your style for this client — add plain-language summaries, define jargon, and ask for specific feedback on what is unclear.","Ask your manager to handle all written communication with this client.","Send simpler future documents but include the detailed version as an appendix.","Tell the client the technical detail is required and cannot be removed."],best:1,worst:0,explanation:"Option B adapts to the client while preserving quality. Option A dismisses client feedback, which is unprofessional."},
-  {scenario:"It is 10pm before a major deliverable is due. You finished your section with good work. A teammate messages saying they are significantly behind and the whole submission may be incomplete.",options:["It's their problem — you finished your part on time.","Offer to help for an hour, then review your own work to ensure your contribution is still strong.","Take over their section entirely and do it yourself.","Tell your manager straight away so they're not surprised.","Stay up all night helping without telling anyone, even if quality suffers."],best:1,worst:4,explanation:"Option B is collaborative and bounded. Option E sacrifices sleep and quality without communication, leading to worse outcomes for everyone."}
+  {scenario:"It is 10pm before a major deliverable is due. You finished your section with good work. A teammate messages saying they are significantly behind and the whole submission may be incomplete.",options:["It's their problem — you finished your part on time.","Offer to help for an hour, then review your own work to ensure your contribution is still strong.","Take over their section entirely and do it yourself.","Tell your manager straight away so they're not surprised.","Stay up all night helping without telling anyone, even if quality suffers."],best:1,worst:4,explanation:"Option B is collaborative and bounded. Option E sacrifices sleep and quality without communication, leading to worse outcomes for everyone."},
+  {scenario:"You discover that a process your team has used for months contains a minor error that slightly overstates client returns by approximately 0.3%. The error is your predecessor's and predates your joining. Clients have received quarterly reports based on this figure.",options:["Do nothing — the error is small and predates you, so it is not your responsibility.","Immediately inform your manager, document what you have found, and recommend issuing a corrected report to affected clients.","Fix the process going forward but say nothing about historical reports.","Raise it with Compliance directly, bypassing your manager, to protect yourself.","Correct it quietly in the next report without flagging the historical discrepancy."],best:1,worst:0,explanation:"Option B is best: transparent, proactive, and follows proper escalation. Option A is worst: ignoring a known client-facing error, however small, is a professional and regulatory failure."},
+  {scenario:"You are presenting findings to a client. Halfway through, the client's CFO aggressively interrupts to challenge one of your assumptions, claiming your model is wrong. You believe your assumption is sound but have not stress-tested this particular scenario.",options:["Argue your position confidently — backing down signals weakness.","Immediately concede and promise to redo the entire analysis.","Calmly acknowledge the challenge, commit to reviewing that specific assumption with your team, and offer to follow up within 24 hours with additional scenario analysis.","Defer to a more senior colleague in the room to handle the pushback.","Tell the CFO they are incorrect and cite your methodology in detail."],best:2,worst:1,explanation:"Option C is best: professional, non-defensive, and commits to resolution. Option B is worst: full capitulation without investigation is premature and undermines the credibility of your work."},
+  {scenario:"Your team is using an outdated manual process that takes 4 hours weekly. You have built a script that automates it in 10 minutes, but it was built in your own time. Your manager has not asked for improvements.",options:["Keep using the old process — it was not your assignment to improve it.","Share the script with your team and manager, explaining how it works and the time saving.","Use the script yourself secretly to free up time, but do not share it.","Demand recognition or compensation before sharing the script.","Report the inefficiency to your manager without offering a solution."],best:1,worst:3,explanation:"Option B is best: sharing improvements freely demonstrates initiative and team orientation. Option D is worst: withholding value to extract personal gain is incompatible with professional culture."},
+  {scenario:"You overhear two senior colleagues discussing a prospective deal involving a company whose shares you happen to own personally. The conversation appears to contain non-public information.",options:["Buy more shares immediately before any public announcement.","Ignore what you heard — it was not your conversation.","Immediately disclose the situation to your Compliance officer and refrain from trading until guidance is received.","Sell your existing shares to avoid any risk, without telling anyone.","Inform a friend about the opportunity as you are not trading yourself."],best:2,worst:0,explanation:"Option C is best: immediate compliance disclosure is the only correct response when potential material non-public information is involved. Option A is insider trading — a serious criminal offence."}
 ];
 var sjtCurrentQ,sjtAnswers,sjtTimerInterval,sjtSecondsLeft;
 function sjtReset(){
@@ -2103,7 +2119,12 @@ var wgQs=[
   {type:'Assumptions',stem:'"Advertising on social media will boost brand awareness among millennials."',statement:'Assumption: Millennials regularly use social media.',opts:['Assumption Made','Assumption Not Made'],ans:0,exp:'The strategy only works if millennials are on the platform — assumption is made.'},
   {type:'Deductions',stem:'All FTSE 100 companies publish sustainability reports. Unilever is a FTSE 100 company.',statement:'Unilever publishes an annual sustainability report.',opts:['Conclusion Follows','Does Not Follow'],ans:0,exp:'Valid universal affirmative syllogism.'},
   {type:'Interpretation',stem:'Countries with higher chocolate consumption have more Nobel Prize winners per capita.',statement:'Chocolate consumption increases cognitive ability.',opts:['Conclusion Follows','Does Not Follow'],ans:1,exp:'Classic spurious correlation — both likely correlate with general wealth, not each other.'},
-  {type:'Evaluation',stem:'Argument: "Four-day work weeks should be adopted: employees report higher satisfaction."',statement:'Is this a strong argument?',opts:['Strong','Weak'],ans:0,exp:'Satisfaction is a legitimate, well-evidenced benefit — a substantive argument.'}
+  {type:'Evaluation',stem:'Argument: "Four-day work weeks should be adopted: employees report higher satisfaction."',statement:'Is this a strong argument?',opts:['Strong','Weak'],ans:0,exp:'Satisfaction is a legitimate, well-evidenced benefit — a substantive argument.'},
+  {type:'Inference',stem:'A leading investment bank reported record profits last year despite global economic headwinds. Analyst bonuses were reduced by 15%.',statement:'The bank is retaining more profit rather than distributing it to employees.',opts:['True','Probably True','Insufficient Data','Probably False','False'],ans:1,exp:'Record profits plus lower bonuses suggests more is being retained — probable but not certain.'},
+  {type:'Assumptions',stem:'"We should expand into the Asian market because our European growth has stalled."',statement:'Assumption: The Asian market will be receptive to our product.',opts:['Assumption Made','Assumption Not Made'],ans:0,exp:'Expansion only makes sense if the target market offers a viable opportunity — this is assumed.'},
+  {type:'Deductions',stem:'No hedge funds are fully transparent to the public. Bridgewater is a hedge fund.',statement:'Bridgewater is fully transparent to the public.',opts:['Conclusion Follows','Does Not Follow'],ans:1,exp:'Wait — universal negative applied correctly means Bridgewater is NOT fully transparent. The statement claims it IS, so the stated conclusion does not follow.'},
+  {type:'Interpretation',stem:'Firms that invest heavily in employee training have 24% lower staff turnover on average.',statement:'Cutting training budgets will increase staff turnover.',opts:['Conclusion Follows','Does Not Follow'],ans:1,exp:'Association does not establish causation — other factors may drive both training investment and retention.'},
+  {type:'Evaluation',stem:'Argument: "Stricter financial regulation should be imposed because the 2008 crisis caused widespread harm."',statement:'Is this a strong argument?',opts:['Strong','Weak'],ans:0,exp:'The premise (the crisis caused harm) is factual and directly supports greater oversight — a strong argument even if the solution is debated.'}
 ];
 var wgSelected=[],wgCurrent,wgTimerInterval,wgTimeLeft;
 
@@ -2197,7 +2218,16 @@ var codQs=[
   {q:'Space complexity of an adjacency list for a graph with V vertices and E edges?',opts:['O(V)','O(E)','O(V + E)','O(V²)'],ans:2,exp:'O(V) for vertex entries + O(E) for all edge references = O(V + E).'},
   {q:'What is the output?\n\nprint(type([]) == type(()))',opts:['True','False','TypeError','None'],ans:1,exp:'[] is list, () is tuple — different types, so False.'},
   {q:'Which paradigm does dynamic programming primarily use?',opts:['Divide and Conquer','Greedy','Memoization + optimal substructure','Backtracking'],ans:2,exp:'DP stores solutions to overlapping subproblems and builds on optimal substructure.'},
-  {q:'What does this print?\n\ndef f(x, lst=[]):\n    lst.append(x)\n    return lst\nprint(f(1))\nprint(f(2))',opts:['[1] then [2]','[1] then [1, 2]','[1, 2] twice','Error'],ans:1,exp:'Default mutable args are shared across calls — the list persists, giving [1] then [1, 2].'}
+  {q:'What does this print?\n\ndef f(x, lst=[]):\n    lst.append(x)\n    return lst\nprint(f(1))\nprint(f(2))',opts:['[1] then [2]','[1] then [1, 2]','[1, 2] twice','Error'],ans:1,exp:'Default mutable args are shared across calls — the list persists, giving [1] then [1, 2].'},
+  {q:'Which data structure is most efficient for implementing a priority queue?',opts:['Sorted array','Linked list','Binary heap','Hash map'],ans:2,exp:'A binary heap gives O(log n) insert and O(log n) extract-min/max — optimal for a priority queue.'},
+  {q:'What is the output of:\n\nprint(0.1 + 0.2 == 0.3)',opts:['True','False','TypeError','0.3'],ans:1,exp:'Floating point representation error means 0.1+0.2 = 0.30000000000000004, not exactly 0.3.'},
+  {q:'In SQL, what does a LEFT JOIN return?',opts:['Only matching rows from both tables','All rows from the left table plus matching rows from the right','All rows from both tables','Only rows that do not match'],ans:1,exp:'LEFT JOIN returns all rows from the left table; unmatched right-table columns are NULL.'},
+  {q:'What is the space complexity of depth-first search on a graph with V vertices and E edges?',opts:['O(1)','O(V)','O(E)','O(V + E)'],ans:1,exp:'DFS uses a stack that can hold at most V frames (the depth of recursion is bounded by the number of vertices).'},
+  {q:'Which Python expression correctly checks if a string s is a palindrome?',opts:['s == s.reverse()','s == s[::-1]','s == reversed(s)','palindrome(s)'],ans:1,exp:'s[::-1] creates a reversed copy of the string. s.reverse() does not exist for strings; reversed() returns an iterator.'},
+  {q:'What design pattern ensures only one instance of a class exists?',opts:['Factory','Observer','Singleton','Decorator'],ans:2,exp:'The Singleton pattern restricts instantiation to a single object, providing a global access point.'},
+  {q:'Given a sorted array, what is the time complexity of inserting a new element while maintaining sorted order?',opts:['O(1)','O(log n)','O(n)','O(n log n)'],ans:2,exp:'Binary search finds the position in O(log n), but shifting elements requires O(n) — total is O(n).'},
+  {q:'What does this return?\n\nlen(set([1,1,2,3,3,3,4]))',opts:['7','4','3','Error'],ans:1,exp:'set() removes duplicates: {1,2,3,4}. len() of that is 4.'},
+  {q:'Which HTTP status code indicates a resource was successfully created?',opts:['200 OK','201 Created','204 No Content','301 Moved Permanently'],ans:1,exp:'201 Created is the correct response when a POST request successfully creates a new resource.'}
 ];
 var codSelected=[],codCurrent,codTimerInterval,codTimeLeft;
 
@@ -2315,6 +2345,104 @@ function displayLeaderboard(score,gameType,resultsEl){
   })
   .catch(function(e){console.log('Leaderboard fetch error',e);});
 }
+</script>
+
+<script>
+// ===== DYNAMIC QUESTION FETCHING =====
+var _numQuestionsBase = numQuestions.slice();
+var _verQuestionsBase = verQuestions.slice();
+var _indQuestionsBase = indQuestions.slice();
+var _sjtScenariosBase = sjtScenarios.slice();
+var _wgQsBase = wgQs.slice();
+var _codQsBase = codQs.slice();
+
+function fetchDynamicQuestions(gameType) {
+  return fetch('/api/generate-questions/' + gameType, {signal: AbortSignal.timeout ? AbortSignal.timeout(12000) : undefined})
+    .then(function(r) { if (!r.ok) throw new Error('API error ' + r.status); return r.json(); })
+    .then(function(d) { return (d && d.questions && d.questions.length > 0) ? d.questions : null; })
+    .catch(function(e) { console.log('Dynamic questions unavailable, using defaults:', e.message); return null; });
+}
+
+var _numStartOrig = numStart;
+numStart = function() {
+  numCurrentQ=0;numAnswers=new Array(numQuestions.length).fill(null);numSecondsLeft=1200;
+  document.getElementById('num-instructions').classList.add('hidden');
+  document.getElementById('num-game').classList.remove('hidden');
+  document.getElementById('num-question-area').innerHTML='<div style="text-align:center;padding:3rem;color:var(--text-muted)">⏳ Loading fresh questions from AI…</div>';
+  fetchDynamicQuestions('numerical').then(function(qs) {
+    if(qs && qs.length>0){numQuestions=qs;}else{numQuestions=_numQuestionsBase;}
+    numAnswers=new Array(numQuestions.length).fill(null);
+    numRenderQ(0);numStartTimer();
+  });
+};
+
+var _verStartOrig = verStart;
+verStart = function() {
+  verCurrentQ=0;verAnswers=new Array(verQuestions.length).fill(null);verSecondsLeft=1020;
+  document.getElementById('ver-instructions').classList.add('hidden');
+  document.getElementById('ver-game').classList.remove('hidden');
+  document.getElementById('ver-question-area').innerHTML='<div style="text-align:center;padding:3rem;color:var(--text-muted)">⏳ Loading fresh questions from AI…</div>';
+  fetchDynamicQuestions('verbal').then(function(qs) {
+    if(qs && qs.length>0){verQuestions=qs;}else{verQuestions=_verQuestionsBase;}
+    verAnswers=new Array(verQuestions.length).fill(null);
+    verRenderQ(0);
+    verTimerInterval=setInterval(function(){
+      verSecondsLeft--;
+      var m=Math.floor(verSecondsLeft/60).toString().padStart(2,'0'),s=(verSecondsLeft%60).toString().padStart(2,'0');
+      var el=document.getElementById('ver-timer');el.textContent=m+':'+s;
+      if(verSecondsLeft<=60)el.classList.add('urgent');
+      if(verSecondsLeft<=0){clearInterval(verTimerInterval);verSubmit();}
+    },1000);
+  });
+};
+
+var _sjtStartOrig = sjtStart;
+sjtStart = function() {
+  sjtCurrentQ=0;sjtAnswers=sjtScenarios.map(function(){return{best:null,worst:null};});sjtSecondsLeft=1800;
+  document.getElementById('sjt-instructions').classList.add('hidden');
+  document.getElementById('sjt-game').classList.remove('hidden');
+  document.getElementById('sjt-question-area').innerHTML='<div style="text-align:center;padding:3rem;color:var(--text-muted)">⏳ Loading fresh scenarios from AI…</div>';
+  fetchDynamicQuestions('sjt').then(function(qs) {
+    if(qs && qs.length>0){sjtScenarios=qs;}else{sjtScenarios=_sjtScenariosBase;}
+    sjtAnswers=sjtScenarios.map(function(){return{best:null,worst:null};});
+    sjtRenderQ(0);
+    sjtTimerInterval=setInterval(function(){
+      sjtSecondsLeft--;
+      var m=Math.floor(sjtSecondsLeft/60).toString().padStart(2,'0'),s=(sjtSecondsLeft%60).toString().padStart(2,'0');
+      var el=document.getElementById('sjt-timer');el.textContent=m+':'+s;
+      if(sjtSecondsLeft<=60)el.classList.add('urgent');
+      if(sjtSecondsLeft<=0){clearInterval(sjtTimerInterval);sjtSubmit();}
+    },1000);
+  });
+};
+
+var _wgStartOrig = wgStart;
+wgStart = function() {
+  document.getElementById('wg-instructions').classList.add('hidden');
+  document.getElementById('wg-game').classList.remove('hidden');
+  wgSelected=new Array(wgQs.length).fill(null);
+  wgCurrent=0;wgTimeLeft=1200;
+  document.getElementById('wg-question-area').innerHTML='<div style="text-align:center;padding:3rem;color:var(--text-muted)">⏳ Loading fresh questions from AI…</div>';
+  fetchDynamicQuestions('watson_glaser').then(function(qs) {
+    if(qs && qs.length>0){wgQs=qs;}else{wgQs=_wgQsBase;}
+    wgSelected=new Array(wgQs.length).fill(null);
+    wgStartTimer();wgShowQ();
+  });
+};
+
+var _codStartOrig = codStart;
+codStart = function() {
+  document.getElementById('cod-instructions').classList.add('hidden');
+  document.getElementById('cod-game').classList.remove('hidden');
+  codSelected=new Array(codQs.length).fill(null);
+  codCurrent=0;codTimeLeft=2700;
+  document.getElementById('cod-question-area').innerHTML='<div style="text-align:center;padding:3rem;color:var(--text-muted)">⏳ Loading fresh questions from AI…</div>';
+  fetchDynamicQuestions('coding').then(function(qs) {
+    if(qs && qs.length>0){codQs=qs;}else{codQs=_codQsBase;}
+    codSelected=new Array(codQs.length).fill(null);
+    codStartTimer();codShowQ();
+  });
+};
 </script>
 
 
