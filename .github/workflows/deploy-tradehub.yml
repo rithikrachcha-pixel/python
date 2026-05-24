@@ -13,33 +13,36 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Diagnose and Deploy
+        id: deploy
         run: |
           set -e
           SITE_ID="4cf59dab-5980-4669-995e-074bd3247148"
           TOKEN="${NETLIFY_AUTH_TOKEN}"
 
-          echo "=== TOKEN INFO ==="
-          echo "Token length: ${#TOKEN}"
-          echo "Token prefix: ${TOKEN:0:4}"
+          {
+            echo "=== TOKEN INFO ==="
+            echo "Token length: ${#TOKEN}"
+            echo "Token prefix: ${TOKEN:0:4}"
+            echo "Token suffix: ${TOKEN: -4}"
 
-          echo "=== TEST AUTH ==="
-          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
-            -H "Authorization: Bearer ${TOKEN}" \
-            https://api.netlify.com/api/v1/user)
-          HTTP_STATUS=$(echo "$RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
-          BODY=$(echo "$RESPONSE" | grep -v "HTTP_STATUS:")
-          echo "HTTP Status: $HTTP_STATUS"
-          echo "Response: $BODY" | head -c 500
+            echo "=== TEST AUTH ==="
+            RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
+              -H "Authorization: Bearer ${TOKEN}" \
+              https://api.netlify.com/api/v1/user 2>&1)
+            HTTP_STATUS=$(echo "$RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
+            BODY=$(echo "$RESPONSE" | grep -v "HTTP_STATUS:")
+            echo "HTTP Status: $HTTP_STATUS"
+            echo "Body: $(echo "$BODY" | cut -c1-300)"
 
-          if [ "$HTTP_STATUS" != "200" ]; then
-            echo "Auth failed! Token is invalid or empty."
-            exit 1
-          fi
+            if [ "$HTTP_STATUS" != "200" ]; then
+              echo "AUTH FAILED"
+              exit 1
+            fi
 
-          echo "=== DEPLOYING ==="
-          pip3 install -q requests
-          python3 -c "
-          import requests, hashlib, os, time, json
+            echo "=== DEPLOYING ==="
+            pip3 install -q requests
+            python3 << 'PYEOF'
+          import requests, hashlib, os, time
 
           token = os.environ['NETLIFY_AUTH_TOKEN']
           site_id = '4cf59dab-5980-4669-995e-074bd3247148'
@@ -48,22 +51,21 @@ jobs:
           with open('tradehub-deploy/index.html', 'rb') as f:
               content = f.read()
           sha1 = hashlib.sha1(content).hexdigest()
-          print(f'File SHA1: {sha1[:8]}..., size: {len(content)} bytes')
+          print(f'File: {len(content)} bytes, sha1={sha1[:8]}')
 
           r = requests.post(
               f'https://api.netlify.com/api/v1/sites/{site_id}/deploys',
               headers={**headers, 'Content-Type': 'application/json'},
               json={'files': {'/index.html': sha1}}
           )
-          print(f'Deploy create: HTTP {r.status_code}')
+          print(f'Create deploy: {r.status_code}')
           if not r.ok:
               print(r.text[:500])
-              exit(1)
+              raise SystemExit(1)
 
-          deploy = r.json()
-          deploy_id = deploy['id']
-          required = deploy.get('required', [])
-          print(f'Deploy ID: {deploy_id}, required: {len(required)} files')
+          d = r.json()
+          deploy_id, required = d['id'], d.get('required', [])
+          print(f'Deploy {deploy_id}, required={required}')
 
           if sha1 in required:
               r2 = requests.put(
@@ -71,20 +73,27 @@ jobs:
                   headers={**headers, 'Content-Type': 'application/octet-stream'},
                   data=content
               )
-              print(f'Upload: HTTP {r2.status_code}')
+              print(f'Upload: {r2.status_code}')
 
           for _ in range(20):
-              r3 = requests.get(f'https://api.netlify.com/api/v1/deploys/{deploy_id}', headers=headers)
-              d = r3.json()
-              state = d.get('state')
+              d2 = requests.get(f'https://api.netlify.com/api/v1/deploys/{deploy_id}', headers=headers).json()
+              state = d2.get('state')
               print(f'State: {state}')
               if state in ('ready', 'current'):
-                  print(f'Live at: {d.get(\"ssl_url\") or d.get(\"url\")}')
+                  print(f'URL: {d2.get("ssl_url") or d2.get("url")}')
                   break
               if state == 'error':
-                  print(f'Error: {d.get(\"error_message\")}')
-                  exit(1)
+                  raise SystemExit(f'Deploy error: {d2.get("error_message")}')
               time.sleep(3)
-          "
+          PYEOF
+          } 2>&1 | tee /tmp/deploy-output.txt
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+
+      - name: Upload diagnostic output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-output
+          path: /tmp/deploy-output.txt
+          retention-days: 1
