@@ -12,14 +12,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Netlify CLI
+        run: npm install -g netlify-cli@latest
+
       - name: Deploy to Netlify
-        uses: nwtgck/actions-netlify@v3
-        with:
-          publish-dir: tradehub-deploy
-          production-branch: claude/build-web-app-pc3Au
-          production-deploy: true
-          netlify-config-path: ./netlify.toml
-          deploy-message: "Deploy ${{ github.sha }}"
+        run: netlify deploy --prod --dir=tradehub-deploy --site=$NETLIFY_SITE_ID --auth=$NETLIFY_AUTH_TOKEN
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: 4cf59dab-5980-4669-995e-074bd3247148
