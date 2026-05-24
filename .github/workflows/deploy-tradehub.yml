@@ -12,37 +12,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Diagnose and Deploy
-        id: deploy
+      - name: Test auth and deploy
         run: |
-          set -e
-          SITE_ID="4cf59dab-5980-4669-995e-074bd3247148"
+          set -euo pipefail
           TOKEN="${NETLIFY_AUTH_TOKEN}"
+          SITE_ID="4cf59dab-5980-4669-995e-074bd3247148"
 
-          {
-            echo "=== TOKEN INFO ==="
-            echo "Token length: ${#TOKEN}"
-            echo "Token prefix: ${TOKEN:0:4}"
-            echo "Token suffix: ${TOKEN: -4}"
+          echo "## Deploy Output" >> "$GITHUB_STEP_SUMMARY"
+          echo "Token length: ${#TOKEN}" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "Token prefix: ${TOKEN:0:4}" | tee -a "$GITHUB_STEP_SUMMARY"
 
-            echo "=== TEST AUTH ==="
-            RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
-              -H "Authorization: Bearer ${TOKEN}" \
-              https://api.netlify.com/api/v1/user 2>&1)
-            HTTP_STATUS=$(echo "$RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
-            BODY=$(echo "$RESPONSE" | grep -v "HTTP_STATUS:")
-            echo "HTTP Status: $HTTP_STATUS"
-            echo "Body: $(echo "$BODY" | cut -c1-300)"
+          echo "### Auth test" >> "$GITHUB_STEP_SUMMARY"
+          STATUS=$(curl -s -o /tmp/auth.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${TOKEN}" \
+            https://api.netlify.com/api/v1/user)
+          echo "HTTP $STATUS" | tee -a "$GITHUB_STEP_SUMMARY"
+          cat /tmp/auth.json | python3 -c "import json,sys; d=json.load(sys.stdin); print('email:', d.get('email','?'))" \
+            2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          if [ "$STATUS" != "200" ]; then
+            echo "Auth FAILED" | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
 
-            if [ "$HTTP_STATUS" != "200" ]; then
-              echo "AUTH FAILED"
-              exit 1
-            fi
-
-            echo "=== DEPLOYING ==="
-            pip3 install -q requests
-            python3 << 'PYEOF'
-          import requests, hashlib, os, time
+          echo "### Deploy" >> "$GITHUB_STEP_SUMMARY"
+          pip3 install -q requests
+          python3 - << 'PYEOF' 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          import requests, hashlib, os, time, sys
 
           token = os.environ['NETLIFY_AUTH_TOKEN']
           site_id = '4cf59dab-5980-4669-995e-074bd3247148'
@@ -58,14 +53,16 @@ jobs:
               headers={**headers, 'Content-Type': 'application/json'},
               json={'files': {'/index.html': sha1}}
           )
-          print(f'Create deploy: {r.status_code}')
+          print(f'Create deploy: HTTP {r.status_code}')
           if not r.ok:
-              print(r.text[:500])
-              raise SystemExit(1)
+              print('ERROR:', r.text[:500])
+              sys.exit(1)
 
           d = r.json()
-          deploy_id, required = d['id'], d.get('required', [])
-          print(f'Deploy {deploy_id}, required={required}')
+          deploy_id = d['id']
+          required = d.get('required', [])
+          print(f'Deploy ID: {deploy_id}')
+          print(f'Required files: {required}')
 
           if sha1 in required:
               r2 = requests.put(
@@ -73,27 +70,24 @@ jobs:
                   headers={**headers, 'Content-Type': 'application/octet-stream'},
                   data=content
               )
-              print(f'Upload: {r2.status_code}')
+              print(f'Upload: HTTP {r2.status_code}')
+              if not r2.ok:
+                  print('Upload error:', r2.text[:300])
+                  sys.exit(1)
 
-          for _ in range(20):
+          for i in range(30):
               d2 = requests.get(f'https://api.netlify.com/api/v1/deploys/{deploy_id}', headers=headers).json()
               state = d2.get('state')
-              print(f'State: {state}')
+              print(f'Poll {i+1}: state={state}')
               if state in ('ready', 'current'):
-                  print(f'URL: {d2.get("ssl_url") or d2.get("url")}')
-                  break
+                  print(f'LIVE: {d2.get("ssl_url") or d2.get("url")}')
+                  sys.exit(0)
               if state == 'error':
-                  raise SystemExit(f'Deploy error: {d2.get("error_message")}')
+                  print(f'Deploy error: {d2.get("error_message")}')
+                  sys.exit(1)
               time.sleep(3)
+          print('Timed out waiting for deploy')
+          sys.exit(1)
           PYEOF
-          } 2>&1 | tee /tmp/deploy-output.txt
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-
-      - name: Upload diagnostic output
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: deploy-output
-          path: /tmp/deploy-output.txt
-          retention-days: 1
