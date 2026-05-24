@@ -14,29 +14,34 @@ jobs:
 
       - name: Test auth and deploy
         run: |
-          set -euo pipefail
+          set -uo pipefail
           TOKEN="${NETLIFY_AUTH_TOKEN}"
           SITE_ID="4cf59dab-5980-4669-995e-074bd3247148"
+          OUT="/tmp/debug.txt"
 
-          echo "## Deploy Output" >> "$GITHUB_STEP_SUMMARY"
-          echo "Token length: ${#TOKEN}" | tee -a "$GITHUB_STEP_SUMMARY"
-          echo "Token prefix: ${TOKEN:0:4}" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "Token length: ${#TOKEN}" | tee "$OUT"
+          echo "Token prefix: ${TOKEN:0:4}" | tee -a "$OUT"
 
-          echo "### Auth test" >> "$GITHUB_STEP_SUMMARY"
           STATUS=$(curl -s -o /tmp/auth.json -w "%{http_code}" \
             -H "Authorization: Bearer ${TOKEN}" \
             https://api.netlify.com/api/v1/user)
-          echo "HTTP $STATUS" | tee -a "$GITHUB_STEP_SUMMARY"
-          cat /tmp/auth.json | python3 -c "import json,sys; d=json.load(sys.stdin); print('email:', d.get('email','?'))" \
-            2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
-          if [ "$STATUS" != "200" ]; then
-            echo "Auth FAILED" | tee -a "$GITHUB_STEP_SUMMARY"
-            exit 1
-          fi
+          echo "Auth HTTP: $STATUS" | tee -a "$OUT"
+          python3 -c "
+          import json,sys
+          try:
+              d=json.load(open('/tmp/auth.json'))
+              print('email:',d.get('email','?'),'id:',d.get('id','?'))
+          except Exception as e:
+              print('parse error:',e)
+              print(open('/tmp/auth.json').read()[:200])
+          " | tee -a "$OUT"
 
-          echo "### Deploy" >> "$GITHUB_STEP_SUMMARY"
-          pip3 install -q requests
-          python3 - << 'PYEOF' 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          if [ "$STATUS" != "200" ]; then
+            echo "AUTH FAILED - token is invalid or empty" >> "$OUT"
+          else
+            echo "AUTH OK" >> "$OUT"
+            pip3 install -q requests
+            python3 - << 'PYEOF' >> "$OUT" 2>&1 || echo "PYTHON DEPLOY FAILED exit=$?" >> "$OUT"
           import requests, hashlib, os, time, sys
 
           token = os.environ['NETLIFY_AUTH_TOKEN']
@@ -46,23 +51,21 @@ jobs:
           with open('tradehub-deploy/index.html', 'rb') as f:
               content = f.read()
           sha1 = hashlib.sha1(content).hexdigest()
-          print(f'File: {len(content)} bytes, sha1={sha1[:8]}')
+          print(f'File: {len(content)} bytes sha1={sha1}')
 
           r = requests.post(
               f'https://api.netlify.com/api/v1/sites/{site_id}/deploys',
               headers={**headers, 'Content-Type': 'application/json'},
               json={'files': {'/index.html': sha1}}
           )
-          print(f'Create deploy: HTTP {r.status_code}')
+          print(f'Create: HTTP {r.status_code} {r.text[:300]}')
           if not r.ok:
-              print('ERROR:', r.text[:500])
               sys.exit(1)
 
           d = r.json()
+          print(f'Deploy: {d["id"]} required={d.get("required",[])}')
           deploy_id = d['id']
           required = d.get('required', [])
-          print(f'Deploy ID: {deploy_id}')
-          print(f'Required files: {required}')
 
           if sha1 in required:
               r2 = requests.put(
@@ -71,23 +74,28 @@ jobs:
                   data=content
               )
               print(f'Upload: HTTP {r2.status_code}')
-              if not r2.ok:
-                  print('Upload error:', r2.text[:300])
-                  sys.exit(1)
 
-          for i in range(30):
+          for i in range(20):
               d2 = requests.get(f'https://api.netlify.com/api/v1/deploys/{deploy_id}', headers=headers).json()
               state = d2.get('state')
-              print(f'Poll {i+1}: state={state}')
+              print(f'State {i}: {state}')
               if state in ('ready', 'current'):
-                  print(f'LIVE: {d2.get("ssl_url") or d2.get("url")}')
-                  sys.exit(0)
+                  print(f'URL: {d2.get("ssl_url")}')
+                  break
               if state == 'error':
-                  print(f'Deploy error: {d2.get("error_message")}')
+                  print(f'Error: {d2.get("error_message")}')
                   sys.exit(1)
               time.sleep(3)
-          print('Timed out waiting for deploy')
-          sys.exit(1)
           PYEOF
+          fi
+
+          # Commit debug output to repo
+          git config user.email "ci@deploy"
+          git config user.name "CI Deploy"
+          cp "$OUT" debug-output.txt
+          git add debug-output.txt
+          git commit -m "debug: deploy output" --allow-empty
+          git push
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
