@@ -12,17 +12,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Deploy to Netlify
-        uses: nwtgck/actions-netlify@v3
+      - uses: actions/setup-node@v4
         with:
-          publish-dir: tradehub-deploy
-          production-branch: claude/build-web-app-pc3Au
-          production-deploy: true
-          deploy-message: "Deploy from GitHub Actions"
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          enable-pull-request-comment: false
-          enable-commit-comment: false
-          enable-github-deployment: false
+          node-version: '20'
+
+      - name: Install Netlify CLI
+        run: npm install -g netlify-cli@latest
+
+      - name: Deploy
+        run: |
+          netlify deploy \
+            --dir tradehub-deploy \
+            --prod \
+            --message "Deploy $(date -u +%Y-%m-%dT%H:%M:%SZ)"
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: 4cf59dab-5980-4669-995e-074bd3247148
