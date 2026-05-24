@@ -1,0 +1,23 @@
+name: Deploy TradeHub to Netlify
+
+on:
+  push:
+    branches: [claude/build-web-app-pc3Au, main]
+    paths: [tradehub-deploy/**, tradehub.html]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Netlify
+        uses: nwtgck/actions-netlify@v3
+        with:
+          publish-dir: tradehub-deploy
+          production-branch: claude/build-web-app-pc3Au
+          production-deploy: true
+          netlify-config-path: ./netlify.toml
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: 4cf59dab-5980-4669-995e-074bd3247148
