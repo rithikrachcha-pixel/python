@@ -12,13 +12,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Deploy to Netlify
-        uses: nwtgck/actions-netlify@v3
-        with:
-          publish-dir: tradehub-deploy
-          production-branch: claude/build-web-app-pc3Au
-          production-deploy: true
-          deploy-message: "Deploy from GitHub Actions"
+      - name: Zip and deploy to Netlify
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: 4cf59dab-5980-4669-995e-074bd3247148
+        run: |
+          cd tradehub-deploy
+          zip -r ../deploy.zip .
+          cd ..
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -H "Authorization: Bearer $NETLIFY_AUTH_TOKEN" \
+            -H "Content-Type: application/zip" \
+            --data-binary @deploy.zip \
+            "https://api.netlify.com/api/v1/sites/4cf59dab-5980-4669-995e-074bd3247148/deploys")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | head -1)
+          echo "HTTP: $HTTP_CODE"
+          echo "$BODY" | python3 -c "import sys,json; d=json.load(sys.stdin); print('URL:', d.get('deploy_url') or d.get('url','n/a')); print('State:', d.get('state','n/a'))" 2>/dev/null || echo "$BODY"
+          [ "$HTTP_CODE" -lt 400 ] || exit 1
