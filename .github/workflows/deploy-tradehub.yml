@@ -14,88 +14,97 @@ jobs:
 
       - name: Test auth and deploy
         run: |
-          set -uo pipefail
           TOKEN="${NETLIFY_AUTH_TOKEN}"
           SITE_ID="4cf59dab-5980-4669-995e-074bd3247148"
           OUT="/tmp/debug.txt"
 
-          echo "Token length: ${#TOKEN}" | tee "$OUT"
-          echo "Token prefix: ${TOKEN:0:4}" | tee -a "$OUT"
+          {
+            echo "Token length: ${#TOKEN}"
+            echo "Token prefix: ${TOKEN:0:4}"
 
-          STATUS=$(curl -s -o /tmp/auth.json -w "%{http_code}" \
-            -H "Authorization: Bearer ${TOKEN}" \
-            https://api.netlify.com/api/v1/user)
-          echo "Auth HTTP: $STATUS" | tee -a "$OUT"
-          python3 -c "
+            STATUS=$(curl -s -o /tmp/auth.json -w "%{http_code}" \
+              -H "Authorization: Bearer ${TOKEN}" \
+              https://api.netlify.com/api/v1/user)
+            echo "Auth HTTP: $STATUS"
+            python3 -c "
           import json,sys
           try:
               d=json.load(open('/tmp/auth.json'))
-              print('email:',d.get('email','?'),'id:',d.get('id','?'))
+              print('email:', d.get('email','?'))
           except Exception as e:
-              print('parse error:',e)
-              print(open('/tmp/auth.json').read()[:200])
-          " | tee -a "$OUT"
+              raw=open('/tmp/auth.json').read()
+              print('parse err:', e, 'body:', raw[:200])
+          "
 
-          if [ "$STATUS" != "200" ]; then
-            echo "AUTH FAILED - token is invalid or empty" >> "$OUT"
-          else
-            echo "AUTH OK" >> "$OUT"
-            pip3 install -q requests
-            python3 - << 'PYEOF' >> "$OUT" 2>&1 || echo "PYTHON DEPLOY FAILED exit=$?" >> "$OUT"
+            if [ "$STATUS" != "200" ]; then
+              echo "AUTH FAILED"
+            else
+              echo "AUTH OK"
+              pip3 install -q requests 2>&1
+              python3 - << 'PYEOF' 2>&1 || echo "PYTHON EXIT $?"
           import requests, hashlib, os, time, sys
 
           token = os.environ['NETLIFY_AUTH_TOKEN']
           site_id = '4cf59dab-5980-4669-995e-074bd3247148'
-          headers = {'Authorization': f'Bearer {token}'}
+          H = {'Authorization': f'Bearer {token}'}
 
           with open('tradehub-deploy/index.html', 'rb') as f:
               content = f.read()
           sha1 = hashlib.sha1(content).hexdigest()
-          print(f'File: {len(content)} bytes sha1={sha1}')
+          print(f'File {len(content)}b sha={sha1}')
 
           r = requests.post(
               f'https://api.netlify.com/api/v1/sites/{site_id}/deploys',
-              headers={**headers, 'Content-Type': 'application/json'},
+              headers={**H, 'Content-Type': 'application/json'},
               json={'files': {'/index.html': sha1}}
           )
-          print(f'Create: HTTP {r.status_code} {r.text[:300]}')
-          if not r.ok:
-              sys.exit(1)
+          print(f'Create: {r.status_code} body={r.text[:400]}')
+          if not r.ok: sys.exit(1)
 
           d = r.json()
-          print(f'Deploy: {d["id"]} required={d.get("required",[])}')
-          deploy_id = d['id']
-          required = d.get('required', [])
+          did, req = d['id'], d.get('required', [])
+          print(f'DeployID={did} required={req}')
 
-          if sha1 in required:
+          if sha1 in req:
               r2 = requests.put(
-                  f'https://api.netlify.com/api/v1/deploys/{deploy_id}/files/index.html',
-                  headers={**headers, 'Content-Type': 'application/octet-stream'},
-                  data=content
-              )
-              print(f'Upload: HTTP {r2.status_code}')
+                  f'https://api.netlify.com/api/v1/deploys/{did}/files/index.html',
+                  headers={**H, 'Content-Type': 'application/octet-stream'}, data=content)
+              print(f'Upload: {r2.status_code}')
 
           for i in range(20):
-              d2 = requests.get(f'https://api.netlify.com/api/v1/deploys/{deploy_id}', headers=headers).json()
-              state = d2.get('state')
-              print(f'State {i}: {state}')
-              if state in ('ready', 'current'):
-                  print(f'URL: {d2.get("ssl_url")}')
-                  break
-              if state == 'error':
-                  print(f'Error: {d2.get("error_message")}')
-                  sys.exit(1)
+              d2 = requests.get(f'https://api.netlify.com/api/v1/deploys/{did}', headers=H).json()
+              st = d2.get('state')
+              print(f'Poll{i}: {st}')
+              if st in ('ready','current'):
+                  print(f'URL: {d2.get("ssl_url")}'); break
+              if st=='error':
+                  print(f'Err: {d2.get("error_message")}'); sys.exit(1)
               time.sleep(3)
           PYEOF
-          fi
+            fi
+          } 2>&1 | tee "$OUT"
 
-          # Commit debug output to repo
-          git config user.email "ci@deploy"
-          git config user.name "CI Deploy"
-          cp "$OUT" debug-output.txt
-          git add debug-output.txt
-          git commit -m "debug: deploy output" --allow-empty
-          git push
+          # Write debug file via GitHub API
+          CONTENT_B64=$(base64 -w 0 "$OUT")
+          # Check if file exists
+          EXISTING=$(curl -s -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/contents/debug-output.txt?ref=${GITHUB_REF_NAME}" \
+            | python3 -c "import json,sys; print(json.load(sys.stdin).get('sha',''))" 2>/dev/null || echo "")
+          if [ -n "$EXISTING" ]; then
+            JSON="{\"message\":\"ci: debug output\",\"content\":\"${CONTENT_B64}\",\"sha\":\"${EXISTING}\"}"
+          else
+            JSON="{\"message\":\"ci: debug output\",\"content\":\"${CONTENT_B64}\"}"
+          fi
+          curl -s -X PUT \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "Content-Type: application/json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/contents/debug-output.txt" \
+            -d "$JSON" | python3 -c "import json,sys; d=json.load(sys.stdin); print('File write:', d.get('content',{}).get('name','error'), d.get('message',''))" 2>/dev/null || echo "API write failed"
+
+          # Check if TOKEN was empty = fail the step properly
+          [ -n "$TOKEN" ] && [ "$STATUS" = "200" ]
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
