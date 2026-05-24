@@ -12,11 +12,91 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Netlify CLI
-        run: npm install -g netlify-cli@latest
+      - name: Deploy to Netlify via API
+        run: |
+          python3 << 'PYEOF'
+          import json, urllib.request, urllib.error, hashlib, os, time
 
-      - name: Deploy to Netlify
-        run: netlify deploy --prod --dir=tradehub-deploy --site=$NETLIFY_SITE_ID --auth=$NETLIFY_AUTH_TOKEN
+          token = os.environ['NETLIFY_AUTH_TOKEN']
+          site_id = '4cf59dab-5980-4669-995e-074bd3247148'
+
+          print(f"Token length: {len(token)}")
+
+          def api(path, method='GET', data=None, headers=None, raw_data=None):
+              url = f'https://api.netlify.com/api/v1/{path}'
+              h = {'Authorization': f'Bearer {token}'}
+              if headers:
+                  h.update(headers)
+              body = None
+              if data is not None:
+                  body = json.dumps(data).encode()
+                  h['Content-Type'] = 'application/json'
+              if raw_data is not None:
+                  body = raw_data
+              req = urllib.request.Request(url, data=body, headers=h, method=method)
+              try:
+                  with urllib.request.urlopen(req, timeout=60) as r:
+                      resp = r.read()
+                      return r.status, json.loads(resp) if resp.strip() else {}
+              except urllib.error.HTTPError as e:
+                  body = e.read().decode(errors='replace')
+                  print(f"HTTP {e.code}: {body[:500]}")
+                  raise
+
+          # Verify token
+          try:
+              s, user = api('user')
+              print(f"Auth OK: {user.get('email')} (id={user.get('id')})")
+          except Exception as ex:
+              print(f"Auth FAILED: {ex}")
+              exit(1)
+
+          # Read files
+          import glob
+          files = {}
+          file_contents = {}
+          deploy_dir = 'tradehub-deploy'
+          for filepath in glob.glob(f'{deploy_dir}/**/*', recursive=True):
+              if os.path.isfile(filepath):
+                  with open(filepath, 'rb') as f:
+                      content = f.read()
+                  rel = '/' + os.path.relpath(filepath, deploy_dir)
+                  sha1 = hashlib.sha1(content).hexdigest()
+                  files[rel] = sha1
+                  file_contents[rel] = content
+                  print(f"  {rel}: {sha1[:8]}... ({len(content)} bytes)")
+
+          # Create deploy
+          print(f"\nCreating deploy for site {site_id}...")
+          s, deploy = api(f'sites/{site_id}/deploys', 'POST', {'files': files, 'async': False})
+          deploy_id = deploy['id']
+          print(f"Deploy {deploy_id} created, state={deploy['state']}, required={len(deploy.get('required', []))} files")
+
+          # Upload required files
+          required = deploy.get('required', [])
+          for rel, content in file_contents.items():
+              sha1 = hashlib.sha1(content).hexdigest()
+              if sha1 in required:
+                  url_path = rel.lstrip('/')
+                  print(f"Uploading {rel}...")
+                  s, _ = api(f'deploys/{deploy_id}/files/{url_path}', 'PUT',
+                             raw_data=content,
+                             headers={'Content-Type': 'application/octet-stream'})
+                  print(f"  Uploaded: HTTP {s}")
+
+          # Wait for deploy to be ready
+          for _ in range(30):
+              s, d = api(f'deploys/{deploy_id}')
+              state = d.get('state')
+              print(f"  Deploy state: {state}")
+              if state in ('ready', 'current'):
+                  print(f"Deploy complete! URL: {d.get('deploy_ssl_url') or d.get('url')}")
+                  break
+              if state in ('error',):
+                  print(f"Deploy failed: {d.get('error_message')}")
+                  exit(1)
+              time.sleep(3)
+
+          PYEOF
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: 4cf59dab-5980-4669-995e-074bd3247148
