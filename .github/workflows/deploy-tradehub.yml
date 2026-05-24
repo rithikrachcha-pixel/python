@@ -22,11 +22,5 @@ jobs:
       - name: Deploy to Netlify
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-        run: |
-          netlify deploy \
-            --auth=$NETLIFY_AUTH_TOKEN \
-            --site=4cf59dab-5980-4669-995e-074bd3247148 \
-            --dir=tradehub-deploy \
-            --functions=netlify/functions \
-            --prod \
-            --message="Deploy from GitHub Actions"
+          NETLIFY_SITE_ID: 4cf59dab-5980-4669-995e-074bd3247148
+        run: netlify deploy --dir=tradehub-deploy --functions=netlify/functions --prod --message="Deploy from GitHub Actions"
