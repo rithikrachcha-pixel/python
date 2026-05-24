@@ -3,7 +3,7 @@ name: Deploy TradeHub to Netlify
 on:
   push:
     branches: [claude/build-web-app-pc3Au, main]
-    paths: [tradehub-deploy/**, tradehub.html, netlify/**, netlify.toml]
+    paths: [tradehub-deploy/**, tradehub.html]
   workflow_dispatch:
 
 jobs:
@@ -16,7 +16,6 @@ jobs:
         uses: nwtgck/actions-netlify@v3
         with:
           publish-dir: tradehub-deploy
-          functions-dir: netlify/functions
           production-branch: claude/build-web-app-pc3Au
           production-deploy: true
           deploy-message: "Deploy from GitHub Actions"
