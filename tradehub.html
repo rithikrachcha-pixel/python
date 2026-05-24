@@ -628,7 +628,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
       <!-- NEWS -->
       <div class="page" id="page-news">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-          <div class="section-title" style="margin:0">Market News</div>
+          <div class="section-title" style="margin:0">Market News <span id="newsLiveLabel" style="font-size:11px;font-weight:500;color:var(--green);margin-left:8px;letter-spacing:.02em"></span></div>
           <div class="tabs" style="margin:0;padding:3px">
             <div class="tab active" onclick="filterNews('all',this)">All</div>
             <div class="tab" onclick="filterNews('positive',this)">Positive</div>
@@ -639,7 +639,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
         <div class="card" style="margin-bottom:0">
           <div style="display:flex;gap:10px;margin-bottom:16px">
             <input class="form-input" style="flex:1" placeholder="Search by ticker or topic… AAPL, SHEL dividend, Fed rates" id="newsSearch" oninput="filterNewsBySearch(this.value)">
-            <button class="run-btn" style="width:auto;padding:9px 20px;margin:0" onclick="loadAINews()"><span id="newsBtnTxt">AI News Analysis</span></button>
+            <button class="run-btn" style="width:auto;padding:9px 14px;margin:0;background:var(--card2)" onclick="refreshLiveNews()" title="Refresh live news"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg></button>
+            <button class="run-btn" style="width:auto;padding:9px 20px;margin:0" onclick="loadAINews()"><span id="newsBtnTxt">AI Analyse</span></button>
           </div>
           <div id="newsContainer"></div>
         </div>
@@ -803,17 +804,23 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
 // ================================================
 let ANTHROPIC_API_KEY = localStorage.getItem('tradehub_apikey') || '';
 
-function getApiHeaders() {
-  return {'Content-Type':'application/json','x-api-key':ANTHROPIC_API_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'};
+async function callAI(payload) {
+  const resp = await fetch('/.netlify/functions/ai', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({...payload, userKey: ANTHROPIC_API_KEY || undefined}),
+  });
+  const data = await resp.json();
+  if(!resp.ok || data.error) throw new Error(data.error?.message || `HTTP ${resp.status}`);
+  return data;
 }
 function saveApiKey() {
   const key = document.getElementById('apiKeyInput').value.trim();
-  if(!key.startsWith('sk-')) { notify('Please enter a valid API key (starts with sk-)','error'); return; }
+  if(key && !key.startsWith('sk-')) { notify('Key should start with sk-','error'); return; }
   ANTHROPIC_API_KEY = key;
   localStorage.setItem('tradehub_apikey', key);
   document.getElementById('apiKeyModal').style.display='none';
-  document.getElementById('apiKeyBtnLabel').textContent='✓ AI Key';
-  notify('AI features enabled!','success');
+  document.getElementById('apiKeyBtnLabel').textContent = key ? '✓ My Key' : 'AI Ready';
+  notify(key ? 'Personal API key saved!' : 'Using shared AI key','success');
 }
 function showApiKeyModal() {
   document.getElementById('apiKeyModal').style.display='flex';
@@ -1106,6 +1113,81 @@ function renderDashWatchlist() {
 // NEWS PAGE
 // ================================================
 let allNews = [...NEWS_DATA];
+let liveNewsCache = [];
+let newsLastUpdated = null;
+
+function detectSentiment(text) {
+  const t = text.toLowerCase();
+  const pos = ['surge','soar','rise','gain','jump','rally','record','beat','strong','profit','growth','up','bull','boost','high','top','win'];
+  const neg = ['fall','drop','slump','decline','miss','weak','loss','down','bear','crash','plunge','cut','warn','concern','risk','low'];
+  const ps = pos.filter(w=>t.includes(w)).length;
+  const ns = neg.filter(w=>t.includes(w)).length;
+  return ps>ns?'pos':ns>ps?'neg':'neu';
+}
+function extractTicker(text) {
+  const known = ['AAPL','MSFT','NVDA','TSLA','AMZN','GOOGL','META','JPM','XOM','GS','BAC','DIS','NFLX','CVX','WMT','SHEL','AZN','HSBA','BP','BARC','VOD','LLOY','RIO','GSK','ULVR','ARM','RDSB','BT'];
+  for(const t of known) if(text.toUpperCase().includes(t)) return t;
+  const names = {apple:'AAPL',microsoft:'MSFT',nvidia:'NVDA',tesla:'TSLA',amazon:'AMZN',alphabet:'GOOGL',google:'GOOGL',meta:'META',jpmorgan:'JPM',exxon:'XOM','goldman sachs':'GS',disney:'DIS',netflix:'NFLX',chevron:'CVX',walmart:'WMT',shell:'SHEL',astrazeneca:'AZN',hsbc:'HSBA',barclays:'BARC',vodafone:'VOD',lloyds:'LLOY','rio tinto':'RIO',gsk:'GSK',unilever:'ULVR'};
+  const lower = text.toLowerCase();
+  for(const [n,t] of Object.entries(names)) if(lower.includes(n)) return t;
+  return 'MKT';
+}
+function ageLabel(dateStr) {
+  if(!dateStr) return 'Live';
+  const diff = (Date.now()-new Date(dateStr).getTime())/1000;
+  if(diff<60) return 'Just now';
+  if(diff<3600) return Math.floor(diff/60)+'m ago';
+  if(diff<86400) return Math.floor(diff/3600)+'h ago';
+  return Math.floor(diff/86400)+'d ago';
+}
+async function fetchLiveNews() {
+  const PROXY = 'https://api.rss2json.com/v1/api.json?rss_url=';
+  const FEEDS = [
+    {url:'https://feeds.finance.yahoo.com/rss/2.0/headline?region=US&lang=en-US',src:'Yahoo Finance',region:'US'},
+    {url:'https://feeds.bbci.co.uk/news/business/rss.xml',src:'BBC Business',region:'UK'},
+    {url:'https://www.cnbc.com/id/10001147/device/rss/rss.html',src:'CNBC',region:'US'},
+    {url:'https://feeds.reuters.com/reuters/businessNews',src:'Reuters',region:'US'},
+    {url:'https://www.ft.com/?format=rss',src:'FT',region:'UK'},
+  ];
+  const results = await Promise.allSettled(FEEDS.map(feed=>
+    fetch(PROXY+encodeURIComponent(feed.url),{signal:AbortSignal.timeout(8000)})
+      .then(r=>r.json())
+      .then(d=>(d.items||[]).slice(0,8).map(item=>({
+        headline:(item.title||'').replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;/g,"'").trim(),
+        source:feed.src, region:feed.region,
+        sentiment:detectSentiment(item.title||''),
+        ticker:extractTicker(item.title||''),
+        time:ageLabel(item.pubDate),
+        pubDate:new Date(item.pubDate).getTime()||0,
+        link:item.link||'#',
+        summary:(item.description||'').replace(/<[^>]+>/g,'').slice(0,120),
+      })))
+  ));
+  const items = results
+    .filter(r=>r.status==='fulfilled')
+    .flatMap(r=>r.value)
+    .filter(n=>n.headline.length>10)
+    .sort((a,b)=>b.pubDate-a.pubDate)
+    .slice(0,40);
+  return items;
+}
+async function refreshLiveNews(silent=false) {
+  try {
+    const items = await fetchLiveNews();
+    if(items.length) {
+      liveNewsCache = items;
+      newsLastUpdated = new Date();
+      allNews = [...items,...NEWS_DATA];
+      renderNews();
+      updateLiveBadge();
+      if(!silent) notify('News updated — '+items.length+' live articles','success');
+    }
+  } catch(e) { /* silently fall back to static */ }
+}
+function updateLiveBadge() {
+  const el = document.getElementById('newsLiveLabel');
+  if(el && newsLastUpdated) el.textContent = 'Live · '+newsLastUpdated.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+}
 function renderNews(filter) {
   filter = filter||state.newsFilter;
   const search = (document.getElementById('newsSearch')?.value||'').toLowerCase();
@@ -1121,7 +1203,7 @@ function renderNews(filter) {
       <div class="news-sentiment ${n.sentiment}"></div>
       <div style="flex:1">
         <div class="news-source">${n.source} · ${n.time} <span class="sugg-exch">${n.ticker}</span> <span class="sentiment-badge ${n.sentiment}">${n.sentiment==='pos'?'Positive':n.sentiment==='neg'?'Negative':'Neutral'}</span></div>
-        <div class="news-headline" onclick="openStockDive('${n.ticker}')">${n.headline}</div>
+        <div class="news-headline" onclick="${n.link&&n.link!=='#'?`window.open('${n.link}','_blank')`:`openStockDive('${n.ticker}')`}">${n.headline}</div>
         <div class="news-meta">${n.region} Market</div>
       </div>
     </div>`).join('')
@@ -1135,19 +1217,18 @@ function filterNews(f,btn) {
 }
 function filterNewsBySearch() { renderNews(); }
 async function loadAINews() {
-  if(!ANTHROPIC_API_KEY){ showApiKeyModal(); return; }
   const ticker = document.getElementById('newsSearch').value||'market';
   const btn = document.getElementById('newsBtnTxt');
   btn.innerHTML='<span class="loader"></span>';
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:getApiHeaders(),body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:`Financial news analyst. For "${ticker}", generate 4 realistic news headlines as if today is late 2024. Return JSON array only: [{headline,source,sentiment("pos"/"neg"/"neu"),ticker,time,region("US"/"UK"),summary}]`}]})});
-    const d = await res.json();
+    const d = await callAI({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:`Financial news analyst. For "${ticker}", generate 4 realistic recent news headlines. Return JSON array only: [{headline,source,sentiment("pos"/"neg"/"neu"),ticker,time,region("US"/"UK"),summary}]`}]});
     const text = d.content[0].text.replace(/```json|```/g,'').trim();
-    allNews = [...JSON.parse(text).map(i=>({...i,region:i.region||'US'})),...NEWS_DATA];
+    const liveFirst = liveNewsCache.length ? liveNewsCache : [];
+    allNews = [...JSON.parse(text).map(i=>({...i,region:i.region||'US'})), ...liveFirst, ...NEWS_DATA];
     renderNews();
     notify('AI news loaded for '+ticker,'success');
-  } catch(e) { notify('Could not load AI news','error'); }
-  btn.textContent='AI News Analysis';
+  } catch(e) { notify('AI news: '+e.message,'error'); }
+  btn.textContent='AI Analyse';
 }
 
 // ================================================
@@ -1442,18 +1523,16 @@ async function openLesson(title) {
 // AI TUTOR
 // ================================================
 async function sendAI() {
-  if(!ANTHROPIC_API_KEY){ showApiKeyModal(); return; }
   const input=document.getElementById('aiInput');
   const msg=input.value.trim(); if(!msg) return;
   input.value='';
   appendMsg(msg,'user');
   const typing=appendMsg('<span class="loader"></span>','bot');
   try {
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:getApiHeaders(),body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'You are TradeHub AI, an expert trading tutor for UK and US stock markets. Keep responses concise (3-4 paragraphs), practical. Include UK context (LSE, FTSE, ISA, stamp duty) where relevant. Always clarify this is educational only, not financial advice.',messages:[{role:'user',content:msg}]})});
-    const d=await res.json();
+    const d=await callAI({model:'claude-sonnet-4-6',max_tokens:1000,system:'You are TradeHub AI, an expert trading tutor for UK and US stock markets. Keep responses concise (3-4 paragraphs), practical. Include UK context (LSE, FTSE, ISA, stamp duty) where relevant. Always clarify this is educational only, not financial advice.',messages:[{role:'user',content:msg}]});
     typing.querySelector('.ai-bubble').textContent=d.content[0].text;
   } catch(e) {
-    typing.querySelector('.ai-bubble').textContent='Could not connect to AI service. Please check your API key and try again.';
+    typing.querySelector('.ai-bubble').innerHTML='<span style="color:var(--red)">⚠ AI unavailable: '+e.message+'</span>';
   }
   document.getElementById('aiMessages').scrollTop=99999;
 }
@@ -1712,20 +1791,19 @@ async function loadDiveNews(stock) {
   const staticNews=NEWS_DATA.filter(n=>n.ticker===stock.ticker||n.headline.toLowerCase().includes(stock.ticker.toLowerCase())||n.headline.toLowerCase().includes((stock.name||'').toLowerCase().split(' ')[0]));
   if(staticNews.length){ diveState.newsAllItems=staticNews; renderDiveNewsItems(staticNews); updateNewsBadge(staticNews); }
 
-  if(!ANTHROPIC_API_KEY){
-    if(!staticNews.length) document.getElementById('diveNewsContainer').innerHTML='<div style="color:var(--text3);font-size:13px;padding:20px">🔑 <a href="#" onclick="showApiKeyModal()" style="color:var(--accent)">Add API key</a> to load AI-generated news.</div>';
-    return;
-  }
+  const liveItems = liveNewsCache.filter(n=>n.ticker===stock.ticker||n.headline.toLowerCase().includes(stock.ticker.toLowerCase()));
+  if(liveItems.length){ diveState.newsAllItems=[...liveItems,...staticNews]; renderDiveNewsItems(diveState.newsAllItems); updateNewsBadge(diveState.newsAllItems); }
+  else if(staticNews.length){ diveState.newsAllItems=staticNews; renderDiveNewsItems(staticNews); updateNewsBadge(staticNews); }
+
   try {
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:getApiHeaders(),body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:700,messages:[{role:'user',content:`Generate 5 realistic recent financial news headlines for ${stock.ticker} (${stock.name}). Return JSON array only: [{headline,source,sentiment("pos"/"neg"/"neu"),time,summary}]`}]})});
-    const d=await res.json();
+    const d=await callAI({model:'claude-sonnet-4-6',max_tokens:700,messages:[{role:'user',content:`Generate 5 realistic current financial news headlines for ${stock.ticker} (${stock.name}). Return JSON array only: [{headline,source,sentiment("pos"/"neg"/"neu"),time,summary}]`}]});
     const text=d.content[0].text.replace(/```json|```/g,'').trim();
     const items=JSON.parse(text).map(i=>({...i,ticker:stock.ticker,region:stock.currency?'UK':'US'}));
-    diveState.newsAllItems=[...items,...staticNews];
+    diveState.newsAllItems=[...items,...liveItems,...staticNews];
     renderDiveNewsItems(diveState.newsAllItems);
     updateNewsBadge(diveState.newsAllItems);
     updateSentimentSummary(diveState.newsAllItems);
-  } catch(e) { if(!staticNews.length) document.getElementById('diveNewsContainer').innerHTML='<div style="color:var(--text3);font-size:13px">No news found.</div>'; }
+  } catch(e) { if(!staticNews.length&&!liveItems.length) document.getElementById('diveNewsContainer').innerHTML='<div style="color:var(--text3);font-size:13px">No news found.</div>'; }
 }
 
 function updateNewsBadge(items) {
@@ -1887,23 +1965,17 @@ async function switchAITab(tab, btn) {
 }
 
 async function loadDiveAI(tab) {
-  if(!ANTHROPIC_API_KEY){
-    document.getElementById('diveAIContent').innerHTML='<div style="color:var(--text3)">🔑 <a href="#" onclick="showApiKeyModal()" style="color:var(--accent)">Add your Anthropic API key</a> to enable AI analysis.</div>';
-    document.getElementById('diveAIContent').className='dive-ai-box';
-    return;
-  }
   const {ticker,stock}=diveState;
   const prompt=AI_TAB_PROMPTS[tab]?.(ticker,stock.name)||`Analyse ${ticker}`;
   try {
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:getApiHeaders(),body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:450,system:'You are a financial analyst for TradeHub. Provide educational stock analysis for UK and US markets. Always clarify you are not a financial advisor. Be concise.',messages:[{role:'user',content:prompt}]})});
-    const d=await res.json();
+    const d=await callAI({model:'claude-sonnet-4-6',max_tokens:450,system:'You are a financial analyst for TradeHub. Provide educational stock analysis for UK and US markets. Always clarify you are not a financial advisor. Be concise.',messages:[{role:'user',content:prompt}]});
     const text=d.content[0].text;
     diveState.aiCache[tab]=text;
     if(diveState.currentAITab===tab) renderDiveAI(tab,text);
   } catch(e) {
     if(diveState.currentAITab===tab){
       document.getElementById('diveAIContent').className='dive-ai-box';
-      document.getElementById('diveAIContent').innerHTML='<span style="color:var(--red)">Could not load AI analysis. Check your API key and try again.</span>';
+      document.getElementById('diveAIContent').innerHTML='<span style="color:var(--red)">⚠ AI unavailable: '+e.message+'</span>';
     }
   }
 }
@@ -1984,7 +2056,11 @@ function init() {
   updateMarketStatus();
   setInterval(updateMarketStatus, 60000);
 
-  document.getElementById('apiKeyBtnLabel').textContent=ANTHROPIC_API_KEY?'✓ AI Key':'AI Key';
+  document.getElementById('apiKeyBtnLabel').textContent=ANTHROPIC_API_KEY?'✓ My Key':'AI Ready';
+
+  // Live news — fetch immediately then refresh every 3 minutes
+  refreshLiveNews(true);
+  setInterval(()=>refreshLiveNews(true), 3*60*1000);
 
   // Region button state
   ['US','UK','BOTH'].forEach(x=>document.getElementById('reg'+x).classList.remove('active'));
@@ -2010,3 +2086,5 @@ document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
+
+<!-- deployed: 2026-05-24T10:58:35Z -->
