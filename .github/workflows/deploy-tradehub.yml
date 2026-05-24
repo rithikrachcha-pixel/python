@@ -4,6 +4,7 @@ on:
   push:
     branches: [claude/build-web-app-pc3Au, main]
     paths: [tradehub-deploy/**, tradehub.html]
+  workflow_dispatch:
 
 jobs:
   deploy:
