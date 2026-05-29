@@ -145,7 +145,7 @@ def team_builder():
 def dashboard():
     db = get_db()
     user = db.execute("SELECT * FROM users WHERE id=?", (session["user_id"],)).fetchone()
-    if not user["squad_locked"]:
+    if not user or not user["squad_locked"]:
         return redirect(url_for("team_builder"))
     return render_template("dashboard.html", username=session["username"])
 
