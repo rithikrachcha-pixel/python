@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}WC2026 Fantasy · Home{% endblock %}
+{% block content %}
+<section class="hero">
+  <span class="tag">SUMMER 2026 · 48 NATIONS</span>
+  <h1>World Cup <span class="gold">Fantasy</span> Football</h1>
+  <p>Pick your $100M squad from real World Cup 2026 players, back a nation, and climb the
+     global leaderboard. The deeper your team runs in the tournament, the more you win.</p>
+</section>
+
+<div class="features">
+  <div class="feature"><div class="ic">💰</div><h3>$100M Budget</h3>
+    <p>Build a 15-player squad — 11 starters + 3 bench across your chosen formation.</p></div>
+  <div class="feature"><div class="ic">🏆</div><h3>Back a Nation</h3>
+    <p>Choose one country to back. Earn bonus points every round they advance — up to +100 if they lift the trophy.</p></div>
+  <div class="feature"><div class="ic">✨</div><h3>1.5× Loyalty Boost</h3>
+    <p>Every player from your backed nation scores 1.5× points. Reward your conviction.</p></div>
+  <div class="feature"><div class="ic">📊</div><h3>Live Leaderboard</h3>
+    <p>Points and standings refresh automatically as matches play out.</p></div>
+</div>
+
+<div class="card auth-wrap">
+  <div class="auth-tabs">
+    <button id="tab-login" class="active" onclick="showTab('login')">Log In</button>
+    <button id="tab-register" onclick="showTab('register')">Register</button>
+  </div>
+  <div id="msg" class="msg"></div>
+  <div class="field"><label>Username</label><input id="username" autocomplete="username"></div>
+  <div class="field"><label>Password</label><input id="password" type="password" autocomplete="current-password"></div>
+  <button class="btn" style="width:100%" id="submitBtn" onclick="submitAuth()">Log In</button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let mode = 'login';
+function showTab(m){
+  mode = m;
+  document.getElementById('tab-login').classList.toggle('active', m==='login');
+  document.getElementById('tab-register').classList.toggle('active', m==='register');
+  document.getElementById('submitBtn').textContent = m==='login' ? 'Log In' : 'Create Account';
+  document.getElementById('msg').className = 'msg';
+}
+function showMsg(text, ok){
+  const el = document.getElementById('msg');
+  el.textContent = text; el.className = 'msg ' + (ok ? 'ok' : 'err');
+}
+async function submitAuth(){
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  if(!username || !password){ showMsg('Enter a username and password.'); return; }
+  const res = await fetch('/' + mode, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({username, password})
+  });
+  const data = await res.json();
+  if(res.ok){ window.location = '/team-builder'; }
+  else { showMsg(data.error || 'Something went wrong.'); }
+}
+document.getElementById('password').addEventListener('keydown', e => { if(e.key==='Enter') submitAuth(); });
+</script>
+{% endblock %}

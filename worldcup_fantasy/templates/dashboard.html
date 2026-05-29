@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}WC2026 Fantasy · Dashboard{% endblock %}
+{% block content %}
+<h1 class="section-title" style="font-size:1.5rem;margin-bottom:6px;">Welcome, {{ username }} 👋</h1>
+<p class="refresh-note">Auto-refreshing every 30s · <span id="lastUpdate">—</span></p>
+
+<div class="stat-row">
+  <div class="stat"><div class="v" id="statTotal">—</div><div class="l">Total Points</div></div>
+  <div class="stat red"><div class="v" id="statPlayers">—</div><div class="l">Player Points</div></div>
+  <div class="stat gold"><div class="v" id="statBonus">—</div><div class="l">Progression Bonus</div></div>
+  <div class="stat"><div class="v" id="statBacked" style="font-size:1.2rem;">—</div><div class="l">Backed Nation</div></div>
+</div>
+
+<div class="card">
+  <h2 class="section-title">🏆 <span id="progNation">Your Nation</span>'s Run</h2>
+  <div class="progress-track" id="progressTrack"></div>
+</div>
+
+<div class="dash-grid">
+  <div>
+    <div class="card">
+      <h2 class="section-title">⭐ My Starting XI — Points Breakdown</h2>
+      <table class="lb">
+        <thead><tr><th>Player</th><th>Pos</th><th>G</th><th>A</th><th>CS</th><th>Pts</th></tr></thead>
+        <tbody id="breakdownBody"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title">📅 Fixtures &amp; Results</h2>
+      <div id="fixtures"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="section-title">📊 Global Leaderboard</h2>
+    <table class="lb">
+      <thead><tr><th>#</th><th>Manager</th><th>Backs</th><th>Total</th></tr></thead>
+      <tbody id="leaderboardBody"></tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>window.MY_USERNAME = {{ username|tojson }};</script>
+<script src="{{ url_for('static', filename='js/fixtures.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

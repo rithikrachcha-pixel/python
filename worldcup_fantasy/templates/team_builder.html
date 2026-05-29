@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}WC2026 Fantasy · Build Your Team{% endblock %}
+{% block content %}
+<h1 class="section-title" style="font-size:1.5rem;margin-bottom:6px;">Build Your Squad</h1>
+<p class="muted" style="margin-bottom:18px;">Pick 11 starters + 3 bench within $100M. Choose a formation and a nation to back.</p>
+
+<div id="msg" class="msg"></div>
+
+<div class="builder-grid">
+  <!-- LEFT: pitch + controls -->
+  <div>
+    <div class="card">
+      <div class="toolbar">
+        <strong>Formation:</strong>
+        <span class="chip active" data-formation="4-3-3" onclick="setFormation('4-3-3')">4-3-3</span>
+        <span class="chip" data-formation="4-4-2" onclick="setFormation('4-4-2')">4-4-2</span>
+        <span class="chip" data-formation="3-5-2" onclick="setFormation('3-5-2')">3-5-2</span>
+        <span class="chip" data-formation="3-4-3" onclick="setFormation('3-4-3')">3-4-3</span>
+        <span class="chip" data-formation="5-3-2" onclick="setFormation('5-3-2')">5-3-2</span>
+      </div>
+
+      <div id="pitch" class="pitch"></div>
+
+      <div class="bench">
+        <div class="lbl">Bench (3)</div>
+        <div id="benchRow" class="pitch-row"></div>
+      </div>
+
+      <div class="summary">
+        <div>Budget used: <b id="budgetUsed">$0.0M</b> / $100M</div>
+        <div>Squad: <b id="squadCount">0</b>/14</div>
+      </div>
+      <div class="budget-bar" id="budgetBar"><span></span></div>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title">Back a Nation 🏆</h2>
+      <p class="muted" style="font-size:.88rem;margin-bottom:10px;">
+        Earn bonus points as they advance: Win +5 · R32 +8 · R16 +10 · QF +20 · SF +30 · Final +50 · Champions +100.
+        Their players in your squad also score <b>1.5×</b>.
+      </p>
+      <div class="field">
+        <select id="backedNation"><option value="">— Select a nation —</option></select>
+      </div>
+      <button class="btn gold" style="width:100%" id="saveBtn" onclick="saveSquad()" disabled>Lock In Squad &amp; Start</button>
+    </div>
+  </div>
+
+  <!-- RIGHT: player market -->
+  <div class="card">
+    <h2 class="section-title">Player Market</h2>
+    <div class="toolbar">
+      <span class="chip active" data-pos="ALL" onclick="setPosFilter('ALL')">All</span>
+      <span class="chip" data-pos="GK" onclick="setPosFilter('GK')">GK</span>
+      <span class="chip" data-pos="DEF" onclick="setPosFilter('DEF')">DEF</span>
+      <span class="chip" data-pos="MID" onclick="setPosFilter('MID')">MID</span>
+      <span class="chip" data-pos="FWD" onclick="setPosFilter('FWD')">FWD</span>
+    </div>
+    <div class="toolbar">
+      <input id="search" placeholder="Search player…" oninput="renderMarket()"
+             style="flex:1;padding:8px 10px;border:1px solid var(--line);border-radius:8px;">
+      <select id="nationFilter" onchange="renderMarket()"
+              style="padding:8px;border:1px solid var(--line);border-radius:8px;">
+        <option value="">All nations</option>
+      </select>
+    </div>
+    <div class="players-scroll">
+      <table class="players">
+        <thead><tr><th>Player</th><th>Pos</th><th>Club</th><th>$M</th><th></th></tr></thead>
+        <tbody id="marketBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/team_builder.js') }}"></script>
+{% endblock %}

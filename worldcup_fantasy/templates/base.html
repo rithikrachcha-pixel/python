@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}WC2026 Fantasy{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="ball">⚽</span>
+        <div>WC2026 Fantasy<small>CANADA · MEXICO · USA</small></div>
+      </div>
+      <nav class="mainnav">
+        {% if session.get('user_id') %}
+          <a href="{{ url_for('team_builder') }}">Team Builder</a>
+          <a href="{{ url_for('dashboard') }}">Dashboard</a>
+          <a href="{{ url_for('logout') }}" class="gold">Logout ({{ session.get('username') }})</a>
+        {% else %}
+          <a href="{{ url_for('index') }}" class="active">Home</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
