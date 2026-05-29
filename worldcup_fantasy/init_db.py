@@ -51,6 +51,20 @@ CREATE TABLE IF NOT EXISTS fixtures (
     home_score INTEGER, away_score INTEGER,
     played INTEGER DEFAULT 0
 );
+CREATE TABLE IF NOT EXISTS leagues (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    code TEXT UNIQUE NOT NULL,
+    owner_id INTEGER REFERENCES users(id),
+    created_at TEXT DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS league_members (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    league_id INTEGER REFERENCES leagues(id),
+    user_id INTEGER REFERENCES users(id),
+    joined_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(league_id, user_id)
+);
 """
 
 
