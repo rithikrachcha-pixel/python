@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: wc2026-fantasy
+    runtime: python
+    rootDir: worldcup_fantasy
+    buildCommand: pip install -r requirements.txt && python init_db.py
+    startCommand: gunicorn app:app
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ADMIN_TOKEN
+        generateValue: true

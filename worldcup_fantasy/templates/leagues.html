@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}WC2026 Fantasy · My Leagues{% endblock %}
+{% block content %}
+
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
+  <div>
+    <h1 style="font-family:'Oswald',sans-serif;font-size:1.8rem;font-weight:700;margin-bottom:4px;">🏟️ My Leagues</h1>
+    <p class="muted" style="font-size:.88rem;">Create a private league or join one with a code</p>
+  </div>
+</div>
+
+<div id="msg" class="msg"></div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px;">
+  <!-- Create league -->
+  <div class="card">
+    <h2 class="section-title">➕ Create a League</h2>
+    <p style="color:var(--text3);font-size:.85rem;margin-bottom:16px;">
+      Give your league a name and share the 6-character code with your friends.
+    </p>
+    <div class="field">
+      <label>League Name</label>
+      <input id="createName" placeholder="e.g. The Lads 2026" maxlength="50">
+    </div>
+    <button class="btn gold" style="width:100%;justify-content:center;" onclick="createLeague()">
+      🚀 Create League
+    </button>
+  </div>
+
+  <!-- Join league -->
+  <div class="card">
+    <h2 class="section-title">🔗 Join a League</h2>
+    <p style="color:var(--text3);font-size:.85rem;margin-bottom:16px;">
+      Got a code from a friend? Enter it below to join their league.
+    </p>
+    <div class="field">
+      <label>League Code</label>
+      <input id="joinCode" placeholder="e.g. AB12CD" maxlength="6" style="text-transform:uppercase;letter-spacing:3px;font-size:1.1rem;font-weight:700;">
+    </div>
+    <button class="btn" style="width:100%;justify-content:center;" onclick="joinLeague()">
+      Join League →
+    </button>
+  </div>
+</div>
+
+<!-- My leagues list -->
+<div class="card">
+  <h2 class="section-title">📋 Leagues I'm In</h2>
+  <div id="leaguesList">
+    {% if my_leagues %}
+      <table class="lb">
+        <thead><tr><th>League</th><th>Code</th><th>Members</th><th></th></tr></thead>
+        <tbody>
+          {% for l in my_leagues %}
+          <tr>
+            <td style="font-weight:700;">{{ l.name }}</td>
+            <td>
+              <span style="font-family:'Oswald',sans-serif;font-size:1rem;letter-spacing:2px;color:var(--gold);">{{ l.code }}</span>
+              <button class="btn sm ghost" onclick="copyCode('{{ l.code }}')" style="margin-left:8px;">Copy</button>
+            </td>
+            <td>{{ l.member_count }} manager{{ 's' if l.member_count != 1 else '' }}</td>
+            <td><a href="/league/{{ l.code }}" class="btn sm">View →</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div style="text-align:center;padding:40px;color:var(--text3);">
+        <div style="font-size:3rem;margin-bottom:12px;">🏟️</div>
+        <div style="font-weight:600;margin-bottom:6px;">No leagues yet</div>
+        <div style="font-size:.88rem;">Create one or join a friend's league above</div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Success modal -->
+<div id="successModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;align-items:center;justify-content:center;">
+  <div style="background:var(--panel);border:1px solid var(--border2);border-radius:20px;padding:40px;max-width:400px;width:90%;text-align:center;">
+    <div style="font-size:3rem;margin-bottom:16px;">🎉</div>
+    <h2 style="font-family:'Oswald',sans-serif;margin-bottom:8px;">League Created!</h2>
+    <p style="color:var(--text3);margin-bottom:20px;">Share this code with your friends so they can join:</p>
+    <div id="modalCode" style="font-family:'Oswald',sans-serif;font-size:2.5rem;font-weight:700;color:var(--gold);letter-spacing:6px;background:rgba(245,197,24,0.1);padding:16px;border-radius:12px;margin-bottom:20px;"></div>
+    <button class="btn gold" style="width:100%;justify-content:center;margin-bottom:10px;" onclick="copyModalCode()">📋 Copy Code</button>
+    <button class="btn ghost" style="width:100%;justify-content:center;" onclick="closeModal()">Done</button>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+let createdCode = '';
+
+function showMsg(text, ok){
+  const el = document.getElementById('msg');
+  el.textContent = text; el.className = 'msg ' + (ok ? 'ok' : 'err');
+}
+
+async function createLeague(){
+  const name = document.getElementById('createName').value.trim();
+  if(!name){ showMsg('Enter a league name.'); return; }
+  const res = await fetch('/api/leagues/create', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({name})
+  });
+  const data = await res.json();
+  if(res.ok){
+    createdCode = data.code;
+    document.getElementById('modalCode').textContent = data.code;
+    document.getElementById('successModal').style.display = 'flex';
+  } else {
+    showMsg(data.error || 'Failed to create league.');
+  }
+}
+
+async function joinLeague(){
+  const code = document.getElementById('joinCode').value.trim().toUpperCase();
+  if(!code){ showMsg('Enter a league code.'); return; }
+  const res = await fetch('/api/leagues/join', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({code})
+  });
+  const data = await res.json();
+  if(res.ok){
+    showMsg(`Joined "${data.name}"! Redirecting…`, true);
+    setTimeout(() => window.location = '/league/' + data.code, 1000);
+  } else {
+    showMsg(data.error || 'Failed to join league.');
+  }
+}
+
+function copyCode(code){
+  navigator.clipboard.writeText(code).then(() => showMsg('Code copied to clipboard!', true));
+}
+
+function copyModalCode(){
+  navigator.clipboard.writeText(createdCode).then(() => {
+    showMsg('Code copied!', true);
+  });
+}
+
+function closeModal(){
+  document.getElementById('successModal').style.display = 'none';
+  window.location.reload();
+}
+
+document.getElementById('joinCode').addEventListener('input', function(){
+  this.value = this.value.toUpperCase();
+});
+document.getElementById('joinCode').addEventListener('keydown', e => { if(e.key==='Enter') joinLeague(); });
+document.getElementById('createName').addEventListener('keydown', e => { if(e.key==='Enter') createLeague(); });
+</script>
+{% endblock %}
