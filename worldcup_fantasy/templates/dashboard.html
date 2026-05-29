@@ -1,47 +1,85 @@
 {% extends "base.html" %}
 {% block title %}WC2026 Fantasy · Dashboard{% endblock %}
 {% block content %}
-<h1 class="section-title" style="font-size:1.5rem;margin-bottom:6px;">Welcome, {{ username }} 👋</h1>
-<p class="refresh-note">Auto-refreshing every 30s · <span id="lastUpdate">—</span></p>
 
-<div class="stat-row">
-  <div class="stat"><div class="v" id="statTotal">—</div><div class="l">Total Points</div></div>
-  <div class="stat red"><div class="v" id="statPlayers">—</div><div class="l">Player Points</div></div>
-  <div class="stat gold"><div class="v" id="statBonus">—</div><div class="l">Progression Bonus</div></div>
-  <div class="stat"><div class="v" id="statBacked" style="font-size:1.2rem;">—</div><div class="l">Backed Nation</div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:20px;">
+  <div>
+    <h1 style="font-family:'Oswald',sans-serif;font-size:1.8rem;font-weight:700;margin-bottom:4px;">Welcome, {{ username }} 👋</h1>
+    <p class="muted" style="font-size:.82rem;">Your fantasy dashboard · <span id="lastUpdate" class="refresh-note">loading…</span></p>
+  </div>
+  <a href="{{ url_for('team_builder') }}" class="btn ghost">← Edit Squad</a>
 </div>
 
+<!-- Stats row -->
+<div class="stat-row">
+  <div class="stat blue">
+    <div class="v" id="statTotal">—</div>
+    <div class="l">Total Points</div>
+  </div>
+  <div class="stat red">
+    <div class="v" id="statPlayers">—</div>
+    <div class="l">Player Points</div>
+  </div>
+  <div class="stat gold">
+    <div class="v" id="statBonus">—</div>
+    <div class="l">Nation Bonus</div>
+  </div>
+  <div class="stat green">
+    <div class="v" id="statRank">—</div>
+    <div class="l">Leaderboard Rank</div>
+  </div>
+</div>
+
+<!-- Progression track -->
 <div class="card">
-  <h2 class="section-title">🏆 <span id="progNation">Your Nation</span>'s Run</h2>
+  <h2 class="section-title">🏆 <span id="progNation">Your Nation</span>'s Tournament Run</h2>
   <div class="progress-track" id="progressTrack"></div>
+  <div id="progBacked" style="margin-top:10px;font-size:.85rem;color:var(--text3);"></div>
 </div>
 
 <div class="dash-grid">
   <div>
+    <!-- Points breakdown -->
     <div class="card">
-      <h2 class="section-title">⭐ My Starting XI — Points Breakdown</h2>
+      <h2 class="section-title">⭐ Starting XI — Points Breakdown</h2>
       <table class="lb">
-        <thead><tr><th>Player</th><th>Pos</th><th>G</th><th>A</th><th>CS</th><th>Pts</th></tr></thead>
+        <thead>
+          <tr>
+            <th>Player</th>
+            <th>Pos</th>
+            <th>⚽</th>
+            <th>🅰</th>
+            <th>🧤</th>
+            <th>Saves</th>
+            <th>Pts</th>
+          </tr>
+        </thead>
         <tbody id="breakdownBody"></tbody>
       </table>
     </div>
 
+    <!-- Fixtures -->
     <div class="card">
       <h2 class="section-title">📅 Fixtures &amp; Results</h2>
       <div id="fixtures"></div>
     </div>
   </div>
 
-  <div class="card">
-    <h2 class="section-title">📊 Global Leaderboard</h2>
-    <table class="lb">
-      <thead><tr><th>#</th><th>Manager</th><th>Backs</th><th>Total</th></tr></thead>
-      <tbody id="leaderboardBody"></tbody>
-    </table>
+  <div>
+    <!-- Leaderboard -->
+    <div class="card" style="position:sticky;top:80px;">
+      <h2 class="section-title">📊 Global Leaderboard</h2>
+      <table class="lb">
+        <thead>
+          <tr><th>#</th><th>Manager</th><th>Nation</th><th>Pts</th></tr>
+        </thead>
+        <tbody id="leaderboardBody"></tbody>
+      </table>
+    </div>
   </div>
 </div>
-{% endblock %}
 
+{% endblock %}
 {% block scripts %}
 <script>window.MY_USERNAME = {{ username|tojson }};</script>
 <script src="{{ url_for('static', filename='js/fixtures.js') }}"></script>
