@@ -158,6 +158,7 @@ def main():
 
     validate_squads()
     db = sqlite3.connect(DB_PATH)
+    db.row_factory = sqlite3.Row
     db.executescript(SCHEMA)
 
     already = db.execute("SELECT COUNT(*) c FROM players").fetchone()[0]
