@@ -25,7 +25,7 @@ FORMATION_POSITIONS = {
     "3-4-3": {"DEF": 3, "MID": 4, "FWD": 3},
     "5-3-2": {"DEF": 5, "MID": 3, "FWD": 2},
 }
-BUDGET = 100.0
+BUDGET = 150.0
 
 
 def get_db():

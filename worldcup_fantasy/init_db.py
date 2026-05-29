@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS players (
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL,
-    budget_remaining REAL DEFAULT 100.0,
+    budget_remaining REAL DEFAULT 150.0,
     backed_nation TEXT, formation TEXT DEFAULT '4-3-3',
     squad_locked INTEGER DEFAULT 0
 );
