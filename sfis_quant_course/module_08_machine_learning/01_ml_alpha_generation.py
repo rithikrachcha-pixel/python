@@ -133,7 +133,7 @@ class PurgedTimeSeriesSplit:
 
     def split(self, dates: pd.Index):
         """Yield (train_idx, test_idx) pairs."""
-        unique_dates = dates.unique().sort_values()
+        unique_dates = pd.DatetimeIndex(sorted(dates.unique()))
         n_dates = len(unique_dates)
         fold_size = n_dates // (self.n_splits + 1)
 
