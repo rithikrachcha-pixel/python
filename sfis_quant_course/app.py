@@ -30,6 +30,7 @@ app = dash.Dash(
     suppress_callback_exceptions=True,
     title="SFIS Quant Course",
 )
+server = app.server  # Expose Flask server for gunicorn / Render
 
 # ─────────────────────────────────────────────
 # COLOUR PALETTE
