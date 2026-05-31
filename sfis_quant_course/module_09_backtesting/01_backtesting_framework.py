@@ -147,10 +147,10 @@ class VectorisedBacktester:
 def momentum_signal(prices: pd.DataFrame, lookback: int = 252,
                      skip: int = 21, n_positions: int = 3) -> pd.Series:
     """Cross-sectional momentum: long top N stocks, short bottom N."""
-    if len(prices) < lookback:
+    if len(prices) < lookback + skip:
         return pd.Series(0.0, index=prices.columns)
 
-    ret = prices.iloc[-1] / prices.iloc[-lookback - skip + 1] * prices.iloc[-skip] - 1
+    ret = prices.iloc[-1] / prices.iloc[-(lookback + skip)] - 1
     ranked = ret.rank()
     n = len(ranked)
     weights = pd.Series(0.0, index=prices.columns)
