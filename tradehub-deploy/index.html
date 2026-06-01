@@ -296,6 +296,31 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
 .gnews-source{color:var(--accent)}
 @media(max-width:900px){.grid2{grid-template-columns:1fr}.grid4{grid-template-columns:1fr 1fr}.dcf-input-grid{grid-template-columns:1fr 1fr}.dcf-result-band{grid-template-columns:1fr 1fr}}
 @media(max-width:700px){.sidebar{display:none}.dive-stats-grid{grid-template-columns:1fr 1fr}.dive-price{font-size:32px}.dive-name-big{font-size:22px}.dive-tab-nav{padding:12px 14px;font-size:12px}.dive-tab-content{padding:16px}.dive-panel{border-radius:16px}.dcf-input-grid{grid-template-columns:1fr}.dcf-result-band{grid-template-columns:1fr}}
+/* LBO Model */
+.lbo-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
+.lbo-section{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px}
+.lbo-section-title{font-family:var(--font-head);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--text3);margin-bottom:14px}
+.lbo-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.lbo-label{font-size:11px;color:var(--text3);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+.lbo-input{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:var(--font-mono);font-size:13px;outline:none;transition:border .15s;width:100%}
+.lbo-input:focus{border-color:var(--accent)}
+.lbo-results{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.lbo-metric{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center}
+.lbo-metric-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);font-family:var(--font-mono);margin-bottom:6px}
+.lbo-metric-val{font-family:var(--font-mono);font-size:22px;font-weight:700}
+.lbo-irr-great{color:#00e5a0}.lbo-irr-good{color:#a3e635}.lbo-irr-ok{color:var(--amber)}.lbo-irr-bad{color:var(--red)}
+.lbo-table{width:100%;border-collapse:collapse;font-size:12px}
+.lbo-table th{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);font-family:var(--font-mono);padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;background:var(--bg3)}
+.lbo-table th:first-child{text-align:left}
+.lbo-table td{font-family:var(--font-mono);padding:9px 10px;border-bottom:1px solid var(--border);text-align:right;color:var(--text2)}
+.lbo-table td:first-child{text-align:left;color:var(--text)}
+.lbo-table tr:last-child td{font-weight:600;color:var(--accent);border-bottom:none}
+.lbo-calc-btn{background:var(--accent);color:#000;border:none;border-radius:8px;padding:10px 24px;font-family:var(--font-head);font-size:13px;font-weight:700;cursor:pointer;transition:opacity .15s}
+.lbo-calc-btn:hover{opacity:.85}
+.analyst-live-badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-family:var(--font-mono);font-weight:600;background:rgba(0,229,160,0.15);color:var(--green);margin-left:8px;vertical-align:middle}
+.analyst-demo-badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-family:var(--font-mono);font-weight:600;background:rgba(255,165,2,0.15);color:var(--amber);margin-left:8px;vertical-align:middle}
+@media(max-width:900px){.lbo-grid{grid-template-columns:1fr}.lbo-results{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.lbo-results{grid-template-columns:1fr 1fr}.lbo-row{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -527,6 +552,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
       <div class="nav-item" onclick="showPage('ai',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M18 2v6h6"/><path d="m22 2-6 6"/></svg>
         AI Tutor <span class="nav-badge">AI</span>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Finance</div>
+      <div class="nav-item" onclick="showPage('lbo',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20h20"/><path d="M5 20V8l7-5 7 5v12"/><path d="M9 20v-8h6v8"/></svg>
+        LBO Model
       </div>
     </div>
     <div class="sidebar-bottom">
@@ -834,6 +866,65 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
           </div>
         </div>
       </div>
+
+      <!-- LBO MODEL PAGE -->
+      <div class="page" id="page-lbo">
+        <div class="section-title">LBO Model</div>
+        <div style="color:var(--text2);font-size:13px;margin-bottom:20px">Leveraged Buyout analysis — model entry structure, debt, operating plan and sponsor returns.</div>
+        <div class="lbo-results" id="lbo-results-band">
+          <div class="lbo-metric"><div class="lbo-metric-label">IRR</div><div class="lbo-metric-val" id="lbo-irr">—</div></div>
+          <div class="lbo-metric"><div class="lbo-metric-label">MOIC</div><div class="lbo-metric-val" id="lbo-moic">—</div></div>
+          <div class="lbo-metric"><div class="lbo-metric-label">Entry Equity</div><div class="lbo-metric-val" id="lbo-eq-in">—</div></div>
+          <div class="lbo-metric"><div class="lbo-metric-label">Exit Equity</div><div class="lbo-metric-val" id="lbo-eq-out">—</div></div>
+          <div class="lbo-metric"><div class="lbo-metric-label">Exit EV</div><div class="lbo-metric-val" id="lbo-exit-ev">—</div></div>
+          <div class="lbo-metric"><div class="lbo-metric-label">Remaining Debt</div><div class="lbo-metric-val" id="lbo-rem-debt">—</div></div>
+        </div>
+        <div class="lbo-grid">
+          <div class="lbo-section">
+            <div class="lbo-section-title">Entry &amp; Capitalization</div>
+            <div class="lbo-row">
+              <div><div class="lbo-label">Entry EV ($M)</div><input class="lbo-input" id="lbo-ev" type="number" value="500" oninput="calcLBO()"></div>
+              <div><div class="lbo-label">Entry EBITDA ($M)</div><input class="lbo-input" id="lbo-ebitda" type="number" value="50" oninput="calcLBO()"></div>
+            </div>
+            <div class="lbo-row">
+              <div><div class="lbo-label">Revenue ($M)</div><input class="lbo-input" id="lbo-rev" type="number" value="200" oninput="calcLBO()"></div>
+              <div><div class="lbo-label">EBITDA Margin (%)</div><input class="lbo-input" id="lbo-margin" type="number" value="25" oninput="calcLBO()"></div>
+            </div>
+            <div class="lbo-row">
+              <div><div class="lbo-label">Total Leverage (x EBITDA)</div><input class="lbo-input" id="lbo-leverage" type="number" value="5" step="0.1" oninput="calcLBO()"></div>
+              <div><div class="lbo-label">Senior % of Debt</div><input class="lbo-input" id="lbo-senior-pct" type="number" value="70" oninput="calcLBO()"></div>
+            </div>
+            <div class="lbo-row">
+              <div><div class="lbo-label">Senior Rate (%)</div><input class="lbo-input" id="lbo-senior-rate" type="number" value="7" step="0.1" oninput="calcLBO()"></div>
+              <div><div class="lbo-label">Sub / Mezz Rate (%)</div><input class="lbo-input" id="lbo-sub-rate" type="number" value="11" step="0.1" oninput="calcLBO()"></div>
+            </div>
+          </div>
+          <div class="lbo-section">
+            <div class="lbo-section-title">Operating Plan &amp; Exit</div>
+            <div class="lbo-row">
+              <div><div class="lbo-label">Revenue Growth (%/yr)</div><input class="lbo-input" id="lbo-growth" type="number" value="8" step="0.1" oninput="calcLBO()"></div>
+              <div><div class="lbo-label">Exit EBITDA Margin (%)</div><input class="lbo-input" id="lbo-exit-margin" type="number" value="28" oninput="calcLBO()"></div>
+            </div>
+            <div class="lbo-row">
+              <div><div class="lbo-label">CapEx (% Revenue)</div><input class="lbo-input" id="lbo-capex" type="number" value="4" step="0.1" oninput="calcLBO()"></div>
+              <div><div class="lbo-label">Tax Rate (%)</div><input class="lbo-input" id="lbo-tax" type="number" value="25" oninput="calcLBO()"></div>
+            </div>
+            <div class="lbo-row">
+              <div><div class="lbo-label">Hold Period (yrs)</div><input class="lbo-input" id="lbo-hold" type="number" value="5" min="1" max="10" oninput="calcLBO()"></div>
+              <div><div class="lbo-label">Exit Multiple (x EBITDA)</div><input class="lbo-input" id="lbo-exit-mult" type="number" value="10" step="0.1" oninput="calcLBO()"></div>
+            </div>
+            <div><div class="lbo-label">D&amp;A (% Revenue)</div><input class="lbo-input" id="lbo-dna" type="number" value="3" step="0.1" oninput="calcLBO()" style="max-width:50%"></div>
+          </div>
+        </div>
+        <div class="lbo-section" style="overflow-x:auto">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div class="lbo-section-title" style="margin-bottom:0">Year-by-Year Model</div>
+            <button class="lbo-calc-btn" onclick="calcLBO()">Recalculate</button>
+          </div>
+          <table class="lbo-table"><thead><tr id="lbo-thead"></tr></thead><tbody id="lbo-tbody"></tbody></table>
+        </div>
+        <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-top:12px">⚠ LBO model is for educational purposes only. Not investment advice.</div>
+      </div>
     </div>
   </div>
 </div>
@@ -887,6 +978,7 @@ function showApiKeyModal() {
 // DATA
 // ================================================
 const STOCKS_US = [
+  // Tech — 30 stocks
   {ticker:'AAPL',name:'Apple Inc.',price:189.34,chg:1.23,pct:0.65,pe:29.4,mktcap:'$2.94T',sector:'tech'},
   {ticker:'MSFT',name:'Microsoft Corp.',price:414.87,chg:3.21,pct:0.78,pe:36.1,mktcap:'$3.08T',sector:'tech'},
   {ticker:'NVDA',name:'NVIDIA Corp.',price:875.43,chg:22.1,pct:2.59,pe:65.2,mktcap:'$2.16T',sector:'tech'},
@@ -894,14 +986,157 @@ const STOCKS_US = [
   {ticker:'AMZN',name:'Amazon.com Inc.',price:198.73,chg:2.87,pct:1.46,pe:44.2,mktcap:'$2.08T',sector:'tech'},
   {ticker:'GOOGL',name:'Alphabet Inc.',price:172.14,chg:0.98,pct:0.57,pe:25.1,mktcap:'$2.14T',sector:'tech'},
   {ticker:'META',name:'Meta Platforms',price:512.83,chg:8.43,pct:1.67,pe:27.8,mktcap:'$1.30T',sector:'tech'},
-  {ticker:'JPM',name:'JPMorgan Chase',price:196.54,chg:1.12,pct:0.57,pe:12.3,mktcap:'$567B',sector:'finance'},
-  {ticker:'XOM',name:'ExxonMobil Corp.',price:115.23,chg:-0.87,pct:-0.75,pe:14.1,mktcap:'$466B',sector:'energy'},
-  {ticker:'WMT',name:'Walmart Inc.',price:168.93,chg:0.54,pct:0.32,pe:30.2,mktcap:'$455B',sector:'retail'},
-  {ticker:'GS',name:'Goldman Sachs',price:483.27,chg:5.12,pct:1.07,pe:15.4,mktcap:'$163B',sector:'finance'},
-  {ticker:'CVX',name:'Chevron Corp.',price:154.43,chg:-1.23,pct:-0.79,pe:13.8,mktcap:'$292B',sector:'energy'},
-  {ticker:'BAC',name:'Bank of America',price:38.24,chg:0.44,pct:1.16,pe:11.2,mktcap:'$304B',sector:'finance'},
-  {ticker:'DIS',name:'Walt Disney Co.',price:97.82,chg:-0.64,pct:-0.65,pe:22.1,mktcap:'$180B',sector:'consumer'},
   {ticker:'NFLX',name:'Netflix Inc.',price:628.14,chg:9.21,pct:1.49,pe:44.8,mktcap:'$271B',sector:'tech'},
+  {ticker:'ADBE',name:'Adobe Inc.',price:512.72,chg:3.18,pct:0.62,pe:44.2,mktcap:'$232B',sector:'tech'},
+  {ticker:'CRM',name:'Salesforce Inc.',price:298.45,chg:1.87,pct:0.63,pe:48.1,mktcap:'$289B',sector:'tech'},
+  {ticker:'ORCL',name:'Oracle Corp.',price:128.56,chg:0.78,pct:0.61,pe:30.2,mktcap:'$352B',sector:'tech'},
+  {ticker:'INTC',name:'Intel Corp.',price:37.82,chg:-0.43,pct:-1.12,pe:22.4,mktcap:'$160B',sector:'tech'},
+  {ticker:'AMD',name:'Advanced Micro Devices',price:168.43,chg:4.21,pct:2.56,pe:42.3,mktcap:'$273B',sector:'tech'},
+  {ticker:'QCOM',name:'Qualcomm Inc.',price:178.92,chg:2.34,pct:1.32,pe:18.7,mktcap:'$203B',sector:'tech'},
+  {ticker:'AVGO',name:'Broadcom Inc.',price:1387.23,chg:18.4,pct:1.34,pe:32.8,mktcap:'$644B',sector:'tech'},
+  {ticker:'TXN',name:'Texas Instruments',price:192.43,chg:1.12,pct:0.59,pe:25.1,mktcap:'$175B',sector:'tech'},
+  {ticker:'NOW',name:'ServiceNow Inc.',price:812.34,chg:9.87,pct:1.23,pe:78.4,mktcap:'$167B',sector:'tech'},
+  {ticker:'INTU',name:'Intuit Inc.',price:648.92,chg:4.32,pct:0.67,pe:52.3,mktcap:'$181B',sector:'tech'},
+  {ticker:'PANW',name:'Palo Alto Networks',price:348.21,chg:5.67,pct:1.66,pe:null,mktcap:'$113B',sector:'tech'},
+  {ticker:'SNOW',name:'Snowflake Inc.',price:178.43,chg:3.21,pct:1.83,pe:null,mktcap:'$60B',sector:'tech'},
+  {ticker:'PLTR',name:'Palantir Technologies',price:24.87,chg:0.54,pct:2.22,pe:null,mktcap:'$53B',sector:'tech'},
+  {ticker:'NET',name:'Cloudflare Inc.',price:98.43,chg:1.87,pct:1.94,pe:null,mktcap:'$31B',sector:'tech'},
+  {ticker:'DDOG',name:'Datadog Inc.',price:128.76,chg:2.43,pct:1.92,pe:null,mktcap:'$42B',sector:'tech'},
+  {ticker:'CRWD',name:'CrowdStrike Holdings',price:358.92,chg:7.34,pct:2.09,pe:null,mktcap:'$88B',sector:'tech'},
+  {ticker:'SHOP',name:'Shopify Inc.',price:78.43,chg:1.12,pct:1.45,pe:null,mktcap:'$101B',sector:'tech'},
+  {ticker:'UBER',name:'Uber Technologies',price:68.92,chg:0.87,pct:1.28,pe:38.2,mktcap:'$142B',sector:'tech'},
+  {ticker:'ABNB',name:'Airbnb Inc.',price:148.73,chg:2.14,pct:1.46,pe:42.8,mktcap:'$93B',sector:'tech'},
+  {ticker:'SPOT',name:'Spotify Technology',price:289.43,chg:4.21,pct:1.48,pe:null,mktcap:'$58B',sector:'tech'},
+  {ticker:'TWLO',name:'Twilio Inc.',price:68.92,chg:1.32,pct:1.95,pe:null,mktcap:'$12B',sector:'tech'},
+  {ticker:'ZM',name:'Zoom Video Comms.',price:68.43,chg:0.87,pct:1.29,pe:22.4,mktcap:'$21B',sector:'tech'},
+  // Finance — 20 stocks
+  {ticker:'JPM',name:'JPMorgan Chase',price:196.54,chg:1.12,pct:0.57,pe:12.3,mktcap:'$567B',sector:'finance'},
+  {ticker:'GS',name:'Goldman Sachs',price:483.27,chg:5.12,pct:1.07,pe:15.4,mktcap:'$163B',sector:'finance'},
+  {ticker:'BAC',name:'Bank of America',price:38.24,chg:0.44,pct:1.16,pe:11.2,mktcap:'$304B',sector:'finance'},
+  {ticker:'WFC',name:'Wells Fargo & Co.',price:57.84,chg:0.62,pct:1.08,pe:11.8,mktcap:'$211B',sector:'finance'},
+  {ticker:'MS',name:'Morgan Stanley',price:98.34,chg:1.23,pct:1.27,pe:16.8,mktcap:'$160B',sector:'finance'},
+  {ticker:'C',name:'Citigroup Inc.',price:62.43,chg:0.78,pct:1.26,pe:10.4,mktcap:'$120B',sector:'finance'},
+  {ticker:'BLK',name:'BlackRock Inc.',price:923.42,chg:8.72,pct:0.95,pe:23.8,mktcap:'$140B',sector:'finance'},
+  {ticker:'AXP',name:'American Express',price:228.84,chg:2.34,pct:1.03,pe:19.2,mktcap:'$168B',sector:'finance'},
+  {ticker:'V',name:'Visa Inc.',price:278.43,chg:2.12,pct:0.77,pe:31.2,mktcap:'$574B',sector:'finance'},
+  {ticker:'MA',name:'Mastercard Inc.',price:468.92,chg:4.31,pct:0.93,pe:38.4,mktcap:'$438B',sector:'finance'},
+  {ticker:'PYPL',name:'PayPal Holdings',price:68.43,chg:-0.54,pct:-0.78,pe:18.2,mktcap:'$74B',sector:'finance'},
+  {ticker:'SPGI',name:'S&P Global Inc.',price:474.82,chg:3.42,pct:0.73,pe:46.2,mktcap:'$154B',sector:'finance'},
+  {ticker:'ICE',name:'Intercontinental Exchange',price:148.32,chg:1.12,pct:0.76,pe:32.4,mktcap:'$85B',sector:'finance'},
+  {ticker:'CME',name:'CME Group Inc.',price:218.43,chg:1.87,pct:0.86,pe:22.8,mktcap:'$78B',sector:'finance'},
+  {ticker:'USB',name:'US Bancorp',price:44.82,chg:0.34,pct:0.76,pe:12.2,mktcap:'$68B',sector:'finance'},
+  {ticker:'PNC',name:'PNC Financial Services',price:178.43,chg:1.42,pct:0.80,pe:13.4,mktcap:'$72B',sector:'finance'},
+  {ticker:'COF',name:'Capital One Financial',price:148.92,chg:1.78,pct:1.21,pe:12.8,mktcap:'$57B',sector:'finance'},
+  {ticker:'AIG',name:'American Intl Group',price:78.43,chg:0.54,pct:0.69,pe:14.2,mktcap:'$46B',sector:'finance'},
+  {ticker:'MET',name:'MetLife Inc.',price:68.92,chg:0.42,pct:0.61,pe:8.4,mktcap:'$55B',sector:'finance'},
+  {ticker:'PRU',name:'Prudential Financial',price:112.84,chg:0.72,pct:0.64,pe:9.2,mktcap:'$43B',sector:'finance'},
+  // Healthcare — 20 stocks
+  {ticker:'JNJ',name:'Johnson & Johnson',price:152.43,chg:-0.87,pct:-0.57,pe:15.2,mktcap:'$365B',sector:'health'},
+  {ticker:'UNH',name:'UnitedHealth Group',price:487.82,chg:3.42,pct:0.71,pe:22.4,mktcap:'$451B',sector:'health'},
+  {ticker:'PFE',name:'Pfizer Inc.',price:27.84,chg:-0.32,pct:-1.14,pe:12.3,mktcap:'$157B',sector:'health'},
+  {ticker:'MRK',name:'Merck & Co.',price:123.42,chg:0.87,pct:0.71,pe:16.8,mktcap:'$312B',sector:'health'},
+  {ticker:'ABBV',name:'AbbVie Inc.',price:178.92,chg:1.34,pct:0.75,pe:18.4,mktcap:'$316B',sector:'health'},
+  {ticker:'LLY',name:'Eli Lilly & Co.',price:742.83,chg:12.34,pct:1.69,pe:68.4,mktcap:'$707B',sector:'health'},
+  {ticker:'BMY',name:'Bristol-Myers Squibb',price:48.43,chg:-0.21,pct:-0.43,pe:9.2,mktcap:'$99B',sector:'health'},
+  {ticker:'AMGN',name:'Amgen Inc.',price:278.43,chg:2.12,pct:0.77,pe:18.4,mktcap:'$148B',sector:'health'},
+  {ticker:'GILD',name:'Gilead Sciences',price:78.43,chg:0.43,pct:0.55,pe:14.2,mktcap:'$97B',sector:'health'},
+  {ticker:'CVS',name:'CVS Health Corp.',price:72.84,chg:0.34,pct:0.47,pe:10.2,mktcap:'$90B',sector:'health'},
+  {ticker:'MDT',name:'Medtronic plc',price:82.43,chg:0.54,pct:0.66,pe:16.8,mktcap:'$111B',sector:'health'},
+  {ticker:'DHR',name:'Danaher Corp.',price:248.43,chg:1.87,pct:0.76,pe:38.4,mktcap:'$178B',sector:'health'},
+  {ticker:'SYK',name:'Stryker Corp.',price:348.92,chg:2.34,pct:0.68,pe:34.2,mktcap:'$132B',sector:'health'},
+  {ticker:'ELV',name:'Elevance Health',price:468.43,chg:3.12,pct:0.67,pe:18.4,mktcap:'$108B',sector:'health'},
+  {ticker:'CI',name:'The Cigna Group',price:332.84,chg:2.14,pct:0.65,pe:16.2,mktcap:'$103B',sector:'health'},
+  {ticker:'HUM',name:'Humana Inc.',price:368.43,chg:2.87,pct:0.78,pe:19.4,mktcap:'$44B',sector:'health'},
+  {ticker:'ISRG',name:'Intuitive Surgical',price:392.43,chg:4.12,pct:1.06,pe:72.4,mktcap:'$137B',sector:'health'},
+  {ticker:'REGN',name:'Regeneron Pharma.',price:878.43,chg:7.34,pct:0.84,pe:28.4,mktcap:'$94B',sector:'health'},
+  {ticker:'VRTX',name:'Vertex Pharmaceuticals',price:468.92,chg:4.21,pct:0.91,pe:34.8,mktcap:'$121B',sector:'health'},
+  {ticker:'BIIB',name:'Biogen Inc.',price:224.43,chg:1.42,pct:0.64,pe:18.2,mktcap:'$33B',sector:'health'},
+  // Energy — 15 stocks
+  {ticker:'XOM',name:'ExxonMobil Corp.',price:115.23,chg:-0.87,pct:-0.75,pe:14.1,mktcap:'$466B',sector:'energy'},
+  {ticker:'CVX',name:'Chevron Corp.',price:154.43,chg:-1.23,pct:-0.79,pe:13.8,mktcap:'$292B',sector:'energy'},
+  {ticker:'COP',name:'ConocoPhillips',price:112.43,chg:-0.87,pct:-0.77,pe:12.4,mktcap:'$128B',sector:'energy'},
+  {ticker:'SLB',name:'SLB (Schlumberger)',price:42.84,chg:-0.32,pct:-0.74,pe:16.2,mktcap:'$60B',sector:'energy'},
+  {ticker:'EOG',name:'EOG Resources',price:128.43,chg:-0.78,pct:-0.60,pe:11.4,mktcap:'$77B',sector:'energy'},
+  {ticker:'PSX',name:'Phillips 66',price:148.92,chg:-0.92,pct:-0.61,pe:13.2,mktcap:'$54B',sector:'energy'},
+  {ticker:'VLO',name:'Valero Energy Corp.',price:148.43,chg:-1.12,pct:-0.75,pe:8.2,mktcap:'$46B',sector:'energy'},
+  {ticker:'MPC',name:'Marathon Petroleum',price:178.43,chg:-0.87,pct:-0.49,pe:9.4,mktcap:'$57B',sector:'energy'},
+  {ticker:'HAL',name:'Halliburton Co.',price:32.84,chg:-0.21,pct:-0.64,pe:12.8,mktcap:'$29B',sector:'energy'},
+  {ticker:'OXY',name:'Occidental Petroleum',price:58.43,chg:-0.43,pct:-0.73,pe:14.2,mktcap:'$55B',sector:'energy'},
+  {ticker:'DVN',name:'Devon Energy Corp.',price:42.84,chg:-0.32,pct:-0.74,pe:9.2,mktcap:'$27B',sector:'energy'},
+  {ticker:'KMI',name:'Kinder Morgan',price:18.43,chg:0.12,pct:0.65,pe:18.4,mktcap:'$41B',sector:'energy'},
+  {ticker:'WMB',name:'Williams Companies',price:38.43,chg:0.24,pct:0.63,pe:22.4,mktcap:'$47B',sector:'energy'},
+  {ticker:'LNG',name:'Cheniere Energy',price:178.43,chg:1.23,pct:0.69,pe:16.2,mktcap:'$43B',sector:'energy'},
+  {ticker:'BKR',name:'Baker Hughes Co.',price:32.43,chg:0.18,pct:0.56,pe:22.8,mktcap:'$32B',sector:'energy'},
+  // Consumer & Retail — 20 stocks
+  {ticker:'WMT',name:'Walmart Inc.',price:168.93,chg:0.54,pct:0.32,pe:30.2,mktcap:'$455B',sector:'consumer'},
+  {ticker:'DIS',name:'Walt Disney Co.',price:97.82,chg:-0.64,pct:-0.65,pe:22.1,mktcap:'$180B',sector:'consumer'},
+  {ticker:'HD',name:'Home Depot Inc.',price:348.43,chg:2.34,pct:0.68,pe:24.2,mktcap:'$346B',sector:'consumer'},
+  {ticker:'MCD',name:"McDonald's Corp.",price:278.43,chg:1.12,pct:0.40,pe:24.8,mktcap:'$202B',sector:'consumer'},
+  {ticker:'NKE',name:'Nike Inc.',price:92.84,chg:-0.43,pct:-0.46,pe:28.4,mktcap:'$143B',sector:'consumer'},
+  {ticker:'SBUX',name:'Starbucks Corp.',price:92.43,chg:0.78,pct:0.85,pe:28.4,mktcap:'$105B',sector:'consumer'},
+  {ticker:'LOW',name:"Lowe's Companies",price:228.43,chg:1.42,pct:0.63,pe:21.8,mktcap:'$134B',sector:'consumer'},
+  {ticker:'TGT',name:'Target Corp.',price:148.43,chg:0.87,pct:0.59,pe:17.4,mktcap:'$68B',sector:'consumer'},
+  {ticker:'COST',name:'Costco Wholesale',price:862.43,chg:5.34,pct:0.62,pe:48.4,mktcap:'$382B',sector:'consumer'},
+  {ticker:'PG',name:'Procter & Gamble',price:162.84,chg:0.72,pct:0.44,pe:26.4,mktcap:'$383B',sector:'consumer'},
+  {ticker:'KO',name:'Coca-Cola Co.',price:62.43,chg:0.18,pct:0.29,pe:24.2,mktcap:'$269B',sector:'consumer'},
+  {ticker:'PEP',name:'PepsiCo Inc.',price:178.43,chg:0.64,pct:0.36,pe:24.8,mktcap:'$244B',sector:'consumer'},
+  {ticker:'PM',name:'Philip Morris Intl.',price:98.43,chg:0.42,pct:0.43,pe:18.4,mktcap:'$153B',sector:'consumer'},
+  {ticker:'MO',name:'Altria Group Inc.',price:42.84,chg:0.12,pct:0.28,pe:8.4,mktcap:'$76B',sector:'consumer'},
+  {ticker:'CL',name:'Colgate-Palmolive',price:88.43,chg:0.34,pct:0.39,pe:34.2,mktcap:'$74B',sector:'consumer'},
+  {ticker:'EL',name:'Estée Lauder Cos.',price:98.43,chg:0.78,pct:0.80,pe:22.4,mktcap:'$36B',sector:'consumer'},
+  {ticker:'LULU',name:'Lululemon Athletica',price:328.43,chg:2.84,pct:0.87,pe:34.8,mktcap:'$42B',sector:'consumer'},
+  {ticker:'ROST',name:'Ross Stores Inc.',price:148.43,chg:0.87,pct:0.59,pe:24.2,mktcap:'$55B',sector:'consumer'},
+  {ticker:'TJX',name:'TJX Companies',price:112.84,chg:0.64,pct:0.57,pe:28.4,mktcap:'$131B',sector:'consumer'},
+  {ticker:'DHI',name:'D.R. Horton Inc.',price:168.43,chg:1.23,pct:0.74,pe:10.4,mktcap:'$55B',sector:'consumer'},
+  // Industrials — 15 stocks
+  {ticker:'CAT',name:'Caterpillar Inc.',price:348.43,chg:2.87,pct:0.83,pe:18.4,mktcap:'$178B',sector:'industrials'},
+  {ticker:'BA',name:'Boeing Co.',price:228.43,chg:-1.42,pct:-0.62,pe:null,mktcap:'$138B',sector:'industrials'},
+  {ticker:'HON',name:'Honeywell Intl.',price:198.43,chg:1.12,pct:0.57,pe:23.4,mktcap:'$128B',sector:'industrials'},
+  {ticker:'GE',name:'GE Aerospace',price:162.43,chg:1.84,pct:1.15,pe:34.8,mktcap:'$177B',sector:'industrials'},
+  {ticker:'MMM',name:'3M Company',price:128.43,chg:0.72,pct:0.56,pe:14.2,mktcap:'$70B',sector:'industrials'},
+  {ticker:'UPS',name:'UPS Inc.',price:148.43,chg:0.87,pct:0.59,pe:18.4,mktcap:'$127B',sector:'industrials'},
+  {ticker:'FDX',name:'FedEx Corp.',price:248.43,chg:1.84,pct:0.75,pe:16.2,mktcap:'$63B',sector:'industrials'},
+  {ticker:'LMT',name:'Lockheed Martin',price:482.43,chg:2.34,pct:0.49,pe:18.4,mktcap:'$122B',sector:'industrials'},
+  {ticker:'RTX',name:'RTX Corp.',price:118.43,chg:0.87,pct:0.74,pe:34.2,mktcap:'$157B',sector:'industrials'},
+  {ticker:'NOC',name:'Northrop Grumman',price:498.43,chg:2.84,pct:0.57,pe:22.4,mktcap:'$75B',sector:'industrials'},
+  {ticker:'DE',name:'Deere & Company',price:448.43,chg:3.14,pct:0.71,pe:16.4,mktcap:'$134B',sector:'industrials'},
+  {ticker:'ETN',name:'Eaton Corp.',price:348.43,chg:2.34,pct:0.68,pe:34.2,mktcap:'$141B',sector:'industrials'},
+  {ticker:'UNP',name:'Union Pacific Corp.',price:248.43,chg:1.84,pct:0.75,pe:22.4,mktcap:'$148B',sector:'industrials'},
+  {ticker:'GD',name:'General Dynamics',price:282.43,chg:1.42,pct:0.51,pe:18.4,mktcap:'$77B',sector:'industrials'},
+  {ticker:'WM',name:'Waste Management',price:212.43,chg:1.12,pct:0.53,pe:34.2,mktcap:'$84B',sector:'industrials'},
+  // Materials — 10 stocks
+  {ticker:'LIN',name:'Linde plc',price:448.43,chg:2.84,pct:0.64,pe:34.8,mktcap:'$214B',sector:'materials'},
+  {ticker:'APD',name:'Air Products & Chemicals',price:248.43,chg:1.42,pct:0.58,pe:28.4,mktcap:'$55B',sector:'materials'},
+  {ticker:'FCX',name:'Freeport-McMoRan',price:42.84,chg:0.64,pct:1.52,pe:18.4,mktcap:'$62B',sector:'materials'},
+  {ticker:'NEM',name:'Newmont Corp.',price:48.43,chg:0.72,pct:1.51,pe:14.2,mktcap:'$38B',sector:'materials'},
+  {ticker:'NUE',name:'Nucor Corp.',price:148.43,chg:0.87,pct:0.59,pe:9.4,mktcap:'$19B',sector:'materials'},
+  {ticker:'DOW',name:'Dow Inc.',price:48.43,chg:0.24,pct:0.50,pe:14.2,mktcap:'$34B',sector:'materials'},
+  {ticker:'DD',name:'DuPont de Nemours',price:78.43,chg:0.43,pct:0.55,pe:22.8,mktcap:'$35B',sector:'materials'},
+  {ticker:'SHW',name:'Sherwin-Williams',price:348.43,chg:2.34,pct:0.68,pe:34.2,mktcap:'$89B',sector:'materials'},
+  {ticker:'CF',name:'CF Industries',price:82.43,chg:0.54,pct:0.66,pe:9.4,mktcap:'$15B',sector:'materials'},
+  {ticker:'ALB',name:'Albemarle Corp.',price:92.43,chg:0.64,pct:0.70,pe:null,mktcap:'$11B',sector:'materials'},
+  // Telecom & Media — 10 stocks
+  {ticker:'T',name:'AT&T Inc.',price:17.84,chg:0.08,pct:0.45,pe:8.4,mktcap:'$128B',sector:'telecom'},
+  {ticker:'VZ',name:'Verizon Comms.',price:42.84,chg:0.18,pct:0.42,pe:9.2,mktcap:'$180B',sector:'telecom'},
+  {ticker:'TMUS',name:'T-Mobile US Inc.',price:168.43,chg:0.84,pct:0.50,pe:24.2,mktcap:'$196B',sector:'telecom'},
+  {ticker:'CMCSA',name:'Comcast Corp.',price:42.84,chg:0.24,pct:0.56,pe:12.4,mktcap:'$170B',sector:'telecom'},
+  {ticker:'CHTR',name:'Charter Comms.',price:368.43,chg:2.14,pct:0.58,pe:14.2,mktcap:'$59B',sector:'telecom'},
+  {ticker:'FOX',name:'Fox Corp.',price:38.43,chg:0.24,pct:0.63,pe:14.2,mktcap:'$22B',sector:'telecom'},
+  {ticker:'WBD',name:'Warner Bros. Discovery',price:8.43,chg:-0.12,pct:-1.40,pe:null,mktcap:'$20B',sector:'telecom'},
+  {ticker:'PARA',name:'Paramount Global',price:12.43,chg:-0.14,pct:-1.11,pe:null,mktcap:'$8B',sector:'telecom'},
+  {ticker:'DISH',name:'EchoStar Corp.',price:2.84,chg:-0.04,pct:-1.39,pe:null,mktcap:'$2B',sector:'telecom'},
+  {ticker:'LUMN',name:'Lumen Technologies',price:1.43,chg:-0.02,pct:-1.38,pe:null,mktcap:'$2B',sector:'telecom'},
+  // Utilities & Real Estate — 10 stocks
+  {ticker:'NEE',name:'NextEra Energy',price:72.84,chg:0.34,pct:0.47,pe:24.2,mktcap:'$149B',sector:'utilities'},
+  {ticker:'DUK',name:'Duke Energy Corp.',price:108.43,chg:0.42,pct:0.39,pe:18.4,mktcap:'$84B',sector:'utilities'},
+  {ticker:'SO',name:'Southern Company',price:82.43,chg:0.32,pct:0.39,pe:22.4,mktcap:'$90B',sector:'utilities'},
+  {ticker:'AMT',name:'American Tower Corp.',price:188.43,chg:1.12,pct:0.60,pe:52.4,mktcap:'$87B',sector:'utilities'},
+  {ticker:'PLD',name:'Prologis Inc.',price:108.43,chg:0.64,pct:0.59,pe:34.2,mktcap:'$98B',sector:'utilities'},
+  {ticker:'EQIX',name:'Equinix Inc.',price:812.43,chg:4.84,pct:0.60,pe:78.4,mktcap:'$76B',sector:'utilities'},
+  {ticker:'O',name:'Realty Income Corp.',price:52.84,chg:0.24,pct:0.46,pe:48.4,mktcap:'$47B',sector:'utilities'},
+  {ticker:'SPG',name:'Simon Property Group',price:148.43,chg:0.87,pct:0.59,pe:24.4,mktcap:'$48B',sector:'utilities'},
+  {ticker:'WELL',name:'Welltower Inc.',price:108.43,chg:0.64,pct:0.59,pe:188.4,mktcap:'$67B',sector:'utilities'},
+  {ticker:'D',name:'Dominion Energy',price:52.84,chg:0.22,pct:0.42,pe:24.2,mktcap:'$44B',sector:'utilities'},
 ];
 const STOCKS_UK = [
   {ticker:'SHEL',name:'Shell plc',price:27.84,chg:0.42,pct:1.53,pe:11.2,mktcap:'£198B',sector:'energy',currency:'£'},
@@ -914,6 +1149,22 @@ const STOCKS_UK = [
   {ticker:'BP',name:'BP plc',price:4.87,chg:-0.06,pct:-1.22,pe:10.3,mktcap:'£79B',sector:'energy',currency:'£'},
   {ticker:'VOD',name:'Vodafone Group',price:0.76,chg:-0.01,pct:-1.30,pe:9.1,mktcap:'£21B',sector:'telecom',currency:'£'},
   {ticker:'LLOY',name:'Lloyds Banking Group',price:0.53,chg:0.01,pct:1.92,pe:7.8,mktcap:'£37B',sector:'finance',currency:'£'},
+  {ticker:'DGE',name:'Diageo plc',price:28.84,chg:-0.32,pct:-1.10,pe:18.4,mktcap:'£67B',sector:'consumer',currency:'£'},
+  {ticker:'LSEG',name:'London Stock Exchange',price:108.43,chg:0.84,pct:0.78,pe:42.4,mktcap:'£52B',sector:'finance',currency:'£'},
+  {ticker:'STAN',name:'Standard Chartered',price:8.43,chg:0.12,pct:1.44,pe:9.4,mktcap:'£28B',sector:'finance',currency:'£'},
+  {ticker:'NWG',name:'NatWest Group',price:3.84,chg:0.06,pct:1.59,pe:7.2,mktcap:'£34B',sector:'finance',currency:'£'},
+  {ticker:'BA.',name:'BAE Systems',price:12.43,chg:0.18,pct:1.47,pe:22.4,mktcap:'£42B',sector:'industrials',currency:'£'},
+  {ticker:'REL',name:'RELX plc',price:38.43,chg:0.24,pct:0.63,pe:34.4,mktcap:'£60B',sector:'tech',currency:'£'},
+  {ticker:'CPG',name:'Compass Group',price:28.43,chg:0.22,pct:0.78,pe:28.4,mktcap:'£47B',sector:'consumer',currency:'£'},
+  {ticker:'IMB',name:'Imperial Brands',price:22.84,chg:0.18,pct:0.79,pe:8.2,mktcap:'£19B',sector:'consumer',currency:'£'},
+  {ticker:'GLEN',name:'Glencore plc',price:4.48,chg:0.08,pct:1.82,pe:9.4,mktcap:'£56B',sector:'materials',currency:'£'},
+  {ticker:'AAL',name:'Anglo American',price:22.84,chg:0.48,pct:2.15,pe:18.4,mktcap:'£30B',sector:'materials',currency:'£'},
+  {ticker:'BHP',name:'BHP Group',price:22.43,chg:0.42,pct:1.91,pe:11.4,mktcap:'£116B',sector:'materials',currency:'£'},
+  {ticker:'IAG',name:'Intl Consolidated Airlines',price:3.48,chg:0.06,pct:1.75,pe:8.4,mktcap:'£12B',sector:'industrials',currency:'£'},
+  {ticker:'EZJ',name:'easyJet plc',price:4.84,chg:0.08,pct:1.68,pe:14.4,mktcap:'£4B',sector:'industrials',currency:'£'},
+  {ticker:'WPP',name:'WPP plc',price:7.84,chg:-0.08,pct:-1.01,pe:12.4,mktcap:'£10B',sector:'consumer',currency:'£'},
+  {ticker:'BT.A',name:'BT Group',price:1.43,chg:-0.02,pct:-1.38,pe:8.4,mktcap:'£14B',sector:'telecom',currency:'£'},
+  {ticker:'PRU',name:'Prudential plc',price:8.43,chg:0.12,pct:1.44,pe:14.4,mktcap:'£22B',sector:'finance',currency:'£'},
 ];
 const ALL_STOCKS = [...STOCKS_US,...STOCKS_UK];
 
@@ -1040,6 +1291,7 @@ function showPage(id, el) {
   if(id==='markets') renderMarketsTable();
   if(id==='watchlist') renderWatchlist();
   if(id==='learn') renderLearn();
+  if(id==='lbo') calcLBO();
 }
 
 // ================================================
@@ -1923,33 +2175,65 @@ function renderDiveFinancials(stock) {
 }
 
 // ------------------------------------------------
-// ANALYST RATINGS TAB
+// ANALYST RATINGS TAB  — live Yahoo Finance data with fallback
 // ------------------------------------------------
-function renderDiveAnalyst(stock) {
-  const r=seededRand(tickerSeed(stock.ticker)+42);
-  const total=Math.floor(25+r()*30);
-  const buyPct=0.35+r()*0.45; const holdPct=0.2+r()*0.25; const sellPct=1-buyPct-holdPct;
-  const sb=Math.floor(total*buyPct*0.4), buy=Math.floor(total*buyPct*0.6), hold=Math.floor(total*holdPct), sell=Math.floor(total*sellPct*0.7), ss=total-sb-buy-hold-sell;
-  const consensus=buyPct>0.6?'Strong Buy':buyPct>0.45?'Buy':sellPct>0.4?'Sell':'Hold';
-  const consColor=consensus.includes('Buy')?'var(--green)':consensus==='Sell'?'var(--red)':'var(--amber)';
-  const targetLow=stock.price*(0.85+r()*0.1);
-  const targetMed=stock.price*(1.1+r()*0.15);
-  const targetHigh=stock.price*(1.3+r()*0.2);
-  const curr=stock.currency||'$';
-  const upside=((targetMed-stock.price)/stock.price*100).toFixed(1);
-  const html=`
+function _analystSimulated(stock) {
+  const r = seededRand(tickerSeed(stock.ticker) + 42);
+  const total = Math.floor(25 + r() * 30);
+  const buyPct = 0.35 + r() * 0.45;
+  const holdPct = 0.2 + r() * 0.25;
+  const sellPct = Math.max(0, 1 - buyPct - holdPct);
+  const sb  = Math.floor(total * buyPct  * 0.4);
+  const buy = Math.floor(total * buyPct  * 0.6);
+  const hold= Math.floor(total * holdPct);
+  const sell= Math.floor(total * sellPct * 0.7);
+  const ss  = Math.max(0, total - sb - buy - hold - sell);
+  return {
+    targetLowPrice:  {raw: stock.price * (0.85 + r() * 0.1)},
+    targetMeanPrice: {raw: stock.price * (1.10 + r() * 0.15)},
+    targetHighPrice: {raw: stock.price * (1.30 + r() * 0.2)},
+    numberOfAnalystOpinions: {raw: total},
+    recommendationKey: buyPct > 0.6 ? 'buy' : sellPct > 0.4 ? 'sell' : 'hold',
+    _trend: {strongBuy:sb, buy, hold, sell, strongSell:ss},
+  };
+}
+
+function _buildAnalystHtml(stock, fd, trend, live) {
+  const curr = stock.currency || '$';
+  const targetLow  = fd.targetLowPrice?.raw  || stock.price * 0.85;
+  const targetMed  = fd.targetMeanPrice?.raw || stock.price * 1.10;
+  const targetHigh = fd.targetHighPrice?.raw || stock.price * 1.30;
+  const numA = fd.numberOfAnalystOpinions?.raw || 0;
+  const recKey = (fd.recommendationKey || 'hold').toLowerCase().replace('_','');
+  const sb   = trend?.strongBuy  || 0;
+  const buy  = trend?.buy        || 0;
+  const hold = trend?.hold       || 0;
+  const sell = trend?.sell       || 0;
+  const ss   = trend?.strongSell || 0;
+  const total = (sb+buy+hold+sell+ss) || numA || 1;
+  const consLabel = recKey==='strongbuy'||recKey==='strongbuyrecommendation' ? 'Strong Buy'
+    : recKey==='buy'  ? 'Buy'
+    : recKey==='sell' ? 'Sell'
+    : recKey==='strongsell' ? 'Strong Sell'
+    : 'Hold';
+  const consColor = consLabel.includes('Buy') ? 'var(--green)' : consLabel.includes('Sell') ? 'var(--red)' : 'var(--amber)';
+  const upside = ((targetMed - stock.price) / stock.price * 100).toFixed(1);
+  const badge = live
+    ? `<span class="analyst-live-badge">LIVE</span>`
+    : `<span class="analyst-demo-badge">SIMULATED</span>`;
+  return `
     <div class="price-target-card">
-      <div class="pt-label">Consensus Price Target</div>
+      <div class="pt-label">Consensus Price Target ${badge}</div>
       <div class="pt-current">${curr}${targetMed.toFixed(2)} <span style="font-size:14px;color:${parseFloat(upside)>=0?'var(--green)':'var(--red)'}">${parseFloat(upside)>=0?'+':''}${upside}% upside</span></div>
       <div class="pt-range">
         <div><div class="pt-label">Low</div><div style="font-family:var(--font-mono);font-size:15px">${curr}${targetLow.toFixed(2)}</div></div>
         <div><div class="pt-label">Median</div><div style="font-family:var(--font-mono);font-size:15px">${curr}${targetMed.toFixed(2)}</div></div>
         <div><div class="pt-label">High</div><div style="font-family:var(--font-mono);font-size:15px">${curr}${targetHigh.toFixed(2)}</div></div>
-        <div><div class="pt-label">Analysts</div><div style="font-family:var(--font-mono);font-size:15px">${total}</div></div>
+        <div><div class="pt-label">Analysts</div><div style="font-family:var(--font-mono);font-size:15px">${numA || total}</div></div>
       </div>
     </div>
     <div style="font-family:var(--font-head);font-size:15px;font-weight:700;margin-bottom:16px">
-      Consensus: <span style="color:${consColor}">${consensus}</span>
+      Consensus: <span style="color:${consColor}">${consLabel}</span>
     </div>
     <div class="analyst-bar-wrap">
       ${[['Strong Buy',sb,'var(--green)'],['Buy',buy,'#00c887'],['Hold',hold,'var(--amber)'],['Sell',sell,'var(--red)'],['Strong Sell',ss,'#cc0000']].map(([lbl,count,color])=>`
@@ -1959,9 +2243,31 @@ function renderDiveAnalyst(stock) {
           <div class="analyst-count">${count}</div>
         </div>`).join('')}
     </div>
-    <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-top:8px">⚠ Analyst ratings are simulated for educational purposes only.</div>`;
-  const el=document.getElementById('diveAnalystContent');
-  el.className=''; el.innerHTML=html;
+    ${live ? '' : '<div style="font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-top:8px">⚠ Live analyst data unavailable — showing estimated ratings.</div>'}`;
+}
+
+async function renderDiveAnalyst(stock) {
+  const el = document.getElementById('diveAnalystContent');
+  el.innerHTML = '<div style="color:var(--text3);padding:20px 0;font-family:var(--font-mono)">Loading analyst data…</div>';
+  const sym = stock.ticker.replace('.', '-');
+  const url = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${sym}?modules=financialData,recommendationTrend`;
+  let fd = null, trend = null, live = false;
+  for (const endpoint of [`https://corsproxy.io/?${encodeURIComponent(url)}`, url]) {
+    try {
+      const resp = await fetch(endpoint, {signal: AbortSignal.timeout(7000)});
+      if (!resp.ok) continue;
+      const json = await resp.json();
+      const res = json?.quoteSummary?.result?.[0];
+      if (res?.financialData?.targetMeanPrice?.raw) {
+        fd = res.financialData;
+        trend = res.recommendationTrend?.trend?.[0];
+        live = true;
+        break;
+      }
+    } catch(e) { /* try next */ }
+  }
+  if (!live) { const sim = _analystSimulated(stock); fd = sim; trend = sim._trend; }
+  el.className = ''; el.innerHTML = _buildAnalystHtml(stock, fd, trend, live);
 }
 
 // ------------------------------------------------
@@ -2138,6 +2444,103 @@ function init() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+// ================================================
+// LBO MODEL CALCULATOR
+// ================================================
+function fmtM(v) {
+  if (Math.abs(v) >= 1000) return '$' + (v / 1000).toFixed(1) + 'B';
+  return '$' + v.toFixed(1) + 'M';
+}
+
+function calcLBO() {
+  const g  = id => parseFloat(document.getElementById(id)?.value) || 0;
+  const ev        = g('lbo-ev');
+  const ebitda    = g('lbo-ebitda');
+  const rev0      = g('lbo-rev');
+  const margin    = g('lbo-margin') / 100;
+  const exitMargin= g('lbo-exit-margin') / 100;
+  const leverage  = g('lbo-leverage');
+  const seniorPct = g('lbo-senior-pct') / 100;
+  const seniorRate= g('lbo-senior-rate') / 100;
+  const subRate   = g('lbo-sub-rate') / 100;
+  const growth    = g('lbo-growth') / 100;
+  const capexPct  = g('lbo-capex') / 100;
+  const taxRate   = g('lbo-tax') / 100;
+  const hold      = Math.max(1, Math.min(10, Math.round(g('lbo-hold'))));
+  const exitMult  = g('lbo-exit-mult');
+  const dnaPct    = g('lbo-dna') / 100;
+
+  const totalDebt = ebitda * leverage;
+  const equity    = ev - totalDebt;
+  if (equity <= 0) { notify('Equity is negative — reduce leverage', 'error'); return; }
+
+  const seniorDebt = totalDebt * seniorPct;
+  const subDebt    = totalDebt * (1 - seniorPct);
+  const blendedRate = seniorPct * seniorRate + (1 - seniorPct) * subRate;
+
+  // Build year-by-year model
+  const rows = [];
+  let debt = totalDebt;
+  let rev  = rev0;
+  const cashflows = [-equity];
+
+  for (let yr = 1; yr <= hold; yr++) {
+    rev *= (1 + growth);
+    const em      = yr === hold ? exitMargin : margin + (exitMargin - margin) * (yr / hold);
+    const ebitdaYr= rev * em;
+    const dna     = rev * dnaPct;
+    const ebit    = ebitdaYr - dna;
+    const interest = debt * blendedRate;
+    const ebt     = ebit - interest;
+    const tax     = Math.max(0, ebt * taxRate);
+    const netInc  = ebt - tax;
+    const capex   = rev * capexPct;
+    const fcf     = netInc + dna - capex;
+    const debtPay = Math.max(0, Math.min(fcf, debt));
+    debt          = Math.max(0, debt - debtPay);
+    rows.push({yr, rev, ebitdaYr, interest, ebt, netInc, fcf, debtPay, debt});
+    if (yr === hold) cashflows.push(0); // exit handled below
+  }
+
+  const exitEV    = (rows[hold-1]?.ebitdaYr || ebitda) * exitMult;
+  const remDebt   = debt;
+  const exitEquity= Math.max(0, exitEV - remDebt);
+  cashflows[cashflows.length - 1] = exitEquity;
+
+  const moic = equity > 0 ? exitEquity / equity : 0;
+  const irr  = moic > 0 ? (Math.pow(moic, 1 / hold) - 1) * 100 : 0;
+
+  // Update metric cards
+  const irrEl = document.getElementById('lbo-irr');
+  irrEl.textContent = irr.toFixed(1) + '%';
+  irrEl.className = 'lbo-metric-val ' + (irr >= 25 ? 'lbo-irr-great' : irr >= 20 ? 'lbo-irr-good' : irr >= 15 ? 'lbo-irr-ok' : 'lbo-irr-bad');
+  document.getElementById('lbo-moic').textContent  = moic.toFixed(2) + 'x';
+  document.getElementById('lbo-eq-in').textContent  = fmtM(equity);
+  document.getElementById('lbo-eq-out').textContent = fmtM(exitEquity);
+  document.getElementById('lbo-exit-ev').textContent = fmtM(exitEV);
+  document.getElementById('lbo-rem-debt').textContent = fmtM(remDebt);
+
+  // Build table
+  const thead = document.getElementById('lbo-thead');
+  const tbody = document.getElementById('lbo-tbody');
+  thead.innerHTML = `<th style="text-align:left">Year</th><th>Revenue</th><th>EBITDA</th><th>Interest</th><th>Net Income</th><th>FCF</th><th>Debt Repaid</th><th>Debt O/S</th>`;
+  tbody.innerHTML = rows.map(r => `<tr>
+    <td>${r.yr}</td>
+    <td>${fmtM(r.rev)}</td>
+    <td>${fmtM(r.ebitdaYr)}</td>
+    <td style="color:var(--red)">${fmtM(r.interest)}</td>
+    <td style="color:${r.netInc>=0?'var(--green)':'var(--red)'}">${fmtM(r.netInc)}</td>
+    <td style="color:${r.fcf>=0?'var(--green)':'var(--red)'}">${fmtM(r.fcf)}</td>
+    <td>${fmtM(r.debtPay)}</td>
+    <td>${fmtM(r.debt)}</td>
+  </tr>`).join('') + `<tr>
+    <td>Exit</td>
+    <td colspan="2" style="color:var(--accent)">EV: ${fmtM(exitEV)} @ ${exitMult}x EBITDA</td>
+    <td colspan="2" style="color:var(--red)">Debt: ${fmtM(remDebt)}</td>
+    <td colspan="3" style="color:var(--green);font-weight:700">Equity: ${fmtM(exitEquity)} (${moic.toFixed(2)}x / ${irr.toFixed(1)}% IRR)</td>
+  </tr>`;
+}
 
 </script>
 </body>
