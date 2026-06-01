@@ -1,0 +1,10 @@
+app.py
+requirements.txt
+assesssim.db
+render.yaml
+static/
+templates/
+helloWorld
+tradehub.html
+*.pyc
+__pycache__/
