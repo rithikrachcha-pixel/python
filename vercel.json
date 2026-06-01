@@ -1,8 +1,11 @@
 {
   "version": 2,
+  "framework": null,
+  "buildCommand": null,
+  "outputDirectory": null,
   "builds": [
     {
-      "src": "tradehub-deploy/**",
+      "src": "tradehub-deploy/index.html",
       "use": "@vercel/static"
     }
   ],
