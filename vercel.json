@@ -1,10 +1,19 @@
 {
   "version": 2,
-  "outputDirectory": "tradehub-deploy",
-  "buildCommand": null,
-  "devCommand": null,
-  "framework": null,
+  "builds": [
+    {
+      "src": "tradehub-deploy/**",
+      "use": "@vercel/static"
+    }
+  ],
   "routes": [
-    { "src": "/(.*)", "dest": "/$1" }
+    {
+      "src": "/",
+      "dest": "/tradehub-deploy/index.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/tradehub-deploy/$1"
+    }
   ]
 }
