@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "outputDirectory": "tradehub-deploy",
+  "buildCommand": null,
+  "devCommand": null,
+  "framework": null,
+  "routes": [
+    { "src": "/(.*)", "dest": "/$1" }
+  ]
+}
