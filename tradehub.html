@@ -272,6 +272,30 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
 .compare-table td:first-child{text-align:left;color:var(--accent);font-weight:500}
 .compare-table tr.highlight td{background:rgba(0,229,160,0.04);color:var(--text)}
 .compare-table tr.highlight td:first-child{color:var(--accent)}
+/* DCF CALCULATOR */
+.dcf-panel{background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px}
+.dcf-title{font-family:var(--font-head);font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.dcf-inputs{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:16px}
+.dcf-input-group{display:flex;flex-direction:column;gap:4px}
+.dcf-input-group label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);font-family:var(--font-mono)}
+.dcf-input-group input{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-family:var(--font-mono);font-size:13px;outline:none;transition:border .15s;width:100%}
+.dcf-input-group input:focus{border-color:var(--accent)}
+.dcf-result-banner{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.dcf-result-item{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center}
+.dcf-result-val{font-family:var(--font-mono);font-size:22px;font-weight:600;margin-bottom:4px}
+.dcf-result-lbl{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);font-family:var(--font-mono)}
+.dcf-table{width:100%;border-collapse:collapse;font-size:12px}
+.dcf-table th{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);font-family:var(--font-mono);padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;background:var(--bg2)}
+.dcf-table th:first-child{text-align:left}
+.dcf-table td{font-family:var(--font-mono);padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;color:var(--text2)}
+.dcf-table td:first-child{text-align:left;color:var(--text)}
+.dcf-table tr:last-child td{border-bottom:none;font-weight:600;color:var(--text)}
+/* NEWS PANEL */
+.gnews-item{padding:12px 0;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:flex-start}
+.gnews-item:last-child{border-bottom:none}
+.gnews-item a{color:var(--text);text-decoration:none;font-size:13px;font-weight:500;line-height:1.4;display:block;margin-bottom:4px}
+.gnews-item a:hover{color:var(--accent)}
+.gnews-meta{font-size:11px;color:var(--text3);font-family:var(--font-mono)}
 @media(max-width:900px){.grid2{grid-template-columns:1fr}.grid4{grid-template-columns:1fr 1fr}}
 @media(max-width:700px){.sidebar{display:none}.dive-stats-grid{grid-template-columns:1fr 1fr}.dive-price{font-size:32px}.dive-name-big{font-size:22px}.dive-tab-nav{padding:12px 14px;font-size:12px}.dive-tab-content{padding:16px}.dive-panel{border-radius:16px}}
 </style>
@@ -330,6 +354,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
       </div>
       <div class="dive-tab-nav" onclick="showDiveTab('ai',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M18 2v6h6"/><path d="m22 2-6 6"/></svg>AI Analysis
+      </div>
+      <div class="dive-tab-nav" onclick="showDiveTab('dcf',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>DCF Model
       </div>
       <div class="dive-tab-nav" onclick="showDiveTab('news',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 0-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/></svg>
@@ -411,6 +438,37 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
     <!-- TAB: COMPARE -->
     <div class="dive-tab-content" id="dtab-compare">
       <div id="diveCompareContent" class="dive-ai-box loading"><span class="loader"></span> Loading peer comparison…</div>
+    </div>
+
+    <!-- TAB: DCF MODEL -->
+    <div class="dive-tab-content" id="dtab-dcf">
+      <div class="dcf-panel">
+        <div class="dcf-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Discounted Cash Flow (DCF) Model
+          <span style="font-size:11px;font-weight:400;color:var(--text3);font-family:var(--font-mono);margin-left:6px">— edit inputs to recalculate live</span>
+        </div>
+        <div class="dcf-inputs" id="dcfInputs">
+          <div class="dcf-input-group"><label>Free Cash Flow ($B)</label><input type="number" id="dcf-fcf" step="0.1" oninput="calcDCF()"></div>
+          <div class="dcf-input-group"><label>Growth Yr 1-5 (%)</label><input type="number" id="dcf-g1" value="15" oninput="calcDCF()"></div>
+          <div class="dcf-input-group"><label>Growth Yr 6-10 (%)</label><input type="number" id="dcf-g2" value="10" oninput="calcDCF()"></div>
+          <div class="dcf-input-group"><label>Terminal Growth (%)</label><input type="number" id="dcf-tg" value="3" oninput="calcDCF()"></div>
+          <div class="dcf-input-group"><label>Discount Rate / WACC (%)</label><input type="number" id="dcf-wacc" value="10" oninput="calcDCF()"></div>
+          <div class="dcf-input-group"><label>Shares Outstanding (B)</label><input type="number" id="dcf-shares" step="0.001" oninput="calcDCF()"></div>
+        </div>
+        <div class="dcf-result-banner" id="dcfResults">
+          <div class="dcf-result-item"><div class="dcf-result-val" style="color:var(--text3)">—</div><div class="dcf-result-lbl">Intrinsic Value / Share</div></div>
+          <div class="dcf-result-item"><div class="dcf-result-val" style="color:var(--text3)">—</div><div class="dcf-result-lbl">Current Price</div></div>
+          <div class="dcf-result-item"><div class="dcf-result-val" style="color:var(--text3)">—</div><div class="dcf-result-lbl">Upside / Downside</div></div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="dcf-table" id="dcfTable">
+            <thead><tr><th style="text-align:left">Year</th><th>Projected FCF ($B)</th><th>Discount Factor</th><th>PV of FCF ($B)</th></tr></thead>
+            <tbody id="dcfTableBody"><tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">Loading FCF data…</td></tr></tbody>
+          </table>
+        </div>
+        <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-top:12px">⚠ DCF model is for educational purposes only. Assumptions heavily affect output. Not financial advice.</div>
+      </div>
     </div>
   </div>
 </div>
@@ -598,9 +656,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
 
       <!-- MARKETS -->
       <div class="page" id="page-markets">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
           <div class="section-title" style="margin:0">Markets</div>
-          <div style="display:flex;gap:8px">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <div style="position:relative">
+              <input class="form-input" id="marketsSearch" placeholder="Search any ticker or name…" style="width:240px;padding-left:32px" oninput="onMarketsSearch(this.value)" onkeydown="if(event.key==='Enter'){const v=this.value.trim();if(v){openStockDive(v);this.value='';}}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:13px;height:13px;color:var(--text3)"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <div id="marketsSearchSugg" style="position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);z-index:50;display:none;max-height:220px;overflow-y:auto"></div>
+            </div>
             <div class="indicator-toggle" id="tog-ma" onclick="toggleIndicator('MA')">MA (20)</div>
             <div class="indicator-toggle" id="tog-vol" onclick="toggleIndicator('VOL')">Volume</div>
           </div>
@@ -1477,8 +1540,8 @@ function renderWatchlist() {
 function addToWatchlist() {
   const t=document.getElementById('addTickerInput').value.toUpperCase().trim();
   if(!t) return;
-  if(!ALL_STOCKS.find(s=>s.ticker===t)) return notify('Ticker not found. Try AAPL, MSFT, SHEL…','error');
   if(state.watchlist.includes(t)) return notify('Already in watchlist','error');
+  // Allow any ticker — not just hardcoded ones
   state.watchlist.push(t); document.getElementById('addTickerInput').value='';
   renderWatchlist(); renderDashWatchlist(); saveState();
   notify(t+' added to watchlist','success');
@@ -1577,25 +1640,90 @@ function renderGlossary() {
 }
 
 // ================================================
-// SEARCH
+// SEARCH  (topbar — Yahoo Finance + local)
 // ================================================
-function onSearch(val) {
+let _searchTimer = null;
+async function onSearch(val) {
   if(!val){ hideSugg(); return; }
-  const results=ALL_STOCKS.filter(s=>s.ticker.startsWith(val.toUpperCase())||s.name.toLowerCase().includes(val.toLowerCase())).slice(0,5);
-  const el=document.getElementById('searchSugg');
-  let html=`<div class="sugg-item" style="background:rgba(0,229,160,0.05);border-bottom:1px solid var(--border)" onmousedown="hideSugg();openStockDive('${val.toUpperCase()}')">
+  const el = document.getElementById('searchSugg');
+  // Immediately show local matches
+  const local = ALL_STOCKS.filter(s=>s.ticker.startsWith(val.toUpperCase())||s.name.toLowerCase().includes(val.toLowerCase())).slice(0,4);
+  renderSuggestions(val, local, el, false);
+  el.classList.add('open');
+  // Debounce Yahoo Finance API call
+  clearTimeout(_searchTimer);
+  _searchTimer = setTimeout(async ()=>{
+    try {
+      const yhUrl = `https://query2.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(val)}&quotesCount=10&newsCount=0`;
+      const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(yhUrl);
+      const resp = await fetch(proxyUrl, {signal: AbortSignal.timeout(5000)});
+      if(!resp.ok) throw new Error('HTTP '+resp.status);
+      const data = await resp.json();
+      const quotes = (data.quotes||[]).filter(q=>q.quoteType==='EQUITY'||q.quoteType==='ETF').slice(0,8);
+      if(quotes.length) renderSuggestions(val, quotes.map(q=>({ticker:q.symbol, name:q.longname||q.shortname||q.symbol, exchange:q.exchange||'', isYahoo:true})), el, true);
+    } catch(e) { /* stay with local results */ }
+  }, 300);
+}
+function renderSuggestions(val, results, el, isYahoo) {
+  let html = `<div class="sugg-item" style="background:rgba(0,229,160,0.05);border-bottom:1px solid var(--border)" onmousedown="hideSugg();openStockDive('${val.toUpperCase().replace(/'/g,"\\'")}')">
     <div><div class="sugg-ticker">🔍 "${val.toUpperCase()}"</div><div class="sugg-name">Full Stock Deep Dive</div></div>
     <div class="sugg-exch" style="background:rgba(0,229,160,0.15);color:var(--accent)">Deep Dive</div>
   </div>`;
-  html+=results.map(s=>`
-    <div class="sugg-item" onmousedown="selectStock('${s.ticker}')">
-      <div><div class="sugg-ticker">${s.ticker}</div><div class="sugg-name">${s.name}</div></div>
-      <div><div class="sugg-exch">${s.currency?'LSE':'NASDAQ'}</div><div style="font-size:11px;font-family:var(--font-mono);text-align:right;margin-top:2px;color:${s.pct>=0?'var(--green)':'var(--red)'}">${s.pct>=0?'+':''}${s.pct.toFixed(2)}%</div></div>
-    </div>`).join('');
-  el.innerHTML=html; el.classList.add('open');
+  if(isYahoo) {
+    html += results.map(s=>`
+      <div class="sugg-item" onmousedown="selectStock('${s.ticker.replace(/'/g,"\\'")}')">
+        <div><div class="sugg-ticker">${s.ticker}</div><div class="sugg-name">${s.name}</div></div>
+        <div><div class="sugg-exch">${s.exchange||''}</div></div>
+      </div>`).join('');
+  } else {
+    html += results.map(s=>`
+      <div class="sugg-item" onmousedown="selectStock('${s.ticker}')">
+        <div><div class="sugg-ticker">${s.ticker}</div><div class="sugg-name">${s.name}</div></div>
+        <div><div class="sugg-exch">${s.currency?'LSE':'NASDAQ'}</div><div style="font-size:11px;font-family:var(--font-mono);text-align:right;margin-top:2px;color:${s.pct>=0?'var(--green)':'var(--red)'}">${s.pct>=0?'+':''}${s.pct.toFixed(2)}%</div></div>
+      </div>`).join('');
+  }
+  el.innerHTML = html;
 }
 function hideSugg(){ setTimeout(()=>document.getElementById('searchSugg').classList.remove('open'),200); }
 function selectStock(ticker) { document.getElementById('searchInput').value=ticker; hideSugg(); openStockDive(ticker); }
+
+// ================================================
+// MARKETS SEARCH  (Yahoo Finance + local)
+// ================================================
+let _mktSearchTimer = null;
+async function onMarketsSearch(val) {
+  const el = document.getElementById('marketsSearchSugg');
+  if(!val){ el.style.display='none'; return; }
+  // Local hits first
+  const local = ALL_STOCKS.filter(s=>s.ticker.startsWith(val.toUpperCase())||s.name.toLowerCase().includes(val.toLowerCase())).slice(0,5);
+  renderMarketsSugg(local.map(s=>({ticker:s.ticker,name:s.name,exchange:s.currency?'LSE':'NASDAQ'})), el);
+  el.style.display = 'block';
+  clearTimeout(_mktSearchTimer);
+  _mktSearchTimer = setTimeout(async ()=>{
+    try {
+      const yhUrl = `https://query2.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(val)}&quotesCount=10&newsCount=0`;
+      const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(yhUrl);
+      const resp = await fetch(proxyUrl, {signal: AbortSignal.timeout(5000)});
+      if(!resp.ok) throw new Error('HTTP '+resp.status);
+      const data = await resp.json();
+      const quotes = (data.quotes||[]).filter(q=>q.quoteType==='EQUITY'||q.quoteType==='ETF').slice(0,8);
+      if(quotes.length) renderMarketsSugg(quotes.map(q=>({ticker:q.symbol, name:q.longname||q.shortname||q.symbol, exchange:q.exchange||''})), el);
+    } catch(e) { /* keep local */ }
+  }, 300);
+}
+function renderMarketsSugg(items, el) {
+  if(!items.length){ el.style.display='none'; return; }
+  el.innerHTML = items.map(s=>`
+    <div class="sugg-item" onmousedown="document.getElementById('marketsSearch').value='';document.getElementById('marketsSearchSugg').style.display='none';openStockDive('${s.ticker.replace(/'/g,"\\'")}')">
+      <div><div class="sugg-ticker">${s.ticker}</div><div class="sugg-name">${s.name}</div></div>
+      <div class="sugg-exch">${s.exchange}</div>
+    </div>`).join('');
+  el.style.display = 'block';
+}
+document.addEventListener('click', e=>{
+  const ms = document.getElementById('marketsSearchSugg');
+  if(ms && !ms.closest('#page-markets')?.contains(e.target)) ms.style.display='none';
+});
 
 // ================================================
 // SEEDED RANDOM (for consistent per-ticker data)
@@ -1644,7 +1772,7 @@ let diveState = {ticker:null,stock:null,chartInst:null,chartType:'line',aiCache:
 function openStockDive(ticker) {
   let stock=ALL_STOCKS.find(s=>s.ticker===ticker.toUpperCase());
   if(!stock) stock={ticker:ticker.toUpperCase(),name:ticker.toUpperCase()+' Corp.',price:100+(Math.random()*400),chg:(Math.random()-0.5)*10,pct:(Math.random()-0.5)*5,pe:15+(Math.random()*30),mktcap:'N/A',sector:'unknown'};
-  diveState={ticker:stock.ticker,stock,chartInst:null,chartType:'line',aiCache:{},currentAITab:'overview',newsAllItems:[],financialsLoaded:false,analystLoaded:false,compareLoaded:false};
+  diveState={ticker:stock.ticker,stock,chartInst:null,chartType:'line',aiCache:{},currentAITab:'overview',newsAllItems:[],financialsLoaded:false,analystLoaded:false,compareLoaded:false,dcfLoaded:false,dcfData:{}};
 
   const curr=stock.currency||'$';
   document.getElementById('diveBreadTicker').textContent=stock.ticker;
@@ -1726,6 +1854,7 @@ function showDiveTab(tab, btn) {
   if(tab==='financials'&&!diveState.financialsLoaded){ renderDiveFinancials(diveState.stock); diveState.financialsLoaded=true; }
   if(tab==='analyst'&&!diveState.analystLoaded){ renderDiveAnalyst(diveState.stock); diveState.analystLoaded=true; }
   if(tab==='compare'&&!diveState.compareLoaded){ renderDiveCompare(diveState.stock); diveState.compareLoaded=true; }
+  if(tab==='dcf'&&!diveState.dcfLoaded){ initDCF(diveState.stock); diveState.dcfLoaded=true; }
 }
 
 function closeDive(e) { if(e&&e.target!==document.getElementById('diveOverlay')) return; closeDiveForce(); }
@@ -1807,22 +1936,71 @@ function renderDiveNewsItems(items) {
 }
 
 async function loadDiveNews(stock) {
-  const staticNews=NEWS_DATA.filter(n=>n.ticker===stock.ticker||n.headline.toLowerCase().includes(stock.ticker.toLowerCase())||n.headline.toLowerCase().includes((stock.name||'').toLowerCase().split(' ')[0]));
-  if(staticNews.length){ diveState.newsAllItems=staticNews; renderDiveNewsItems(staticNews); updateNewsBadge(staticNews); }
-
-  const liveItems = liveNewsCache.filter(n=>n.ticker===stock.ticker||n.headline.toLowerCase().includes(stock.ticker.toLowerCase()));
-  if(liveItems.length){ diveState.newsAllItems=[...liveItems,...staticNews]; renderDiveNewsItems(diveState.newsAllItems); updateNewsBadge(diveState.newsAllItems); }
-  else if(staticNews.length){ diveState.newsAllItems=staticNews; renderDiveNewsItems(staticNews); updateNewsBadge(staticNews); }
+  // Show loading state
+  document.getElementById('diveNewsContainer').innerHTML='<div class="dive-ai-box loading"><span class="loader"></span> Fetching latest news…</div>';
 
   try {
-    const d=await callAI({model:'claude-sonnet-4-6',max_tokens:700,messages:[{role:'user',content:`Generate 5 realistic current financial news headlines for ${stock.ticker} (${stock.name}). Return JSON array only: [{headline,source,sentiment("pos"/"neg"/"neu"),time,summary}]`}]});
-    const text=d.content[0].text.replace(/```json|```/g,'').trim();
-    const items=JSON.parse(text).map(i=>({...i,ticker:stock.ticker,region:stock.currency?'UK':'US'}));
-    diveState.newsAllItems=[...items,...liveItems,...staticNews];
-    renderDiveNewsItems(diveState.newsAllItems);
-    updateNewsBadge(diveState.newsAllItems);
-    updateSentimentSummary(diveState.newsAllItems);
-  } catch(e) { if(!staticNews.length&&!liveItems.length) document.getElementById('diveNewsContainer').innerHTML='<div style="color:var(--text3);font-size:13px">No news found.</div>'; }
+    const query = encodeURIComponent(`${stock.ticker} stock earnings`);
+    const rssUrl = `https://news.google.com/rss/search?q=${query}&hl=en-US&gl=US&ceid=US:en`;
+    const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(rssUrl);
+
+    const resp = await fetch(proxyUrl, {signal: AbortSignal.timeout(10000)});
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const text = await resp.text();
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(text, 'application/xml');
+    const items = Array.from(xml.querySelectorAll('item')).slice(0,8);
+
+    if(!items.length) throw new Error('No items in feed');
+
+    const news = items.map(item => {
+      const title = item.querySelector('title')?.textContent || '';
+      const link = item.querySelector('link')?.textContent || '#';
+      const pubDate = item.querySelector('pubDate')?.textContent || '';
+      // Google News source is in <source> tag
+      const source = item.querySelector('source')?.textContent || 'Google News';
+      const dt = pubDate ? new Date(pubDate) : null;
+      const timeAgo = dt ? ageLabel(dt.toISOString()) : 'Recent';
+      const sent = detectSentiment(title);
+      return {headline:title, link, source, pubDate:dt?dt.getTime():0, time:timeAgo, sentiment:sent, ticker:stock.ticker};
+    }).filter(n=>n.headline.length>5);
+
+    diveState.newsAllItems = news;
+    renderGNewsItems(news);
+    updateNewsBadge(news);
+    updateSentimentSummary(news);
+  } catch(e) {
+    // Fallback to static + live cache
+    const staticNews = NEWS_DATA.filter(n=>n.ticker===stock.ticker||n.headline.toLowerCase().includes(stock.ticker.toLowerCase()));
+    const liveItems = liveNewsCache.filter(n=>n.ticker===stock.ticker||n.headline.toLowerCase().includes(stock.ticker.toLowerCase()));
+    const fallback = [...liveItems, ...staticNews];
+    if(fallback.length){
+      diveState.newsAllItems = fallback;
+      renderDiveNewsItems(fallback);
+      updateNewsBadge(fallback);
+      updateSentimentSummary(fallback);
+    } else {
+      document.getElementById('diveNewsContainer').innerHTML='<div style="color:var(--text3);font-size:13px;padding:20px">No news found for '+stock.ticker+'.</div>';
+    }
+  }
+}
+
+function renderGNewsItems(items) {
+  if(!items.length){
+    document.getElementById('diveNewsContainer').innerHTML='<div style="color:var(--text3);font-size:13px;padding:20px">No news found.</div>';
+    return;
+  }
+  const html = `
+    <div style="font-family:var(--font-head);font-size:15px;font-weight:700;margin-bottom:14px">Latest News</div>
+    ${items.map(n=>`
+    <div class="gnews-item">
+      <div style="width:4px;border-radius:2px;flex-shrink:0;background:${n.sentiment==='pos'?'var(--green)':n.sentiment==='neg'?'var(--red)':'var(--text3)'}"></div>
+      <div style="flex:1">
+        <a href="${n.link}" target="_blank" rel="noopener">${n.headline}</a>
+        <div class="gnews-meta">${n.source} · ${n.time}</div>
+      </div>
+    </div>`).join('')}`;
+  document.getElementById('diveNewsContainer').innerHTML = html;
 }
 
 function updateNewsBadge(items) {
@@ -1958,6 +2136,137 @@ function renderDiveCompare(stock) {
     <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-top:12px">⚠ Comparison data is simulated for educational purposes only.</div>`;
   const el=document.getElementById('diveCompareContent');
   el.className=''; el.innerHTML=html;
+}
+
+// ------------------------------------------------
+// DCF CALCULATOR TAB
+// ------------------------------------------------
+async function initDCF(stock) {
+  // Set current price display
+  const curr = stock.currency || '$';
+
+  // Try to fetch real FCF from Yahoo Finance quoteSummary
+  let fcfB = null;       // in billions
+  let sharesB = null;    // in billions
+
+  try {
+    const modules = 'financialData,price';
+    const yhUrl = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(stock.ticker)}?modules=${modules}`;
+    const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(yhUrl);
+    const resp = await fetch(proxyUrl, {signal: AbortSignal.timeout(8000)});
+    if(resp.ok) {
+      const data = await resp.json();
+      const fd = data?.quoteSummary?.result?.[0]?.financialData;
+      const pr = data?.quoteSummary?.result?.[0]?.price;
+      if(fd) {
+        const fcfRaw = fd.freeCashflow?.raw;
+        const ocfRaw = fd.operatingCashflow?.raw;
+        if(fcfRaw) fcfB = fcfRaw / 1e9;
+        else if(ocfRaw) fcfB = (ocfRaw * 0.8) / 1e9;
+      }
+      if(pr) {
+        const so = pr.sharesOutstanding?.raw;
+        if(so) sharesB = so / 1e9;
+      }
+    }
+  } catch(e) { /* use estimate */ }
+
+  // Estimate from market cap if still null
+  if(!fcfB) {
+    const mcapRaw = parseFloat((stock.mktcap||'$10B').replace(/[^0-9.]/g,''));
+    const unit = (stock.mktcap||'').includes('T') ? 1000 : 1;
+    fcfB = Math.max(0.1, (mcapRaw * unit) * 0.04);
+  }
+  if(!sharesB) {
+    const mcapRaw = parseFloat((stock.mktcap||'$10B').replace(/[^0-9.]/g,''));
+    const unit = (stock.mktcap||'').includes('T') ? 1000 : 1;
+    sharesB = Math.max(0.001, (mcapRaw * unit) / stock.price);
+  }
+
+  diveState.dcfData = {stock, fcfB, sharesB};
+
+  document.getElementById('dcf-fcf').value = fcfB.toFixed(2);
+  document.getElementById('dcf-shares').value = sharesB.toFixed(3);
+  document.getElementById('dcf-g1').value = 15;
+  document.getElementById('dcf-g2').value = 10;
+  document.getElementById('dcf-tg').value = 3;
+  document.getElementById('dcf-wacc').value = 10;
+
+  calcDCF();
+}
+
+function calcDCF() {
+  const fcfB   = parseFloat(document.getElementById('dcf-fcf')?.value) || 0;
+  const g1     = parseFloat(document.getElementById('dcf-g1')?.value) / 100 || 0.15;
+  const g2     = parseFloat(document.getElementById('dcf-g2')?.value) / 100 || 0.10;
+  const tg     = parseFloat(document.getElementById('dcf-tg')?.value) / 100 || 0.03;
+  const wacc   = parseFloat(document.getElementById('dcf-wacc')?.value) / 100 || 0.10;
+  const sharesB= parseFloat(document.getElementById('dcf-shares')?.value) || 1;
+
+  if(!fcfB || wacc <= tg) return;
+
+  const rows = [];
+  let fcf = fcfB;
+  let totalPV = 0;
+
+  for(let yr = 1; yr <= 10; yr++) {
+    const growth = yr <= 5 ? g1 : g2;
+    fcf = fcf * (1 + growth);
+    const df = Math.pow(1 + wacc, yr);
+    const pv = fcf / df;
+    totalPV += pv;
+    rows.push({yr, fcf, df, pv});
+  }
+
+  // Terminal value: TV = FCF_yr10 * (1+tg) / (wacc - tg), discounted back
+  const terminalFCF = fcf * (1 + tg);
+  const terminalValue = terminalFCF / (wacc - tg);
+  const terminalPV = terminalValue / Math.pow(1 + wacc, 10);
+  const totalEquityValue = totalPV + terminalPV; // in billions
+
+  const intrinsicPerShare = (totalEquityValue * 1e9) / (sharesB * 1e9);
+  const stock = diveState.dcfData?.stock;
+  const currentPrice = stock?.price || 0;
+  const upside = currentPrice > 0 ? ((intrinsicPerShare - currentPrice) / currentPrice * 100) : 0;
+  const curr = stock?.currency || '$';
+  const isUnder = upside >= 0;
+
+  // Update result banner
+  const resEl = document.getElementById('dcfResults');
+  if(resEl) resEl.innerHTML = `
+    <div class="dcf-result-item">
+      <div class="dcf-result-val" style="color:var(--accent)">${curr}${intrinsicPerShare.toFixed(2)}</div>
+      <div class="dcf-result-lbl">Intrinsic Value / Share</div>
+    </div>
+    <div class="dcf-result-item">
+      <div class="dcf-result-val">${curr}${currentPrice.toFixed(2)}</div>
+      <div class="dcf-result-lbl">Current Price</div>
+    </div>
+    <div class="dcf-result-item">
+      <div class="dcf-result-val" style="color:${isUnder?'var(--green)':'var(--red)'}">${isUnder?'+':''}${upside.toFixed(1)}%</div>
+      <div class="dcf-result-lbl">${isUnder?'Undervalued ↑':'Overvalued ↓'}</div>
+    </div>`;
+
+  // Update year-by-year table
+  const tbody = document.getElementById('dcfTableBody');
+  if(tbody) tbody.innerHTML = rows.map(r=>`
+    <tr>
+      <td>Year ${r.yr}</td>
+      <td>${r.fcf.toFixed(3)}</td>
+      <td>${r.df.toFixed(4)}x</td>
+      <td>${r.pv.toFixed(3)}</td>
+    </tr>`).join('') + `
+    <tr style="background:rgba(0,229,160,0.04)">
+      <td>Terminal Value</td>
+      <td>${terminalFCF.toFixed(3)}</td>
+      <td>${Math.pow(1+wacc,10).toFixed(4)}x</td>
+      <td>${terminalPV.toFixed(3)}</td>
+    </tr>
+    <tr>
+      <td>Total Enterprise Value</td>
+      <td colspan="2" style="text-align:right;color:var(--text3);font-size:11px">Sum of PV FCFs + Terminal PV</td>
+      <td style="color:var(--accent)">${totalEquityValue.toFixed(3)}B</td>
+    </tr>`;
 }
 
 // ------------------------------------------------
