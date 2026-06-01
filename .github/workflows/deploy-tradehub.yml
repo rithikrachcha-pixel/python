@@ -1,9 +1,9 @@
-name: Deploy TradeHub to Netlify
+name: Deploy TradeHub to Vercel
 
 on:
   push:
     branches: [claude/build-web-app-pc3Au, main]
-    paths: [tradehub-deploy/**, tradehub.html]
+    paths: [tradehub-deploy/**, tradehub.html, vercel.json]
   workflow_dispatch:
 
 jobs:
@@ -12,99 +12,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Test auth and deploy
-        run: |
-          TOKEN="${NETLIFY_AUTH_TOKEN}"
-          SITE_ID="4cf59dab-5980-4669-995e-074bd3247148"
-          OUT="/tmp/debug.txt"
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
 
-          {
-            echo "Token length: ${#TOKEN}"
-            echo "Token prefix: ${TOKEN:0:4}"
-
-            STATUS=$(curl -s -o /tmp/auth.json -w "%{http_code}" \
-              -H "Authorization: Bearer ${TOKEN}" \
-              https://api.netlify.com/api/v1/user)
-            echo "Auth HTTP: $STATUS"
-            python3 -c "
-          import json,sys
-          try:
-              d=json.load(open('/tmp/auth.json'))
-              print('email:', d.get('email','?'))
-          except Exception as e:
-              raw=open('/tmp/auth.json').read()
-              print('parse err:', e, 'body:', raw[:200])
-          "
-
-            if [ "$STATUS" != "200" ]; then
-              echo "AUTH FAILED"
-            else
-              echo "AUTH OK"
-              pip3 install -q requests 2>&1
-              python3 - << 'PYEOF' 2>&1 || echo "PYTHON EXIT $?"
-          import requests, hashlib, os, time, sys
-
-          token = os.environ['NETLIFY_AUTH_TOKEN']
-          site_id = '4cf59dab-5980-4669-995e-074bd3247148'
-          H = {'Authorization': f'Bearer {token}'}
-
-          with open('tradehub-deploy/index.html', 'rb') as f:
-              content = f.read()
-          sha1 = hashlib.sha1(content).hexdigest()
-          print(f'File {len(content)}b sha={sha1}')
-
-          r = requests.post(
-              f'https://api.netlify.com/api/v1/sites/{site_id}/deploys',
-              headers={**H, 'Content-Type': 'application/json'},
-              json={'files': {'/index.html': sha1}}
-          )
-          print(f'Create: {r.status_code} body={r.text[:400]}')
-          if not r.ok: sys.exit(1)
-
-          d = r.json()
-          did, req = d['id'], d.get('required', [])
-          print(f'DeployID={did} required={req}')
-
-          if sha1 in req:
-              r2 = requests.put(
-                  f'https://api.netlify.com/api/v1/deploys/{did}/files/index.html',
-                  headers={**H, 'Content-Type': 'application/octet-stream'}, data=content)
-              print(f'Upload: {r2.status_code}')
-
-          for i in range(20):
-              d2 = requests.get(f'https://api.netlify.com/api/v1/deploys/{did}', headers=H).json()
-              st = d2.get('state')
-              print(f'Poll{i}: {st}')
-              if st in ('ready','current'):
-                  print(f'URL: {d2.get("ssl_url")}'); break
-              if st=='error':
-                  print(f'Err: {d2.get("error_message")}'); sys.exit(1)
-              time.sleep(3)
-          PYEOF
-            fi
-          } 2>&1 | tee "$OUT"
-
-          # Write debug file via GitHub API
-          CONTENT_B64=$(base64 -w 0 "$OUT")
-          # Check if file exists
-          EXISTING=$(curl -s -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/contents/debug-output.txt?ref=${GITHUB_REF_NAME}" \
-            | python3 -c "import json,sys; print(json.load(sys.stdin).get('sha',''))" 2>/dev/null || echo "")
-          if [ -n "$EXISTING" ]; then
-            JSON="{\"message\":\"ci: debug output\",\"content\":\"${CONTENT_B64}\",\"sha\":\"${EXISTING}\"}"
-          else
-            JSON="{\"message\":\"ci: debug output\",\"content\":\"${CONTENT_B64}\"}"
-          fi
-          curl -s -X PUT \
-            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-            -H "Accept: application/vnd.github+json" \
-            -H "Content-Type: application/json" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/contents/debug-output.txt" \
-            -d "$JSON" | python3 -c "import json,sys; d=json.load(sys.stdin); print('File write:', d.get('content',{}).get('name','error'), d.get('message',''))" 2>/dev/null || echo "API write failed"
-
-          # Check if TOKEN was empty = fail the step properly
-          [ -n "$TOKEN" ] && [ "$STATUS" = "200" ]
+      - name: Deploy to Vercel
+        run: vercel deploy --prod --yes --token=$VERCEL_TOKEN
         env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
