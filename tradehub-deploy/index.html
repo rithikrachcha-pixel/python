@@ -6,6 +6,7 @@
 <title>TradeHub — Trade, Learn, Backtest</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 <style>
 :root{--bg:#0a0c10;--bg2:#111318;--bg3:#181b22;--bg4:#1e2129;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--text:#f0f2f7;--text2:#8b90a0;--text3:#555c6e;--accent:#00e5a0;--accent2:#0af;--red:#ff4757;--green:#00e5a0;--amber:#ffa502;--purple:#a29bfe;--font-head:'Syne',sans-serif;--font-body:'Inter',sans-serif;--font-mono:'DM Mono',monospace;--r:10px;--r2:16px}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -411,12 +412,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <div class="dive-chart-type">
             <button class="active" onclick="setChartType('line',this)">Line</button>
+            <button onclick="setChartType('candle',this)">Candle</button>
             <button onclick="setChartType('bar',this)">Bar</button>
           </div>
           <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono)" id="diveOHLC"></div>
         </div>
       </div>
-      <div class="dive-chart-wrap"><canvas id="diveChart"></canvas></div>
+      <div class="dive-chart-wrap" id="diveChartWrap"><canvas id="diveChart"></canvas></div>
       <div class="dive-stats-grid" id="diveStats"></div>
     </div>
 
@@ -2035,44 +2037,96 @@ function addDiveToWatchlist() {
   renderDashWatchlist(); saveState();
 }
 
+function _genOHLC(pts, basePrice, vol) {
+  const data = [];
+  let price = basePrice;
+  const now = Math.floor(Date.now()/1000);
+  for (let i = pts; i >= 0; i--) {
+    const open = price;
+    const chg = (Math.random() - 0.48) * vol;
+    const close = Math.max(0.01, open + chg);
+    const high = Math.max(open, close) * (1 + Math.random() * 0.005);
+    const low  = Math.min(open, close) * (1 - Math.random() * 0.005);
+    data.push({time: now - i * 3600, open, high, low, close});
+    price = close;
+  }
+  return data;
+}
+
+function _destroyDiveCharts() {
+  if (diveState.chartInst) { try { diveState.chartInst.destroy(); } catch(e){} diveState.chartInst = null; }
+  if (diveState.tvChart) { try { diveState.tvChart.remove(); } catch(e){} diveState.tvChart = null; }
+}
+
 function initDiveChart(stock) {
-  if(diveState.chartInst){ diveState.chartInst.destroy(); diveState.chartInst=null; }
-  const canvas=document.getElementById('diveChart');
-  if(!canvas) return;
-  const d=generateChartData(24,stock.price,stock.price*0.015);
-  const color=stock.chg>=0?'#00e5a0':'#ff4757';
-  diveState.chartInst=new Chart(canvas.getContext('2d'),{
-    type:'line',
-    data:{labels:d.labels,datasets:[{data:d.values,borderColor:color,borderWidth:2,fill:true,backgroundColor:(c2)=>{const g=c2.chart.ctx.createLinearGradient(0,0,0,200);g.addColorStop(0,color+'33');g.addColorStop(1,color+'00');return g;},pointRadius:0,tension:0.4}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:(c)=>(stock.currency||'$')+c.parsed.y.toFixed(2)}}},scales:{x:{display:false},y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#555c6e',font:{family:'DM Mono',size:10},callback:(v)=>(stock.currency||'$')+v.toFixed(0)}}}}
+  _destroyDiveCharts();
+  const wrap = document.getElementById('diveChartWrap');
+  if (!wrap) return;
+  diveState.chartType = diveState.chartType || 'line';
+  if (diveState.chartType === 'candle' && typeof LightweightCharts !== 'undefined') {
+    _renderTVChart(stock, wrap);
+  } else {
+    _renderCJSChart(stock, diveState.chartType);
+  }
+}
+
+function _renderTVChart(stock, wrap) {
+  wrap.innerHTML = '<div id="tvContainer" style="width:100%;height:260px"></div>';
+  const chart = LightweightCharts.createChart(document.getElementById('tvContainer'), {
+    width: wrap.clientWidth || 600, height: 260,
+    layout: {background:{color:'transparent'}, textColor:'#8b90a0'},
+    grid: {vertLines:{color:'rgba(255,255,255,0.04)'}, horzLines:{color:'rgba(255,255,255,0.04)'}},
+    crosshair: {mode: LightweightCharts.CrosshairMode.Normal},
+    rightPriceScale: {borderColor:'rgba(255,255,255,0.1)'},
+    timeScale: {borderColor:'rgba(255,255,255,0.1)', timeVisible:true, secondsVisible:false},
+  });
+  const series = chart.addCandlestickSeries({
+    upColor:'#00e5a0', downColor:'#ff4757',
+    borderUpColor:'#00e5a0', borderDownColor:'#ff4757',
+    wickUpColor:'#00e5a0', wickDownColor:'#ff4757',
+  });
+  const pts = {'1D':24,'1W':168,'1M':30,'3M':90,'6M':180,'1Y':252,'5Y':260}[diveState.period||'1D'] || 24;
+  const vol = stock.price * ({'1D':0.008,'1W':0.012,'1M':0.018,'3M':0.025,'6M':0.03,'1Y':0.04,'5Y':0.05}[diveState.period||'1D'] || 0.01);
+  series.setData(_genOHLC(pts, stock.price, vol));
+  chart.timeScale().fitContent();
+  diveState.tvChart = chart;
+  diveState.tvSeries = series;
+}
+
+function _renderCJSChart(stock, type) {
+  const wrap = document.getElementById('diveChartWrap');
+  wrap.innerHTML = '<canvas id="diveChart"></canvas>';
+  const canvas = document.getElementById('diveChart');
+  if (!canvas) return;
+  const pts = {'1D':24,'1W':35,'1M':30,'3M':90,'6M':180,'1Y':252,'5Y':260}[diveState.period||'1D'] || 24;
+  const vol = stock.price * ({'1D':0.008,'1W':0.012,'1M':0.018,'3M':0.025,'6M':0.03,'1Y':0.04,'5Y':0.05}[diveState.period||'1D'] || 0.015);
+  const d = generateChartData(pts, stock.price, vol);
+  const color = stock.chg >= 0 ? '#00e5a0' : '#ff4757';
+  diveState.chartInst = new Chart(canvas.getContext('2d'), {
+    type: type === 'bar' ? 'bar' : 'line',
+    data: {labels:d.labels, datasets:[{data:d.values, borderColor:color, borderWidth:2,
+      fill: type !== 'bar',
+      backgroundColor: type === 'bar' ? color+'88' : (c2)=>{const g=c2.chart.ctx.createLinearGradient(0,0,0,200);g.addColorStop(0,color+'33');g.addColorStop(1,color+'00');return g;},
+      pointRadius:0, tension:0.4
+    }]},
+    options:{responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:(c)=>(stock.currency||'$')+c.parsed.y.toFixed(2)}}},
+      scales:{x:{display:false}, y:{grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#555c6e', font:{family:'DM Mono',size:10}, callback:(v)=>(stock.currency||'$')+v.toFixed(0)}}}}
   });
 }
 
 function setDivePeriod(period, btn) {
   document.querySelectorAll('#dtab-chart .period-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  const pts={'1D':24,'1W':35,'1M':30,'3M':90,'6M':180,'1Y':252,'5Y':260}[period]||30;
-  const vari={'1D':0.008,'1W':0.012,'1M':0.018,'3M':0.025,'6M':0.03,'1Y':0.04,'5Y':0.05}[period]||0.018;
-  const stock=diveState.stock;
-  const d=generateChartData(pts,stock.price,stock.price*vari);
-  if(diveState.chartInst){diveState.chartInst.data.labels=d.labels;diveState.chartInst.data.datasets[0].data=d.values;diveState.chartInst.update();}
+  diveState.period = period;
+  initDiveChart(diveState.stock);
 }
 
 function setChartType(type, btn) {
   document.querySelectorAll('.dive-chart-type button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  diveState.chartType=type;
-  if(diveState.chartInst){
-    diveState.chartInst.config.type=type;
-    if(type==='bar'){
-      diveState.chartInst.data.datasets[0].backgroundColor='rgba(0,229,160,0.5)';
-      diveState.chartInst.data.datasets[0].fill=false;
-    } else {
-      diveState.chartInst.data.datasets[0].backgroundColor=(c)=>{const g=c.chart.ctx.createLinearGradient(0,0,0,200);g.addColorStop(0,'#00e5a033');g.addColorStop(1,'#00e5a000');return g;};
-      diveState.chartInst.data.datasets[0].fill=true;
-    }
-    diveState.chartInst.update();
-  }
+  diveState.chartType = type;
+  initDiveChart(diveState.stock);
 }
 
 function filterDiveNews(filter, btn) {
