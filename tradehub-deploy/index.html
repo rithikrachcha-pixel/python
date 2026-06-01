@@ -1932,10 +1932,47 @@ function populateAIScores(stock) {
 // ================================================
 let diveState = {ticker:null,stock:null,chartInst:null,chartType:'line',aiCache:{},currentAITab:'overview',newsAllItems:[],financialsLoaded:false,analystLoaded:false,compareLoaded:false};
 
+async function _fetchLiveQuote(ticker) {
+  try {
+    const sym = ticker.replace('.', '-');
+    const resp = await fetch(`/api/quote?s=${sym}`, {signal: AbortSignal.timeout(6000)});
+    if (!resp.ok) return null;
+    const json = await resp.json();
+    const meta = json?.chart?.result?.[0]?.meta;
+    if (!meta) return null;
+    return {
+      price: meta.regularMarketPrice,
+      chg: meta.regularMarketPrice - meta.chartPreviousClose,
+      pct: ((meta.regularMarketPrice - meta.chartPreviousClose) / meta.chartPreviousClose) * 100,
+      high52: meta.fiftyTwoWeekHigh,
+      low52: meta.fiftyTwoWeekLow,
+      volume: meta.regularMarketVolume,
+      marketCap: meta.marketCap,
+      live: true,
+    };
+  } catch(e) { return null; }
+}
+
 function openStockDive(ticker) {
   let stock=ALL_STOCKS.find(s=>s.ticker===ticker.toUpperCase());
   if(!stock) stock={ticker:ticker.toUpperCase(),name:ticker.toUpperCase()+' Corp.',price:100+(Math.random()*400),chg:(Math.random()-0.5)*10,pct:(Math.random()-0.5)*5,pe:15+(Math.random()*30),mktcap:'N/A',sector:'unknown'};
-  diveState={ticker:stock.ticker,stock,chartInst:null,chartType:'line',aiCache:{},currentAITab:'overview',newsAllItems:[],financialsLoaded:false,analystLoaded:false,compareLoaded:false};
+  diveState={ticker:stock.ticker,stock,chartInst:null,chartType:'line',aiCache:{},currentAITab:'overview',newsAllItems:[],financialsLoaded:false,analystLoaded:false,compareLoaded:false,googleNewsLoaded:false};
+
+  // Fetch live price in background and update display
+  _fetchLiveQuote(stock.ticker).then(live => {
+    if (!live) return;
+    stock = {...stock, price: live.price, chg: live.chg, pct: live.pct};
+    diveState.stock = stock;
+    const curr = stock.currency || '$';
+    document.getElementById('divePrice').textContent = curr + live.price.toFixed(2);
+    const chgEl = document.getElementById('diveChg');
+    chgEl.textContent = (live.chg>=0?'▲ +':'▼ ') + Math.abs(live.chg).toFixed(2) + ' (' + Math.abs(live.pct).toFixed(2) + '%)';
+    chgEl.className = 'dive-chg-big ' + (live.chg>=0?'pos':'neg');
+    document.getElementById('diveUpdated').textContent = 'Live · Yahoo Finance · ' + new Date().toLocaleTimeString();
+    if(live.high52) document.querySelectorAll('[data-stat="52wh"]').forEach(el=>el.textContent=curr+live.high52.toFixed(2));
+    if(live.low52)  document.querySelectorAll('[data-stat="52wl"]').forEach(el=>el.textContent=curr+live.low52.toFixed(2));
+    initDiveChart(stock);
+  });
 
   const curr=stock.currency||'$';
   document.getElementById('diveBreadTicker').textContent=stock.ticker;
@@ -2017,6 +2054,7 @@ function showDiveTab(tab, btn) {
   if(tab==='financials'&&!diveState.financialsLoaded){ renderDiveFinancials(diveState.stock); diveState.financialsLoaded=true; }
   if(tab==='analyst'&&!diveState.analystLoaded){ renderDiveAnalyst(diveState.stock); diveState.analystLoaded=true; }
   if(tab==='compare'&&!diveState.compareLoaded){ renderDiveCompare(diveState.stock); diveState.compareLoaded=true; }
+  if(tab==='ai'&&!diveState.googleNewsLoaded){ loadGoogleNews(diveState.stock); diveState.googleNewsLoaded=true; }
 }
 
 function closeDive(e) { if(e&&e.target!==document.getElementById('diveOverlay')) return; closeDiveForce(); }
@@ -2147,6 +2185,24 @@ function renderDiveNewsItems(items) {
         ${n.summary?`<div style="font-size:12px;color:var(--text2);line-height:1.5">${n.summary}</div>`:''}
       </div>
     </div>`).join('');
+}
+
+async function loadGoogleNews(stock) {
+  const el = document.getElementById('googleNewsContainer');
+  if (!el) return;
+  el.innerHTML = '<div class="dive-ai-box loading"><span class="loader"></span> Fetching from Google News…</div>';
+  try {
+    const resp = await fetch(`/api/news?s=${encodeURIComponent(stock.ticker+' '+stock.name)}`, {signal: AbortSignal.timeout(10000)});
+    const data = await resp.json();
+    if (!data.items?.length) throw new Error('no items');
+    el.innerHTML = data.items.map(item => `
+      <div class="gnews-item">
+        <div class="gnews-headline"><a href="${item.link||'#'}" target="_blank" rel="noopener">${item.title}</a></div>
+        <div class="gnews-meta"><span class="gnews-source">${item.source}</span><span>${item.pubDate ? new Date(item.pubDate).toLocaleDateString() : 'Recent'}</span></div>
+      </div>`).join('');
+  } catch(e) {
+    el.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:12px 0">Could not load Google News — try again or check your connection.</div>';
+  }
 }
 
 async function loadDiveNews(stock) {
@@ -2304,11 +2360,10 @@ async function renderDiveAnalyst(stock) {
   const el = document.getElementById('diveAnalystContent');
   el.innerHTML = '<div style="color:var(--text3);padding:20px 0;font-family:var(--font-mono)">Loading analyst data…</div>';
   const sym = stock.ticker.replace('.', '-');
-  const url = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${sym}?modules=financialData,recommendationTrend`;
   let fd = null, trend = null, live = false;
-  for (const endpoint of [`https://corsproxy.io/?${encodeURIComponent(url)}`, url]) {
+  for (const endpoint of [`/api/analyst?s=${sym}`, `https://corsproxy.io/?${encodeURIComponent('https://query2.finance.yahoo.com/v10/finance/quoteSummary/'+sym+'?modules=financialData,recommendationTrend')}`]) {
     try {
-      const resp = await fetch(endpoint, {signal: AbortSignal.timeout(7000)});
+      const resp = await fetch(endpoint, {signal: AbortSignal.timeout(8000)});
       if (!resp.ok) continue;
       const json = await resp.json();
       const res = json?.quoteSummary?.result?.[0];
