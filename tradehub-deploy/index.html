@@ -2065,12 +2065,12 @@ function onSearch(val) {
   if(!val){ hideSugg(); return; }
   const results=ALL_STOCKS.filter(s=>s.ticker.startsWith(val.toUpperCase())||s.name.toLowerCase().includes(val.toLowerCase())).slice(0,5);
   const el=document.getElementById('searchSugg');
-  let html=`<div class="sugg-item" style="background:rgba(0,229,160,0.05);border-bottom:1px solid var(--border)" onmousedown="hideSugg();openStockDive('${val.toUpperCase()}')">
+  let html=`<div class="sugg-item" style="background:rgba(0,229,160,0.05);border-bottom:1px solid var(--border)" onmousedown="event.preventDefault()" onclick="hideSugg();openStockDive('${val.toUpperCase()}')">
     <div><div class="sugg-ticker">🔍 "${val.toUpperCase()}"</div><div class="sugg-name">Full Stock Deep Dive</div></div>
     <div class="sugg-exch" style="background:rgba(0,229,160,0.15);color:var(--accent)">Deep Dive</div>
   </div>`;
   html+=results.map(s=>`
-    <div class="sugg-item" onmousedown="selectStock('${s.ticker}')">
+    <div class="sugg-item" onmousedown="event.preventDefault()" onclick="selectStock('${s.ticker}')">
       <div><div class="sugg-ticker">${s.ticker}</div><div class="sugg-name">${s.name}</div></div>
       <div><div class="sugg-exch">${s.currency?'LSE':'NASDAQ'}</div><div style="font-size:11px;font-family:var(--font-mono);text-align:right;margin-top:2px;color:${s.pct>=0?'var(--green)':'var(--red)'}">${s.pct>=0?'+':''}${s.pct.toFixed(2)}%</div></div>
     </div>`).join('');
@@ -2145,6 +2145,9 @@ async function _fetchLiveQuote(ticker) {
 }
 
 function openStockDive(ticker) {
+  try { _openStockDive(ticker); } catch(e) { console.error('openStockDive error:',e); notify('Error opening stock panel: '+e.message,'error'); }
+}
+function _openStockDive(ticker) {
   let stock=ALL_STOCKS.find(s=>s.ticker===ticker.toUpperCase());
   if(!stock) stock={ticker:ticker.toUpperCase(),name:ticker.toUpperCase()+' Corp.',price:100+(Math.random()*400),chg:(Math.random()-0.5)*10,pct:(Math.random()-0.5)*5,pe:15+(Math.random()*30),mktcap:'N/A',sector:'unknown'};
   diveState={ticker:stock.ticker,stock,chartInst:null,chartType:'line',aiCache:{},currentAITab:'overview',newsAllItems:[],financialsLoaded:false,analystLoaded:false,compareLoaded:false,dcfLoaded:false,googleNewsLoaded:false};
