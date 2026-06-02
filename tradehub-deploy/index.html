@@ -1633,11 +1633,11 @@ function renderPortfolio() {
         const s=ALL_STOCKS.find(x=>x.ticker===t);
         if(!s) return '';
         const itemPnl=(s.price-p.avgCost)*p.shares;
-        return `<div class="portfolio-row">
-          <div class="port-ticker">${t}</div><div class="port-name">${s.name}</div>
+        return `<div class="portfolio-row" style="cursor:pointer" onclick="openStockDive('${t}')">
+          <div class="port-ticker" style="color:var(--accent)">${t}</div><div class="port-name">${s.name}</div>
           <div class="port-shares">${p.shares}</div><div class="port-price">$${s.price.toFixed(2)}</div>
           <div class="port-pnl" style="color:${itemPnl>=0?'var(--green)':'var(--red)'}">${itemPnl>=0?'+':''}$${Math.abs(itemPnl).toFixed(2)}</div>
-          <div class="port-actions"><button class="action-btn buy" onclick="openTrade('${t}',true)">Buy More</button><button class="action-btn sell" onclick="openTrade('${t}',false)">Sell</button></div>
+          <div class="port-actions" onclick="event.stopPropagation()"><button class="action-btn buy" onclick="openTrade('${t}',true)">Buy More</button><button class="action-btn sell" onclick="openTrade('${t}',false)">Sell</button></div>
         </div>`;
       }).join('')
     : '<div style="color:var(--text3);font-size:13px;padding:20px 0">No holdings yet. Buy stocks from Markets or Dashboard.</div>';
