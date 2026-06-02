@@ -2029,11 +2029,11 @@ function openStockDive(ticker) {
     {l:'Sector',v:(stock.sector||'—').charAt(0).toUpperCase()+(stock.sector||'').slice(1)||'—'},
   ].map(({l,v})=>`<div class="kv-item"><div class="kv-label">${l}</div><div class="kv-value">${v}</div></div>`).join('');
 
-  // Reset tabs
+  // Reset tabs — open on Financials by default
   document.querySelectorAll('.dive-tab-content').forEach(t=>t.classList.remove('active'));
-  document.getElementById('dtab-chart').classList.add('active');
+  document.getElementById('dtab-financials').classList.add('active');
   document.querySelectorAll('.dive-tab-nav').forEach(n=>n.classList.remove('active'));
-  document.querySelector('.dive-tab-nav').classList.add('active');
+  document.querySelector('.dive-tab-nav[onclick*="financials"]').classList.add('active');
 
   // Reset AI tab
   document.querySelectorAll('.ai-section-tab').forEach(t=>t.classList.remove('active'));
@@ -2063,17 +2063,9 @@ function openStockDive(ticker) {
   loadDiveAI('overview');
   loadDiveNews(stock);
 
-  // Pre-load all tab data in background so every tab is instant when clicked
+  // Load financials immediately (default tab)
+  renderDiveFinancials(stock);
   diveState.financialsLoaded = true;
-  diveState.dcfLoaded        = true;
-  diveState.analystLoaded    = true;
-  diveState.compareLoaded    = true;
-  setTimeout(() => {
-    renderDiveFinancials(diveState.stock);
-    renderDiveDCF(diveState.stock);
-    renderDiveAnalyst(diveState.stock);
-    renderDiveCompare(diveState.stock);
-  }, 200);
 }
 
 function showDiveTab(tab, btn) {
