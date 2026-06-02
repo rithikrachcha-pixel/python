@@ -3309,7 +3309,7 @@ async function fetchLBOData() {
     calcLBO();
     notify(`Loaded ${name} financials`, 'success');
   } catch (e) {
-    statusEl.textContent = `✗ ${e.message}. Try a listed ticker (e.g. AAPL, MSFT,PLTR). Private companies like SpaceX must be entered manually.`;
+    statusEl.textContent = `✗ ${e.message}. Try a listed ticker (e.g.  AAPL, MSFT,PLTR). Private companies like SpaceX must be entered manually.`;
     statusEl.style.color = 'var(--red)';
     notify('Could not fetch data: ' + e.message, 'error');
   }
