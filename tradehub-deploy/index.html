@@ -662,8 +662,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
     <div id="authSignupOTP" style="display:none">
       <div style="text-align:center;margin-bottom:18px">
         <div style="font-size:32px;margin-bottom:8px">📧</div>
-        <div style="color:var(--text);font-size:14px;font-weight:600">Check your email</div>
-        <div id="otpSentTo" style="color:var(--text3);font-size:12px;margin-top:4px"></div>
+        <div style="color:var(--text);font-size:15px;font-weight:700">Verification email sent!</div>
+        <div id="otpSentTo" style="color:var(--text3);font-size:12px;margin-top:6px"></div>
+        <div style="color:var(--text3);font-size:11px;margin-top:4px">Enter the 6-digit code below. It expires in 10 minutes.</div>
       </div>
       <div class="auth-field">
         <div class="auth-label">Verification Code</div>
@@ -684,7 +685,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
       <div style="text-align:center;margin-bottom:18px">
         <div style="font-size:32px;margin-bottom:8px">📧</div>
         <div style="color:var(--text);font-size:14px;font-weight:600">Check your email</div>
-        <div id="otpSigninSentTo" style="color:var(--text3);font-size:12px;margin-top:4px"></div>
+        <div id="otpSigninSentTo" style="color:var(--text3);font-size:12px;margin-top:6px"></div>
+        <div style="color:var(--text3);font-size:11px;margin-top:4px">Enter the 6-digit code below. It expires in 10 minutes.</div>
       </div>
       <div class="auth-field">
         <div class="auth-label">Verification Code</div>
@@ -3026,7 +3028,7 @@ async function _sendOTP(email) {
     if(j.demo) {
       notify(`Demo mode: your code is ${j.code}`, 'success');
     } else {
-      notify(`Code sent to ${email}`, 'success');
+      notify(`Verification email sent to ${email} ✓`, 'success');
     }
     return true;
   } catch(e) {
