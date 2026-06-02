@@ -695,6 +695,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
       <button class="auth-btn" onclick="doSignInVerifyOTP()">Verify &amp; Sign In</button>
       <div class="auth-switch"><span onclick="document.getElementById('authSigninOTP').style.display='none';document.getElementById('authSignin').style.display='block'">← Back</span> · <span onclick="doSignInRequestOTP()">Resend code</span></div>
     </div>
+    <div style="margin-top:18px;text-align:center;border-top:1px solid var(--border);padding-top:16px">
+      <button onclick="loginAsGuest()" style="background:none;border:1px solid var(--border);color:var(--text3);font-size:13px;padding:9px 24px;border-radius:8px;cursor:pointer;width:100%;transition:all .2s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text3)'">Continue as Guest</button>
+      <div style="color:var(--text3);font-size:11px;margin-top:8px;opacity:.7">Browse markets &amp; tools without an account</div>
+    </div>
   </div>
 </div>
 
@@ -3141,13 +3145,20 @@ async function doSignInVerifyOTP() {
 function doSignUp() { doSignUpRequestOTP(); }
 function doSignIn() { doSignInRequestOTP(); }
 
+function loginAsGuest() {
+  localStorage.setItem(SESSION_KEY, JSON.stringify({ name: 'Guest', guest: true, capital: 25000 }));
+  closeAuth();
+  updateUserDisplay();
+  notify('Browsing as guest — sign up to save your data', 'success');
+}
+
 function updateUserDisplay() {
   const user = getCurrentUser();
   const chip = document.getElementById('userChip');
   if(user && chip) {
     chip.style.display = 'flex';
-    document.getElementById('userAvatar').textContent = user.name.charAt(0).toUpperCase();
-    document.getElementById('userNameDisplay').textContent = user.name.split(' ')[0];
+    document.getElementById('userAvatar').textContent = user.guest ? '?' : user.name.charAt(0).toUpperCase();
+    document.getElementById('userNameDisplay').textContent = user.guest ? 'Guest' : user.name.split(' ')[0];
   } else if(chip) {
     chip.style.display = 'none';
   }
@@ -3156,12 +3167,13 @@ function updateUserDisplay() {
 function showUserMenu() {
   const user = getCurrentUser();
   if(!user) { showAuthModal(); return; }
-  const msg = `Signed in as ${user.name} (${user.email})`;
-  if(confirm(msg + '\n\nSign out?')) {
+  const msg = user.guest ? 'Browsing as Guest' : `Signed in as ${user.name} (${user.email})`;
+  const action = user.guest ? 'Sign up / Sign in?' : 'Sign out?';
+  if(confirm(msg + '\n\n' + action)) {
     localStorage.removeItem(SESSION_KEY);
     updateUserDisplay();
     showAuthModal();
-    notify('Signed out', 'success');
+    notify(user.guest ? 'Create an account to save your data' : 'Signed out', 'success');
   }
 }
 
