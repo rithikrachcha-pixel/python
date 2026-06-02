@@ -1,97 +1,89 @@
 export const config = { runtime: 'edge' };
 
-const otpStore = new Map(); // { email -> { code, expires } }
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+const json = (data, status = 200) =>
+  new Response(JSON.stringify(data), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
+
+// Stateless HMAC-OTP: deterministic from (email + 10-min time window + secret).
+// No DB or Map needed — works across serverless invocations.
+async function makeOTP(email, secret, windowOffset = 0) {
+  const window = Math.floor(Date.now() / (10 * 60 * 1000)) + windowOffset;
+  const msg = new TextEncoder().encode(email.toLowerCase() + ':' + window);
+  const key = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  );
+  const sig = new Uint8Array(await crypto.subtle.sign('HMAC', key, msg));
+  const num = ((sig[0] << 24) | (sig[1] << 16) | (sig[2] << 8) | sig[3]) & 0x7fffffff;
+  return String(num % 1000000).padStart(6, '0');
+}
 
 export default async function handler(req) {
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-  };
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
+  if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
 
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: corsHeaders });
-  }
+  const body = await req.json().catch(() => ({}));
+  const { action, email, code } = body;
 
-  if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
-  }
+  if (!email || !email.includes('@')) return json({ error: 'Invalid email' }, 400);
 
-  const { action, email, code } = await req.json().catch(() => ({}));
+  const secret = process.env.RESEND_API_KEY || 'tf-demo-secret-2026';
 
-  if (!email || !email.includes('@')) {
-    return new Response(JSON.stringify({ error: 'Invalid email' }), {
-      status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
-  }
-
-  // Verify existing OTP
+  // ── VERIFY ──────────────────────────────────────────────────────────────
   if (action === 'verify') {
-    const stored = otpStore.get(email.toLowerCase());
-    if (!stored) return new Response(JSON.stringify({ error: 'No code found — request a new one' }), {
-      status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
-    if (Date.now() > stored.expires) {
-      otpStore.delete(email.toLowerCase());
-      return new Response(JSON.stringify({ error: 'Code expired — request a new one' }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+    const entered = String(code || '').trim();
+    // Accept current window and the previous window (handles edge-of-window timing)
+    const valid0 = await makeOTP(email, secret, 0);
+    const valid1 = await makeOTP(email, secret, -1);
+    if (entered !== valid0 && entered !== valid1) {
+      return json({ error: 'Incorrect or expired code. Request a new one.' }, 400);
     }
-    if (stored.code !== String(code).trim()) {
-      return new Response(JSON.stringify({ error: 'Incorrect code' }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-    otpStore.delete(email.toLowerCase());
-    return new Response(JSON.stringify({ ok: true }), {
-      status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    return json({ ok: true });
   }
 
-  // Generate and send OTP
-  const otp = String(Math.floor(100000 + Math.random() * 900000));
-  otpStore.set(email.toLowerCase(), { code: otp, expires: Date.now() + 10 * 60 * 1000 });
-
+  // ── SEND ─────────────────────────────────────────────────────────────────
+  const otp = await makeOTP(email, secret, 0);
   const apiKey = process.env.RESEND_API_KEY;
+
   if (!apiKey) {
-    // No email service configured — return code directly for demo mode
-    return new Response(JSON.stringify({ ok: true, demo: true, code: otp }), {
-      status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    // Demo mode — show code in response (no email sent)
+    return json({ ok: true, demo: true, code: otp });
   }
 
   try {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: 'TradeForage <onboarding@resend.dev>',
         to: [email],
-        subject: 'Your TradeForage verification code',
+        subject: `${otp} is your TradeForage verification code`,
         html: `
-          <div style="background:#0a0c10;padding:40px 24px;font-family:sans-serif;color:#e0e0e0;max-width:480px;margin:0 auto;border-radius:12px">
-            <div style="text-align:center;margin-bottom:28px">
-              <img src="https://python-5ozq-git-main-rithikrachcha-pixels-projects.vercel.app/logo.png" width="120" style="border-radius:8px" alt="TradeForage"/>
-              <div style="color:#d4a020;letter-spacing:2px;font-size:11px;margin-top:8px;text-transform:uppercase">Where Intelligence Meets Capital</div>
-            </div>
-            <h2 style="color:#fff;text-align:center;margin:0 0 8px">Verification Code</h2>
-            <p style="color:#8b90a0;text-align:center;margin:0 0 28px;font-size:14px">Use this code to sign in to TradeForage. It expires in 10 minutes.</p>
-            <div style="background:#12151c;border:1px solid #1e2230;border-radius:10px;padding:28px;text-align:center;margin-bottom:24px">
-              <div style="font-size:40px;font-weight:700;letter-spacing:12px;color:#00e5a0;font-family:monospace">${otp}</div>
-            </div>
-            <p style="color:#555;font-size:12px;text-align:center">If you didn't request this, you can safely ignore this email.</p>
-          </div>`,
+<div style="background:#0a0c10;padding:40px 24px;font-family:sans-serif;color:#e0e0e0;max-width:480px;margin:0 auto;border-radius:12px;border:1px solid #1e2230">
+  <div style="text-align:center;margin-bottom:28px">
+    <img src="https://python-5ozq-git-main-rithikrachcha-pixels-projects.vercel.app/logo.png"
+         width="130" style="border-radius:10px" alt="TradeForage"/>
+  </div>
+  <h2 style="color:#fff;text-align:center;margin:0 0 8px;font-size:20px">Verification Code</h2>
+  <p style="color:#8b90a0;text-align:center;margin:0 0 28px;font-size:14px">
+    Use this code to access TradeForage. It expires in <strong style="color:#e0e0e0">10 minutes</strong>.
+  </p>
+  <div style="background:#12151c;border:1px solid #1e2230;border-radius:12px;padding:32px;text-align:center;margin-bottom:24px">
+    <div style="font-size:44px;font-weight:700;letter-spacing:14px;color:#00e5a0;font-family:monospace;padding-left:14px">${otp}</div>
+  </div>
+  <p style="color:#555;font-size:12px;text-align:center;margin:0">
+    If you didn't request this code, you can safely ignore this email.
+  </p>
+</div>`,
       }),
     });
-    if (!res.ok) throw new Error(await res.text());
-    return new Response(JSON.stringify({ ok: true }), {
-      status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    const resText = await res.text();
+    if (!res.ok) throw new Error(resText);
+    return json({ ok: true });
   } catch (e) {
-    return new Response(JSON.stringify({ error: 'Failed to send email: ' + e.message }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    return json({ error: 'Failed to send email: ' + e.message }, 500);
   }
 }
