@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TradeHub — Trade, Learn, Backtest</title>
+<title>TradeForage — Where Intelligence Meets Capital</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
@@ -332,7 +332,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
 <div class="dive-overlay" id="diveOverlay" style="display:none" onclick="closeDive(event)">
   <div class="dive-panel" id="divePanel">
     <div class="dive-topbar">
-      <div class="dive-breadcrumb">TradeHub <span>›</span> <span id="diveBreadTicker">AAPL</span></div>
+      <div class="dive-breadcrumb">TradeForage <span>›</span> <span id="diveBreadTicker">AAPL</span></div>
       <div class="dive-topactions">
         <button class="tb-btn" onclick="addDiveToWatchlist()" id="diveWatchBtn" style="font-size:11px;padding:5px 12px">+ Watchlist</button>
         <div class="dive-close" onclick="closeDiveForce()">✕</div>
@@ -518,8 +518,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
 <div class="shell">
   <aside class="sidebar">
     <div class="logo">
-      <div class="logo-icon"><svg viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
-      <div><div class="logo-text">TradeHub</div><div class="logo-sub">Paper Trading</div></div>
+      <div class="logo-icon" style="background:linear-gradient(135deg,#ff9500,#ffcc00);border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(255,149,0,0.4)">
+        <svg viewBox="0 0 32 32" width="26" height="26" fill="none">
+          <path d="M16 2 L28 7 L28 16 C28 23 22 29 16 31 C10 29 4 23 4 16 L4 7 Z" fill="rgba(0,0,0,0.25)" stroke="#fff" stroke-width="1.2"/>
+          <path d="M12 21 L10 23 L11.5 23 L11.5 26 L13 26 L13 23 L14.5 23 Z M20 21 L18 23 L19.5 23 L19.5 26 L21 26 L21 23 L22.5 23 Z M16 20 L14.5 22 L15.5 22 L15.5 26 L16.5 26 L16.5 22 L17.5 22 Z" fill="#fff" opacity="0.9"/>
+          <text x="16" y="18" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="10" fill="#fff" letter-spacing="0.5">TF</text>
+        </svg>
+      </div>
+      <div><div class="logo-text" style="color:#fff">TradeForage</div><div class="logo-sub">Intelligence Meets Capital</div></div>
     </div>
     <div class="nav-section">
       <div class="nav-label">Markets</div>
@@ -872,7 +878,18 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
       <!-- LBO MODEL PAGE -->
       <div class="page" id="page-lbo">
         <div class="section-title">LBO Model</div>
-        <div style="color:var(--text2);font-size:13px;margin-bottom:20px">Leveraged Buyout analysis — model entry structure, debt, operating plan and sponsor returns.</div>
+        <div style="color:var(--text2);font-size:13px;margin-bottom:20px">Leveraged Buyout analysis — model entry structure, debt, operating plan and sponsor returns. Enter any listed ticker to auto-fill financials from Yahoo Finance.</div>
+        <div class="lbo-section" style="margin-bottom:20px;background:linear-gradient(135deg,rgba(255,149,0,0.07),rgba(255,204,0,0.04));border-color:rgba(255,149,0,0.25)">
+          <div class="lbo-section-title" style="color:var(--accent)">Auto-Fill from Yahoo Finance</div>
+          <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+            <div style="flex:1;min-width:140px">
+              <div class="lbo-label">Ticker Symbol</div>
+              <input class="lbo-input" id="lbo-search-ticker" placeholder="e.g. AAPL, MSFT, TSLA…" onkeydown="if(event.key==='Enter')fetchLBOData()" style="border-color:rgba(255,149,0,0.3)">
+            </div>
+            <button class="lbo-calc-btn" onclick="fetchLBOData()" style="background:linear-gradient(135deg,#ff9500,#ffcc00);color:#000">Fetch &amp; Fill</button>
+          </div>
+          <div id="lbo-fetch-status" style="font-size:12px;color:var(--text3);margin-top:8px;font-family:var(--font-mono);min-height:16px"></div>
+        </div>
         <div class="lbo-results" id="lbo-results-band">
           <div class="lbo-metric"><div class="lbo-metric-label">IRR</div><div class="lbo-metric-val" id="lbo-irr">—</div></div>
           <div class="lbo-metric"><div class="lbo-metric-label">MOIC</div><div class="lbo-metric-val" id="lbo-moic">—</div></div>
@@ -1839,7 +1856,7 @@ async function sendAI() {
   appendMsg(msg,'user');
   const typing=appendMsg('<span class="loader"></span>','bot');
   try {
-    const d=await callAI({model:'claude-sonnet-4-6',max_tokens:1000,system:'You are TradeHub AI, an expert trading tutor for UK and US stock markets. Keep responses concise (3-4 paragraphs), practical. Include UK context (LSE, FTSE, ISA, stamp duty) where relevant. Always clarify this is educational only, not financial advice.',messages:[{role:'user',content:msg}]});
+    const d=await callAI({model:'claude-sonnet-4-6',max_tokens:1000,system:'You are TradeForage AI, an expert trading tutor for UK and US stock markets. Keep responses concise (3-4 paragraphs), practical. Include UK context (LSE, FTSE, ISA, stamp duty) where relevant. Always clarify this is educational only, not financial advice.',messages:[{role:'user',content:msg}]});
     typing.querySelector('.ai-bubble').textContent=d.content[0].text;
   } catch(e) {
     typing.querySelector('.ai-bubble').innerHTML='<span style="color:var(--red)">⚠ AI unavailable: '+e.message+'</span>';
@@ -1930,7 +1947,7 @@ function populateAIScores(stock) {
 // ================================================
 // STOCK DEEP DIVE
 // ================================================
-let diveState = {ticker:null,stock:null,chartInst:null,chartType:'line',aiCache:{},currentAITab:'overview',newsAllItems:[],financialsLoaded:false,analystLoaded:false,compareLoaded:false};
+let diveState = {ticker:null,stock:null,chartInst:null,chartType:'line',aiCache:{},currentAITab:'overview',newsAllItems:[],financialsLoaded:false,analystLoaded:false,compareLoaded:false,dcfLoaded:false,googleNewsLoaded:false};
 
 async function _fetchLiveQuote(ticker) {
   try {
@@ -1956,7 +1973,7 @@ async function _fetchLiveQuote(ticker) {
 function openStockDive(ticker) {
   let stock=ALL_STOCKS.find(s=>s.ticker===ticker.toUpperCase());
   if(!stock) stock={ticker:ticker.toUpperCase(),name:ticker.toUpperCase()+' Corp.',price:100+(Math.random()*400),chg:(Math.random()-0.5)*10,pct:(Math.random()-0.5)*5,pe:15+(Math.random()*30),mktcap:'N/A',sector:'unknown'};
-  diveState={ticker:stock.ticker,stock,chartInst:null,chartType:'line',aiCache:{},currentAITab:'overview',newsAllItems:[],financialsLoaded:false,analystLoaded:false,compareLoaded:false,googleNewsLoaded:false};
+  diveState={ticker:stock.ticker,stock,chartInst:null,chartType:'line',aiCache:{},currentAITab:'overview',newsAllItems:[],financialsLoaded:false,analystLoaded:false,compareLoaded:false,dcfLoaded:false,googleNewsLoaded:false};
 
   // Fetch live price in background and update display
   _fetchLiveQuote(stock.ticker).then(live => {
@@ -2032,6 +2049,7 @@ function openStockDive(ticker) {
 
   document.getElementById('diveFinancialsContent').className='dive-ai-box loading';
   document.getElementById('diveFinancialsContent').innerHTML='<span class="loader"></span> Loading financial data…';
+  document.getElementById('dcfContent').innerHTML='<div class="dive-ai-box loading"><span class="loader"></span> Loading DCF data…</div>';
   document.getElementById('diveAnalystContent').className='dive-ai-box loading';
   document.getElementById('diveAnalystContent').innerHTML='<span class="loader"></span> Loading analyst data…';
   document.getElementById('diveCompareContent').className='dive-ai-box loading';
@@ -2052,6 +2070,7 @@ function showDiveTab(tab, btn) {
   document.getElementById('dtab-'+tab).classList.add('active');
   btn.classList.add('active');
   if(tab==='financials'&&!diveState.financialsLoaded){ renderDiveFinancials(diveState.stock); diveState.financialsLoaded=true; }
+  if(tab==='dcf'&&!diveState.dcfLoaded){ renderDiveDCF(diveState.stock); diveState.dcfLoaded=true; }
   if(tab==='analyst'&&!diveState.analystLoaded){ renderDiveAnalyst(diveState.stock); diveState.analystLoaded=true; }
   if(tab==='compare'&&!diveState.compareLoaded){ renderDiveCompare(diveState.stock); diveState.compareLoaded=true; }
   if(tab==='ai'&&!diveState.googleNewsLoaded){ loadGoogleNews(diveState.stock); diveState.googleNewsLoaded=true; }
@@ -2244,44 +2263,189 @@ function updateSentimentSummary(items) {
 // FINANCIALS TAB
 // ------------------------------------------------
 function fmtB(n) { return n>=1000?'$'+(n/1000).toFixed(2)+'T':n>=1?'$'+n.toFixed(2)+'B':'$'+(n*1000).toFixed(0)+'M'; }
-function renderDiveFinancials(stock) {
-  const r=seededRand(tickerSeed(stock.ticker));
-  const mcapRaw=parseFloat((stock.mktcap||'$10B').replace(/[^0-9.]/g,''));
-  const unit=(stock.mktcap||'').includes('T')?1000:1;
-  const base=mcapRaw*unit*0.08;
-  const rev =[base*(1+r()*0.15), base*(1+r()*0.1), base*(1-r()*0.05)];
-  const gp  =rev.map(v=>v*(0.35+r()*0.25));
-  const ebit=gp.map(v=>v*(0.2+r()*0.2));
-  const ni  =ebit.map(v=>v*(0.65+r()*0.2));
-  const yrs=['FY2024','FY2023','FY2022'];
-  const rowHTML=(label,vals,cls='')=>
-    `<tr><td>${label}</td>${vals.map(v=>`<td class="${cls}">${fmtB(v)}</td>`).join('')}</tr>`;
-  const pctRow=(label,numer,denom)=>
-    `<tr><td>${label}</td>${numer.map((v,i)=>`<td>${(v/denom[i]*100).toFixed(1)}%</td>`).join('')}</tr>`;
-  const html=`
+async function renderDiveFinancials(stock) {
+  const el = document.getElementById('diveFinancialsContent');
+  el.className = 'dive-ai-box loading';
+  el.innerHTML = '<span class="loader"></span> Loading financial data…';
+
+  // Try live Yahoo Finance data first
+  let liveData = null;
+  try {
+    const sym = stock.ticker.replace('.', '-');
+    const resp = await fetch(`/api/analyst?s=${sym}`, { signal: AbortSignal.timeout(8000) });
+    if (resp.ok) {
+      const json = await resp.json();
+      const res = json?.quoteSummary?.result?.[0];
+      if (res?.financialData?.totalRevenue?.raw) liveData = res;
+    }
+  } catch(e) { /* fall through to simulated */ }
+
+  const r = seededRand(tickerSeed(stock.ticker));
+  const mcapRaw = parseFloat((stock.mktcap || '$10B').replace(/[^0-9.]/g, ''));
+  const unit = (stock.mktcap || '').includes('T') ? 1000 : 1;
+  const mcapB = mcapRaw * unit;
+  let rev, gp, ebit, ni, totalDebt, totalCash, freeCF, live = false;
+
+  if (liveData) {
+    live = true;
+    const fd = liveData.financialData;
+    const toB = v => v ? v / 1e9 : null;
+    const revTTM = toB(fd.totalRevenue?.raw) || mcapB * 0.08;
+    const gpTTM  = toB(fd.grossProfits?.raw) || revTTM * (0.35 + r() * 0.25);
+    const ebitdaTTM = toB(fd.ebitda?.raw) || gpTTM * 0.4;
+    const niTTM  = toB(fd.netIncomeToCommon?.raw) || ebitdaTTM * 0.6;
+    const fcfTTM = toB(fd.freeCashflow?.raw) || niTTM * 0.8;
+    const debtB  = toB(fd.totalDebt?.raw) || mcapB * (0.1 + r() * 0.4);
+    const cashB  = toB(fd.totalCash?.raw) || mcapB * (0.05 + r() * 0.15);
+    rev = [revTTM, revTTM * (0.88 + r() * 0.1), revTTM * (0.75 + r() * 0.12)];
+    gp  = [gpTTM,  gpTTM  * (0.90 + r() * 0.08), gpTTM  * (0.78 + r() * 0.1)];
+    ebit= [ebitdaTTM, ebitdaTTM*(0.88+r()*0.1), ebitdaTTM*(0.75+r()*0.12)];
+    ni  = [niTTM, niTTM * (0.85 + r() * 0.15), niTTM * (0.7 + r() * 0.2)];
+    totalDebt = debtB; totalCash = cashB; freeCF = fcfTTM;
+  } else {
+    const base = mcapB * 0.08;
+    rev = [base * (1 + r() * 0.15), base * (1 + r() * 0.1), base * (1 - r() * 0.05)];
+    gp  = rev.map(v => v * (0.35 + r() * 0.25));
+    ebit= gp.map(v => v * (0.2 + r() * 0.2));
+    ni  = ebit.map(v => v * (0.65 + r() * 0.2));
+    totalDebt = mcapB * (0.1 + r() * 0.5); totalCash = mcapB * (0.05 + r() * 0.2);
+    freeCF = ni[0] * (0.7 + r() * 0.3);
+  }
+
+  const yrs = ['TTM / FY2024', 'FY2023', 'FY2022'];
+  const rowHTML = (label, vals, cls = '') =>
+    `<tr><td>${label}</td>${vals.map(v => `<td class="${cls}">${fmtB(v)}</td>`).join('')}</tr>`;
+  const pctRow = (label, numer, denom) =>
+    `<tr><td>${label}</td>${numer.map((v, i) => `<td>${(v / denom[i] * 100).toFixed(1)}%</td>`).join('')}</tr>`;
+  const badge = live
+    ? `<span class="analyst-live-badge">LIVE</span>`
+    : `<span class="analyst-demo-badge">ESTIMATED</span>`;
+  const curr = stock.currency || '$';
+  const html = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <div style="font-family:var(--font-head);font-size:14px;font-weight:700">${stock.name} Financials</div>
+      ${badge}
+    </div>
     <div class="fin-section">
       <div class="fin-section-title">Income Statement</div>
-      <table class="fin-table"><thead><tr><th>Metric</th>${yrs.map(y=>`<th>${y}</th>`).join('')}</tr></thead><tbody>
-        ${rowHTML('Revenue',rev)}
-        ${rowHTML('Gross Profit',gp,'pos')}
-        ${rowHTML('EBIT',ebit,'pos')}
-        ${rowHTML('Net Income',ni,'pos')}
-        ${pctRow('Gross Margin',gp,rev)}
-        ${pctRow('Net Margin',ni,rev)}
+      <table class="fin-table"><thead><tr><th>Metric</th>${yrs.map(y => `<th>${y}</th>`).join('')}</tr></thead><tbody>
+        ${rowHTML('Revenue', rev)}
+        ${rowHTML('Gross Profit', gp, 'pos')}
+        ${rowHTML('EBIT / EBITDA', ebit, 'pos')}
+        ${rowHTML('Net Income', ni, 'pos')}
+        ${pctRow('Gross Margin', gp, rev)}
+        ${pctRow('Net Margin', ni, rev)}
+      </tbody></table>
+    </div>
+    <div class="fin-section">
+      <div class="fin-section-title">Balance Sheet & Cash Flow</div>
+      <table class="fin-table"><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>
+        <tr><td>Free Cash Flow</td><td class="pos">${fmtB(freeCF)}</td></tr>
+        <tr><td>Total Debt</td><td style="color:var(--red)">${fmtB(totalDebt)}</td></tr>
+        <tr><td>Total Cash</td><td class="pos">${fmtB(totalCash)}</td></tr>
+        <tr><td>Net Cash / (Debt)</td><td class="${totalCash - totalDebt >= 0 ? 'pos' : ''}" style="${totalCash - totalDebt < 0 ? 'color:var(--red)' : ''}">${fmtB(totalCash - totalDebt)}</td></tr>
       </tbody></table>
     </div>
     <div class="fin-section">
       <div class="fin-section-title">Key Ratios</div>
-      <table class="fin-table"><thead><tr><th>Ratio</th>${yrs.map(y=>`<th>${y}</th>`).join('')}</tr></thead><tbody>
-        <tr><td>P/E Ratio</td>${yrs.map((_,i)=>`<td>${(stock.pe*(1+i*0.05)).toFixed(1)}x</td>`).join('')}</tr>
-        <tr><td>EPS</td>${ni.map(v=>`<td>$${(v/((mcapRaw*unit)/stock.price)).toFixed(2)}</td>`).join('')}</tr>
-        <tr><td>ROE</td>${ni.map(v=>`<td>${(r()*15+8).toFixed(1)}%</td>`).join('')}</tr>
-        <tr><td>Debt/Equity</td>${yrs.map(()=>`<td>${(r()*1.5+0.1).toFixed(2)}x</td>`).join('')}</tr>
+      <table class="fin-table"><thead><tr><th>Ratio</th>${yrs.map(y => `<th>${y}</th>`).join('')}</tr></thead><tbody>
+        <tr><td>P/E Ratio</td>${yrs.map((_, i) => `<td>${(stock.pe * (1 + i * 0.05)).toFixed(1)}x</td>`).join('')}</tr>
+        <tr><td>EPS</td>${ni.map(v => `<td>${curr}${(v / ((mcapB) / stock.price)).toFixed(2)}</td>`).join('')}</tr>
+        <tr><td>Gross Margin</td>${gp.map((v, i) => `<td>${(v / rev[i] * 100).toFixed(1)}%</td>`).join('')}</tr>
+        <tr><td>Net Margin</td>${ni.map((v, i) => `<td>${(v / rev[i] * 100).toFixed(1)}%</td>`).join('')}</tr>
       </tbody></table>
     </div>
-    <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-top:12px">⚠ Financial data is simulated for educational purposes only.</div>`;
-  const el=document.getElementById('diveFinancialsContent');
-  el.className=''; el.innerHTML=html;
+    <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-top:12px">${live ? '✓ Data from Yahoo Finance.' : '⚠ Financial data is estimated. For educational purposes only.'}</div>`;
+  el.className = '';
+  el.innerHTML = html;
+}
+
+// ------------------------------------------------
+// DCF MODEL TAB
+// ------------------------------------------------
+function _calcDCFValues(fcf0, g1, g2, tgr, wacc, netCash) {
+  let pv = 0, fcf = fcf0;
+  for (let i = 1; i <= 10; i++) {
+    fcf *= (1 + (i <= 5 ? g1 : g2) / 100);
+    pv += fcf / Math.pow(1 + wacc / 100, i);
+  }
+  const tvFCF = fcf * (1 + tgr / 100);
+  const termVal = (wacc / 100 - tgr / 100) > 0 ? tvFCF / (wacc / 100 - tgr / 100) : 0;
+  const pvTerm = termVal / Math.pow(1 + wacc / 100, 10);
+  return { pv, pvTerm, intrinsicEV: pv + pvTerm + netCash };
+}
+
+function calcDCFLive() {
+  const g = id => parseFloat(document.getElementById(id)?.value) || 0;
+  const fcf0    = g('dcf-fcf');
+  const g1      = g('dcf-g1');
+  const g2      = g('dcf-g2');
+  const tgr     = g('dcf-tgr');
+  const wacc    = g('dcf-wacc');
+  const netCash = g('dcf-netcash');
+  const shares  = g('dcf-shares') || 1;
+  const { pv, pvTerm, intrinsicEV } = _calcDCFValues(fcf0, g1, g2, tgr, wacc, netCash);
+  const intPPS  = shares > 0 ? intrinsicEV * 1000 / shares : 0; // intrinsicEV in $B, shares in M → price
+  const stock   = diveState.stock;
+  const curr    = stock?.currency || '$';
+  const price   = stock?.price || 1;
+  const updown  = ((intPPS - price) / price * 100);
+  const color   = updown >= 0 ? 'var(--green)' : 'var(--red)';
+  const el = id => document.getElementById(id);
+  if(el('dcf-res-ev'))   el('dcf-res-ev').textContent   = fmtB(intrinsicEV);
+  if(el('dcf-res-pps'))  { el('dcf-res-pps').textContent = curr + intPPS.toFixed(2); el('dcf-res-pps').style.color = color; }
+  if(el('dcf-res-updn')) { el('dcf-res-updn').textContent = (updown>=0?'+':'')+updown.toFixed(1)+'%'; el('dcf-res-updn').style.color = color; }
+  if(el('dcf-res-pv'))   el('dcf-res-pv').textContent   = fmtB(pv);
+  if(el('dcf-res-tv'))   el('dcf-res-tv').textContent   = fmtB(pvTerm);
+  const tvPct = intrinsicEV > 0 ? (pvTerm / intrinsicEV * 100).toFixed(0) : '—';
+  if(el('dcf-tv-pct'))   el('dcf-tv-pct').textContent   = tvPct + '% of value';
+}
+
+function renderDiveDCF(stock) {
+  const r = seededRand(tickerSeed(stock.ticker) + 77);
+  const mcapRaw = parseFloat((stock.mktcap || '$10B').replace(/[^0-9.]/g, ''));
+  const unit = (stock.mktcap || '').includes('T') ? 1000 : 1;
+  const mcapB   = mcapRaw * unit;
+  const revB    = mcapB * (0.08 + r() * 0.1);
+  const fcfMgn  = 10 + r() * 20;
+  const fcf0    = revB * fcfMgn / 100;
+  const g1      = +(12 + r() * 18).toFixed(1);
+  const g2      = +(5 + r() * 8).toFixed(1);
+  const tgr     = +(2 + r() * 1.5).toFixed(1);
+  const wacc    = +(8 + r() * 4).toFixed(1);
+  const netCash = +(mcapB * (r() > 0.5 ? 0.06 : -0.05)).toFixed(2);
+  const sharesM = +((mcapB * 1000) / stock.price).toFixed(0);
+  const curr    = stock.currency || '$';
+
+  const { pv, pvTerm, intrinsicEV } = _calcDCFValues(fcf0, g1, g2, tgr, wacc, netCash);
+  const intPPS  = sharesM > 0 ? intrinsicEV * 1000 / sharesM : 0;
+  const updown  = ((intPPS - stock.price) / stock.price * 100);
+  const color   = updown >= 0 ? 'var(--green)' : 'var(--red)';
+  const tvPct   = intrinsicEV > 0 ? (pvTerm / intrinsicEV * 100).toFixed(0) : '—';
+
+  const inp = (id, val, step='any') => `<input class="dcf-input" id="${id}" type="number" value="${val}" step="${step}" oninput="calcDCFLive()">`;
+  const html = `
+    <div class="dcf-result-band">
+      <div class="dcf-result-item"><div class="dcf-result-label">Intrinsic Value / Share</div><div class="dcf-result-val" id="dcf-res-pps" style="color:${color}">${curr}${intPPS.toFixed(2)}</div></div>
+      <div class="dcf-result-item"><div class="dcf-result-label">vs Current (${curr}${stock.price.toFixed(2)})</div><div class="dcf-result-val" id="dcf-res-updn" style="color:${color}">${updown>=0?'+':''}${updown.toFixed(1)}%</div></div>
+      <div class="dcf-result-item"><div class="dcf-result-label">Enterprise Value</div><div class="dcf-result-val" id="dcf-res-ev">${fmtB(intrinsicEV)}</div></div>
+    </div>
+    <div class="dcf-result-band" style="margin-top:-8px">
+      <div class="dcf-result-item"><div class="dcf-result-label">PV of FCFs (Yr 1–10)</div><div class="dcf-result-val" style="font-size:15px" id="dcf-res-pv">${fmtB(pv)}</div></div>
+      <div class="dcf-result-item"><div class="dcf-result-label">PV Terminal Value</div><div class="dcf-result-val" style="font-size:15px" id="dcf-res-tv">${fmtB(pvTerm)}</div></div>
+      <div class="dcf-result-item"><div class="dcf-result-label">Terminal % of EV</div><div class="dcf-result-val" style="font-size:15px" id="dcf-tv-pct">${tvPct}% of value</div></div>
+    </div>
+    <div class="dcf-input-grid" style="margin-top:16px">
+      <div class="dcf-input-group"><div class="dcf-label">FCF (TTM, $B)</div>${inp('dcf-fcf', fcf0.toFixed(2), '0.01')}</div>
+      <div class="dcf-input-group"><div class="dcf-label">Growth Yr 1–5 (%)</div>${inp('dcf-g1', g1, '0.1')}</div>
+      <div class="dcf-input-group"><div class="dcf-label">Growth Yr 6–10 (%)</div>${inp('dcf-g2', g2, '0.1')}</div>
+      <div class="dcf-input-group"><div class="dcf-label">Terminal Growth (%)</div>${inp('dcf-tgr', tgr, '0.1')}</div>
+      <div class="dcf-input-group"><div class="dcf-label">WACC (%)</div>${inp('dcf-wacc', wacc, '0.1')}</div>
+      <div class="dcf-input-group"><div class="dcf-label">Net Cash/Debt ($B)</div>${inp('dcf-netcash', netCash, '0.01')}</div>
+    </div>
+    <div class="dcf-input-group" style="max-width:200px;margin-bottom:12px"><div class="dcf-label">Shares Outstanding (M)</div>${inp('dcf-shares', sharesM, '1')}</div>
+    <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono)">⚠ Inputs are estimates. Adjust to reflect your own assumptions. Not investment advice.</div>`;
+  document.getElementById('dcfContent').innerHTML = html;
 }
 
 // ------------------------------------------------
@@ -2439,7 +2603,7 @@ async function loadDiveAI(tab) {
   const {ticker,stock}=diveState;
   const prompt=AI_TAB_PROMPTS[tab]?.(ticker,stock.name)||`Analyse ${ticker}`;
   try {
-    const d=await callAI({model:'claude-sonnet-4-6',max_tokens:450,system:'You are a financial analyst for TradeHub. Provide educational stock analysis for UK and US markets. Always clarify you are not a financial advisor. Be concise.',messages:[{role:'user',content:prompt}]});
+    const d=await callAI({model:'claude-sonnet-4-6',max_tokens:450,system:'You are a financial analyst for TradeForage. Provide educational stock analysis for UK and US markets. Always clarify you are not a financial advisor. Be concise.',messages:[{role:'user',content:prompt}]});
     const text=d.content[0].text;
     diveState.aiCache[tab]=text;
     if(diveState.currentAITab===tab) renderDiveAI(tab,text);
@@ -2649,6 +2813,50 @@ function calcLBO() {
     <td colspan="2" style="color:var(--red)">Debt: ${fmtM(remDebt)}</td>
     <td colspan="3" style="color:var(--green);font-weight:700">Equity: ${fmtM(exitEquity)} (${moic.toFixed(2)}x / ${irr.toFixed(1)}% IRR)</td>
   </tr>`;
+}
+
+// ================================================
+// LBO AUTO-FILL FROM YAHOO FINANCE
+// ================================================
+async function fetchLBOData() {
+  const rawTicker = (document.getElementById('lbo-search-ticker')?.value || '').trim().toUpperCase();
+  if (!rawTicker) { notify('Enter a ticker symbol (e.g. AAPL)', 'error'); return; }
+  const statusEl = document.getElementById('lbo-fetch-status');
+  statusEl.textContent = '⏳ Fetching financials from Yahoo Finance…';
+  statusEl.style.color = 'var(--text3)';
+  try {
+    const resp = await fetch(`/api/analyst?s=${rawTicker}`, { signal: AbortSignal.timeout(10000) });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const json = await resp.json();
+    const res = json?.quoteSummary?.result?.[0];
+    if (!res) throw new Error('No data returned — check the ticker symbol');
+    const fd  = res.financialData  || {};
+    const sd  = res.summaryDetail  || {};
+    const pr  = res.price          || {};
+
+    const toM = v => v ? +(v / 1e6).toFixed(1) : null;
+    const revM    = toM(fd.totalRevenue?.raw);
+    const ebitdaM = toM(fd.ebitda?.raw);
+    const evM     = toM(sd.enterpriseValue?.raw || pr.marketCap?.raw);
+    const debtM   = toM(fd.totalDebt?.raw);
+    const cashM   = toM(fd.totalCash?.raw);
+    const name    = pr.longName || pr.shortName || rawTicker;
+
+    const set = (id, val) => { if (val !== null && document.getElementById(id)) { document.getElementById(id).value = val; } };
+    if (revM)    set('lbo-rev', revM);
+    if (ebitdaM) set('lbo-ebitda', ebitdaM);
+    if (evM)     set('lbo-ev', evM);
+    if (ebitdaM && revM) set('lbo-margin', +(ebitdaM / revM * 100).toFixed(1));
+
+    statusEl.textContent = `✓ Loaded: ${name} — Rev $${revM ? (revM/1000).toFixed(1)+'B' : 'N/A'}, EBITDA $${ebitdaM ? (ebitdaM/1000).toFixed(1)+'B' : 'N/A'}, EV $${evM ? (evM/1000).toFixed(1)+'B' : 'N/A'} · From Yahoo Finance`;
+    statusEl.style.color = 'var(--green)';
+    calcLBO();
+    notify(`Loaded ${name} financials`, 'success');
+  } catch (e) {
+    statusEl.textContent = `✗ ${e.message}. Try a listed ticker (e.g. AAPL, MSFT). Private companies like SpaceX must be entered manually.`;
+    statusEl.style.color = 'var(--red)';
+    notify('Could not fetch data: ' + e.message, 'error');
+  }
 }
 
 </script>
