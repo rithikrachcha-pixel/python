@@ -2215,8 +2215,8 @@ function _openStockDive(ticker) {
   // Reset AI tab
   document.querySelectorAll('.ai-section-tab').forEach(t=>t.classList.remove('active'));
   document.querySelector('.ai-section-tab')?.classList.add('active');
-  document.getElementById('diveAIContent').className='dive-ai-box loading';
-  document.getElementById('diveAIContent').innerHTML='<span class="loader"></span> Generating AI analysis…';
+  const _aiBox=document.getElementById('diveAIContent');
+  if(_aiBox){_aiBox.className='dive-ai-box loading';_aiBox.innerHTML='<span class="loader"></span> Generating AI analysis…';}
 
   // Reset news
   document.getElementById('diveNewsContainer').innerHTML='<div class="dive-ai-box loading"><span class="loader"></span> Loading news…</div>';
@@ -2237,7 +2237,6 @@ function _openStockDive(ticker) {
 
   setTimeout(()=>initDiveChart(stock),50);
   populateAIScores(stock);
-  loadDiveAI('overview');
   loadDiveNews(stock);
   renderDiveKeyMetrics(stock);
 }
@@ -2837,8 +2836,8 @@ async function switchAITab(tab, btn) {
   btn.classList.add('active');
   diveState.currentAITab=tab;
   if(diveState.aiCache[tab]) { renderDiveAI(tab,diveState.aiCache[tab]); return; }
-  document.getElementById('diveAIContent').className='dive-ai-box loading';
-  document.getElementById('diveAIContent').innerHTML='<span class="loader"></span> Generating '+tab+' analysis…';
+  const _aiBox=document.getElementById('diveAIContent');
+  if(_aiBox){_aiBox.className='dive-ai-box loading';_aiBox.innerHTML='<span class="loader"></span> Generating '+tab+' analysis…';}
   await loadDiveAI(tab);
 }
 
@@ -2852,14 +2851,15 @@ async function loadDiveAI(tab) {
     if(diveState.currentAITab===tab) renderDiveAI(tab,text);
   } catch(e) {
     if(diveState.currentAITab===tab){
-      document.getElementById('diveAIContent').className='dive-ai-box';
-      document.getElementById('diveAIContent').innerHTML='<span style="color:var(--red)">⚠ AI unavailable: '+e.message+'</span>';
+      const _aiBox=document.getElementById('diveAIContent');
+      if(_aiBox){_aiBox.className='dive-ai-box';_aiBox.innerHTML='<span style="color:var(--red)">⚠ AI unavailable: '+e.message+'</span>';}
     }
   }
 }
 
 function renderDiveAI(tab, text) {
   const box=document.getElementById('diveAIContent');
+  if(!box) return;
   box.className='dive-ai-box';
   let html='';
   if(tab==='overview'){
