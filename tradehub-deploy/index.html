@@ -547,7 +547,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
   <div class="auth-card">
     <div class="auth-logo">
       <div class="auth-logo-icon">
-        <img src="/ChatGPT%20Image%20Jun%202%2C%202026%2C%2011_43_29%20AM.png" alt="TradeForage" style="width:170px;height:170px;object-fit:contain">
+        <img src="/logo.png" alt="TradeForage" style="width:170px;height:170px;object-fit:contain">
         <svg style="display:none" viewBox="0 0 1 1" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -655,15 +655,43 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
         </div>
         <input class="auth-input" id="su-custom-capital" placeholder="Or enter custom amount…" type="number" style="margin-top:8px" oninput="selectCapital(parseFloat(this.value)||0,null)">
       </div>
-      <button class="auth-btn" onclick="doSignUp()">Create Account &amp; Start Trading</button>
+      <button class="auth-btn" onclick="doSignUpRequestOTP()">Send Verification Code</button>
       <div class="auth-switch">Already have an account? <span onclick="switchAuthTab('signin')">Sign in</span></div>
+    </div>
+    <!-- SIGN UP OTP STEP -->
+    <div id="authSignupOTP" style="display:none">
+      <div style="text-align:center;margin-bottom:18px">
+        <div style="font-size:32px;margin-bottom:8px">📧</div>
+        <div style="color:var(--text);font-size:14px;font-weight:600">Check your email</div>
+        <div id="otpSentTo" style="color:var(--text3);font-size:12px;margin-top:4px"></div>
+      </div>
+      <div class="auth-field">
+        <div class="auth-label">Verification Code</div>
+        <input class="auth-input" id="su-otp" placeholder="6-digit code" type="text" maxlength="6" style="text-align:center;font-size:24px;letter-spacing:8px;font-family:var(--font-mono)" onkeydown="if(event.key==='Enter')doSignUpVerifyOTP()">
+      </div>
+      <button class="auth-btn" onclick="doSignUpVerifyOTP()">Verify &amp; Create Account</button>
+      <div class="auth-switch"><span onclick="document.getElementById('authSignupOTP').style.display='none';document.getElementById('authSignup').style.display='block'">← Back</span> · <span onclick="doSignUpRequestOTP()">Resend code</span></div>
     </div>
     <!-- SIGN IN -->
     <div id="authSignin" style="display:none">
       <div class="auth-field"><div class="auth-label">Email</div><input class="auth-input" id="si-email" placeholder="your@email.com" type="email"></div>
-      <div class="auth-field"><div class="auth-label">Password</div><input class="auth-input" id="si-pass" placeholder="Your password" type="password" onkeydown="if(event.key==='Enter')doSignIn()"></div>
-      <button class="auth-btn" onclick="doSignIn()">Sign In</button>
+      <div class="auth-field"><div class="auth-label">Password</div><input class="auth-input" id="si-pass" placeholder="Your password" type="password" onkeydown="if(event.key==='Enter')doSignInRequestOTP()"></div>
+      <button class="auth-btn" onclick="doSignInRequestOTP()">Send Verification Code</button>
       <div class="auth-switch">New here? <span onclick="switchAuthTab('signup')">Create account</span></div>
+    </div>
+    <!-- SIGN IN OTP STEP -->
+    <div id="authSigninOTP" style="display:none">
+      <div style="text-align:center;margin-bottom:18px">
+        <div style="font-size:32px;margin-bottom:8px">📧</div>
+        <div style="color:var(--text);font-size:14px;font-weight:600">Check your email</div>
+        <div id="otpSigninSentTo" style="color:var(--text3);font-size:12px;margin-top:4px"></div>
+      </div>
+      <div class="auth-field">
+        <div class="auth-label">Verification Code</div>
+        <input class="auth-input" id="si-otp" placeholder="6-digit code" type="text" maxlength="6" style="text-align:center;font-size:24px;letter-spacing:8px;font-family:var(--font-mono)" onkeydown="if(event.key==='Enter')doSignInVerifyOTP()">
+      </div>
+      <button class="auth-btn" onclick="doSignInVerifyOTP()">Verify &amp; Sign In</button>
+      <div class="auth-switch"><span onclick="document.getElementById('authSigninOTP').style.display='none';document.getElementById('authSignin').style.display='block'">← Back</span> · <span onclick="doSignInRequestOTP()">Resend code</span></div>
     </div>
   </div>
 </div>
@@ -672,7 +700,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
   <aside class="sidebar">
     <div class="logo">
       <div style="display:flex;flex-direction:column;align-items:center;padding:6px 0">
-        <img src="/ChatGPT%20Image%20Jun%202%2C%202026%2C%2011_43_29%20AM.png" alt="TradeForage" style="width:130px;height:130px;object-fit:contain">
+        <img src="/logo.png" alt="TradeForage" style="width:130px;height:130px;object-fit:contain">
       </div>
     </div>
     <div class="nav-section">
@@ -2965,8 +2993,10 @@ function selectCapital(amt, el) {
 }
 
 function switchAuthTab(tab) {
-  document.getElementById('authSignup').style.display = tab==='signup'?'block':'none';
-  document.getElementById('authSignin').style.display = tab==='signin'?'block':'none';
+  document.getElementById('authSignup').style.display    = tab==='signup'?'block':'none';
+  document.getElementById('authSignupOTP').style.display = 'none';
+  document.getElementById('authSignin').style.display    = tab==='signin'?'block':'none';
+  document.getElementById('authSigninOTP').style.display = 'none';
   document.getElementById('authTabSignup').classList.toggle('active', tab==='signup');
   document.getElementById('authTabSignin').classList.toggle('active', tab==='signin');
 }
@@ -2981,7 +3011,45 @@ function closeAuth() {
   document.body.style.overflow='';
 }
 
-function doSignUp() {
+// ---- OTP helpers ----
+async function _sendOTP(email) {
+  const btn = event?.target;
+  if(btn) { btn.disabled=true; btn.textContent='Sending…'; }
+  try {
+    const r = await fetch('/api/send-otp', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email})
+    });
+    const j = await r.json();
+    if(!r.ok) throw new Error(j.error||'Failed to send');
+    if(j.demo) {
+      notify(`Demo mode: your code is ${j.code}`, 'success');
+    } else {
+      notify(`Code sent to ${email}`, 'success');
+    }
+    return true;
+  } catch(e) {
+    notify('Could not send code: '+e.message, 'error');
+    return false;
+  } finally {
+    if(btn) { btn.disabled=false; btn.textContent='Send Verification Code'; }
+  }
+}
+
+async function _verifyOTP(email, code) {
+  const r = await fetch('/api/send-otp', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({action:'verify', email, code})
+  });
+  const j = await r.json();
+  if(!r.ok) throw new Error(j.error||'Verification failed');
+  return true;
+}
+
+// ---- Sign-up flow ----
+async function doSignUpRequestOTP() {
   const name  = document.getElementById('su-name').value.trim();
   const email = document.getElementById('su-email').value.trim().toLowerCase();
   const pass  = document.getElementById('su-pass').value;
@@ -2992,6 +3060,32 @@ function doSignUp() {
   if(pass.length < 6) { notify('Password must be at least 6 characters','error'); return; }
   const users = getUsers();
   if(users.find(u=>u.email===email)) { notify('Email already registered — sign in','error'); switchAuthTab('signin'); return; }
+  // Stash pending signup
+  window._pendingSignup = {name, email, pass, capital};
+  const ok = await _sendOTP(email);
+  if(!ok) return;
+  document.getElementById('authSignup').style.display='none';
+  document.getElementById('authSignupOTP').style.display='block';
+  document.getElementById('otpSentTo').textContent=`Code sent to ${email}`;
+  document.getElementById('su-otp').value='';
+  document.getElementById('su-otp').focus();
+}
+
+async function doSignUpVerifyOTP() {
+  const code = document.getElementById('su-otp').value.trim();
+  if(!code || code.length!==6) { notify('Enter the 6-digit code','error'); return; }
+  const {name, email, pass, capital} = window._pendingSignup||{};
+  if(!email) { notify('Session expired — start again','error'); return; }
+  const btn = document.querySelector('#authSignupOTP .auth-btn');
+  if(btn) { btn.disabled=true; btn.textContent='Verifying…'; }
+  try {
+    await _verifyOTP(email, code);
+  } catch(e) {
+    notify(e.message,'error');
+    if(btn) { btn.disabled=false; btn.textContent='Verify & Create Account'; }
+    return;
+  }
+  const users = getUsers();
   const user = { id: Date.now().toString(), name, email, passwordHash: simpleHash(pass), capital, createdAt: new Date().toISOString() };
   users.push(user);
   saveUsers(users);
@@ -3003,18 +3097,47 @@ function doSignUp() {
   notify(`Welcome to TradeForage, ${name}! Starting with $${capital.toLocaleString()}`, 'success');
 }
 
-function doSignIn() {
+// ---- Sign-in flow ----
+async function doSignInRequestOTP() {
   const email = document.getElementById('si-email').value.trim().toLowerCase();
   const pass  = document.getElementById('si-pass').value;
   if(!email || !pass) { notify('Enter email and password','error'); return; }
   const users = getUsers();
   const user  = users.find(u=>u.email===email && u.passwordHash===simpleHash(pass));
   if(!user) { notify('Incorrect email or password','error'); return; }
+  window._pendingSignin = {user};
+  const ok = await _sendOTP(email);
+  if(!ok) return;
+  document.getElementById('authSignin').style.display='none';
+  document.getElementById('authSigninOTP').style.display='block';
+  document.getElementById('otpSigninSentTo').textContent=`Code sent to ${email}`;
+  document.getElementById('si-otp').value='';
+  document.getElementById('si-otp').focus();
+}
+
+async function doSignInVerifyOTP() {
+  const code = document.getElementById('si-otp').value.trim();
+  if(!code || code.length!==6) { notify('Enter the 6-digit code','error'); return; }
+  const {user} = window._pendingSignin||{};
+  if(!user) { notify('Session expired — start again','error'); return; }
+  const btn = document.querySelector('#authSigninOTP .auth-btn');
+  if(btn) { btn.disabled=true; btn.textContent='Verifying…'; }
+  try {
+    await _verifyOTP(user.email, code);
+  } catch(e) {
+    notify(e.message,'error');
+    if(btn) { btn.disabled=false; btn.textContent='Verify & Sign In'; }
+    return;
+  }
   localStorage.setItem(SESSION_KEY, JSON.stringify({userId:user.id, name:user.name, email:user.email}));
   closeAuth();
   updateUserDisplay();
   notify(`Welcome back, ${user.name}!`, 'success');
 }
+
+// kept for backwards compat
+function doSignUp() { doSignUpRequestOTP(); }
+function doSignIn() { doSignInRequestOTP(); }
 
 function updateUserDisplay() {
   const user = getCurrentUser();
