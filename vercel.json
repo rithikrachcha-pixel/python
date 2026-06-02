@@ -7,9 +7,25 @@
     {
       "src": "tradehub-deploy/index.html",
       "use": "@vercel/static"
+    },
+    {
+      "src": "tradehub-deploy/logo.png",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "tradehub-deploy/api/*.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/tradehub-deploy/api/$1"
+    },
+    {
+      "src": "/logo.png",
+      "dest": "/tradehub-deploy/logo.png"
+    },
     {
       "src": "/",
       "dest": "/tradehub-deploy/index.html"
