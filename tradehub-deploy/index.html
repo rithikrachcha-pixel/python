@@ -3015,14 +3015,13 @@ async function _sendOTP(email) {
     const j = await r.json();
     if(!r.ok) throw new Error(j.error||'Failed to send');
     if(j.demo) {
-      notify(`Demo mode: your code is ${j.code}`, 'success');
-    } else {
-      notify(`Verification email sent to ${email} ✓`, 'success');
+      return { ok: true, demoCode: j.code };
     }
-    return true;
+    notify(`Verification email sent to ${email} ✓`, 'success');
+    return { ok: true };
   } catch(e) {
     notify('Could not send code: '+e.message, 'error');
-    return false;
+    return { ok: false };
   } finally {
     if(btn) { btn.disabled=false; btn.textContent='Send Verification Code'; }
   }
@@ -3053,12 +3052,18 @@ async function doSignUpRequestOTP() {
   if(users.find(u=>u.email===email)) { notify('Email already registered — sign in','error'); switchAuthTab('signin'); return; }
   // Stash pending signup
   window._pendingSignup = {name, email, pass, capital};
-  const ok = await _sendOTP(email);
-  if(!ok) return;
+  const res = await _sendOTP(email);
+  if(!res.ok) return;
   document.getElementById('authSignup').style.display='none';
   document.getElementById('authSignupOTP').style.display='block';
-  document.getElementById('otpSentTo').textContent=`Code sent to ${email}`;
-  document.getElementById('su-otp').value='';
+  const sentTo = document.getElementById('otpSentTo');
+  if(res.demoCode) {
+    sentTo.innerHTML=`<span style="color:var(--accent);font-weight:600">Email not configured — code auto-filled below</span>`;
+    document.getElementById('su-otp').value = res.demoCode;
+  } else {
+    sentTo.textContent=`Code sent to ${email}`;
+    document.getElementById('su-otp').value='';
+  }
   document.getElementById('su-otp').focus();
 }
 
