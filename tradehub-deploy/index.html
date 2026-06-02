@@ -1568,17 +1568,20 @@ function renderMarketsTable(filter) {
     if(filter==='all') return state.region==='BOTH'?true:state.region==='UK'?!!s.currency:!s.currency;
     return s.sector===filter;
   });
-  document.getElementById('marketsRows').innerHTML = stocks.map(s=>`
-    <div style="padding:11px 12px;border-bottom:1px solid var(--border);font-family:var(--font-mono);font-size:12px;color:var(--accent);cursor:pointer" onclick="openStockDive('${s.ticker}')">${s.ticker}</div>
-    <div style="padding:11px 12px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2)">${s.name}</div>
-    <div style="padding:11px 12px;border-bottom:1px solid var(--border);font-family:var(--font-mono);font-size:13px;text-align:right">${s.currency||'$'}${s.price.toFixed(2)}</div>
-    <div style="padding:11px 12px;border-bottom:1px solid var(--border);font-family:var(--font-mono);font-size:12px;text-align:right;color:${s.pct>=0?'var(--green)':'var(--red)'}">${s.pct>=0?'+':''}${s.pct.toFixed(2)}%</div>
-    <div style="padding:11px 12px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2);text-align:right">${s.mktcap}</div>
-    <div style="padding:11px 12px;border-bottom:1px solid var(--border);font-family:var(--font-mono);font-size:12px;text-align:right">${s.pe}</div>
+  document.getElementById('marketsRows').innerHTML = stocks.map(s=>{
+    const c = (content, extra='') => `<div style="padding:11px 12px;border-bottom:1px solid var(--border);cursor:pointer;${extra}" onclick="openStockDive('${s.ticker}')">${content}</div>`;
+    return `
+    ${c(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--accent)">${s.ticker}</span>`)}
+    ${c(`<span style="font-size:12px;color:var(--text2)">${s.name}</span>`)}
+    ${c(`<span style="font-family:var(--font-mono);font-size:13px">${s.currency||'$'}${s.price.toFixed(2)}</span>`,'text-align:right')}
+    ${c(`<span style="font-family:var(--font-mono);font-size:12px;color:${s.pct>=0?'var(--green)':'var(--red)'}">${s.pct>=0?'+':''}${s.pct.toFixed(2)}%</span>`,'text-align:right')}
+    ${c(`<span style="font-size:12px;color:var(--text2)">${s.mktcap}</span>`,'text-align:right')}
+    ${c(`<span style="font-family:var(--font-mono);font-size:12px">${s.pe}</span>`,'text-align:right')}
     <div style="padding:11px 12px;border-bottom:1px solid var(--border);text-align:center;display:flex;gap:4px;justify-content:center">
       <button class="action-btn buy" onclick="openTrade('${s.ticker}',true)">Buy</button>
       <button class="action-btn sell" onclick="openTrade('${s.ticker}',false)">Sell</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 function filterMarket(f,btn) {
   state.marketFilter=f;
