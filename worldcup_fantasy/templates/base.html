@@ -13,15 +13,18 @@
 <body>
   <header class="topbar">
     <div class="topbar-inner">
-      <div class="brand">
+      <a href="{{ url_for('index') }}" class="brand" style="text-decoration:none;color:inherit;">
         <div class="brand-icon">⚽</div>
-        <div>WC2026 Fantasy<small>CANADA · MEXICO · USA</small></div>
-      </div>
+        <div>WC2026 Fantasy<small>CANADA · MEXICO · USA 2026</small></div>
+      </a>
       <nav class="mainnav">
         {% if session.get('user_id') %}
-          <a href="{{ url_for('team_builder') }}" {% if request.endpoint == 'team_builder' %}class="active"{% endif %}>Team Builder</a>
-          <a href="{{ url_for('dashboard') }}" {% if request.endpoint == 'dashboard' %}class="active"{% endif %}>Dashboard</a>
-          <a href="{{ url_for('leagues') }}" {% if request.endpoint in ('leagues','league_detail') %}class="active"{% endif %}>🏟️ Leagues</a>
+          <a href="{{ url_for('team_builder') }}"
+             {% if request.endpoint == 'team_builder' %}class="active"{% endif %}>Team Builder</a>
+          <a href="{{ url_for('dashboard') }}"
+             {% if request.endpoint == 'dashboard' %}class="active"{% endif %}>Dashboard</a>
+          <a href="{{ url_for('leagues') }}"
+             {% if request.endpoint in ('leagues','league_detail') %}class="active"{% endif %}>Leagues</a>
           <a href="{{ url_for('logout') }}" class="gold">{{ session.get('username') }} ↩</a>
         {% else %}
           <a href="{{ url_for('index') }}" class="active">Home</a>

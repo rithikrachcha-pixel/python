@@ -1,28 +1,32 @@
 const PROGRESSION = [
-  { key:"win",    label:"Group Win",    pts:5   },
-  { key:"r32",    label:"Round of 32",  pts:8   },
-  { key:"r16",    label:"Round of 16",  pts:10  },
-  { key:"qf",     label:"Quarter-Final",pts:20  },
-  { key:"sf",     label:"Semi-Final",   pts:30  },
-  { key:"final",  label:"Final",        pts:50  },
-  { key:"winner", label:"🏆 Champions", pts:100 },
+  { key: "win",    label: "Group Win",     pts: 5   },
+  { key: "r32",    label: "Round of 32",   pts: 8   },
+  { key: "r16",    label: "Round of 16",   pts: 10  },
+  { key: "qf",     label: "Quarter-Final", pts: 20  },
+  { key: "sf",     label: "Semi-Final",    pts: 30  },
+  { key: "final",  label: "Final",         pts: 50  },
+  { key: "winner", label: "🏆 Champions",  pts: 100 },
 ];
 
 let myRank = '—';
 
+/* ─── Stats ──────────────────────────────────────────── */
 function renderStats(p, lb){
   document.getElementById('statTotal').textContent = p.total;
   document.getElementById('statPlayers').textContent = p.player_points;
   document.getElementById('statBonus').textContent = '+' + p.progression_bonus;
-  // find rank
+
   const me = window.MY_USERNAME;
   const row = lb.find(r => r.username === me);
+  myRank = row ? row.rank : '—';
   document.getElementById('statRank').textContent = row ? '#' + row.rank : '—';
 }
 
+/* ─── Progression track ──────────────────────────────── */
 function renderProgression(p){
   const nation = p.backed_nation || '—';
-  document.getElementById('progNation').textContent = (typeof flag==='function' ? flag(nation) : '') + ' ' + nation;
+  const flagFn = typeof flag === 'function' ? flag : (n => '');
+  document.getElementById('progNation').textContent = flagFn(nation) + ' ' + nation;
   const achieved = new Set(p.progression_stages || []);
   document.getElementById('progressTrack').innerHTML = PROGRESSION.map(s => {
     const done = achieved.has(s.key);
@@ -32,55 +36,64 @@ function renderProgression(p){
   }).join('');
   const bonusPts = p.progression_bonus;
   document.getElementById('progBacked').textContent = bonusPts > 0
-    ? `${nation} has earned ${bonusPts} bonus points so far.`
-    : `${nation} hasn't advanced yet — bonus points unlock as they progress.`;
+    ? `${flagFn(nation)} ${nation} has earned ${bonusPts} bonus points so far.`
+    : `${flagFn(nation)} ${nation} hasn't advanced yet — bonus points unlock as they progress.`;
 }
 
+/* ─── Breakdown table ────────────────────────────────── */
 function renderBreakdown(p){
+  const flagFn = typeof flag === 'function' ? flag : (n => '');
   const body = document.getElementById('breakdownBody');
   body.innerHTML = (p.breakdown || []).map(r => `
     <tr class="breakdown-row">
       <td>
-        <span>${typeof flag==='function' ? flag(r.nation) : ''}</span>
-        <span style="font-weight:600;margin-left:4px;">${r.name}</span>
+        <span>${flagFn(r.nation)}</span>
+        <span style="font-weight:600;margin-left:5px;">${r.name}</span>
         ${r.multiplier > 1 ? '<span class="mult-badge">1.5×</span>' : ''}
       </td>
       <td><span class="pos-pill pos-${r.position}">${r.position}</span></td>
-      <td>${r.goals}</td>
-      <td>${r.assists}</td>
-      <td>${r.clean_sheets}</td>
-      <td>${r.saves || 0}</td>
+      <td style="text-align:center;">${r.goals}</td>
+      <td style="text-align:center;">${r.assists}</td>
+      <td style="text-align:center;">${r.clean_sheets}</td>
+      <td style="text-align:center;">${r.saves || 0}</td>
       <td><b style="color:var(--gold);font-family:'Oswald',sans-serif;font-size:1rem;">${r.points}</b></td>
-    </tr>`).join('') || '<tr><td colspan="7" style="color:var(--text3);padding:20px;text-align:center;">No starters found.</td></tr>';
+    </tr>`
+  ).join('') || '<tr><td colspan="7" style="color:var(--text3);padding:24px;text-align:center;">No starters found.</td></tr>';
 }
 
+/* ─── Leaderboard ────────────────────────────────────── */
 function renderLeaderboard(rows){
   const me = window.MY_USERNAME;
+  const flagFn = typeof flag === 'function' ? flag : (n => '');
   const body = document.getElementById('leaderboardBody');
   body.innerHTML = rows.map(r => {
     const rankClass = r.rank <= 3 ? `rank-${r.rank}` : '';
     const medal = r.rank === 1 ? '🥇' : r.rank === 2 ? '🥈' : r.rank === 3 ? '🥉' : '';
-    return `<tr class="${r.username === me ? 'me' : ''}">
+    const isMe = r.username === me;
+    return `<tr class="${isMe ? 'me' : ''}">
       <td class="rank ${rankClass}">${medal || r.rank}</td>
-      <td style="font-weight:${r.username===me?'700':'500'};">${r.username}${r.username===me?' 👈':''}</td>
-      <td style="font-size:.9rem;">${typeof flag==='function' ? flag(r.backed_nation) : ''} ${r.backed_nation || '—'}</td>
+      <td style="font-weight:${isMe ? '700' : '500'};">${r.username}${isMe ? ' 👈' : ''}</td>
+      <td style="font-size:.88rem;">${flagFn(r.backed_nation)} ${r.backed_nation || '—'}</td>
       <td><b style="color:var(--gold);font-family:'Oswald',sans-serif;">${r.total}</b></td>
     </tr>`;
-  }).join('') || '<tr><td colspan="4" style="color:var(--text3);padding:20px;text-align:center;">No managers yet.</td></tr>';
+  }).join('') || '<tr><td colspan="4" style="color:var(--text3);padding:24px;text-align:center;">No managers yet.</td></tr>';
 }
 
+/* ─── Refresh ────────────────────────────────────────── */
 async function refresh(){
   try {
     const [points, lb, fixtures] = await Promise.all([
-      fetch('/api/points').then(r=>r.json()),
-      fetch('/api/leaderboard').then(r=>r.json()),
-      fetch('/api/fixtures').then(r=>r.json()),
+      fetch('/api/points').then(r => r.json()),
+      fetch('/api/leaderboard').then(r => r.json()),
+      fetch('/api/fixtures').then(r => r.json()),
     ]);
     renderStats(points, lb);
     renderProgression(points);
     renderBreakdown(points);
     renderLeaderboard(lb);
-    renderFixtures(fixtures, points.backed_nation);
+    if(typeof renderFixtures === 'function'){
+      renderFixtures(fixtures, points.backed_nation);
+    }
     document.getElementById('lastUpdate').textContent =
       'Updated ' + new Date().toLocaleTimeString();
   } catch(e){

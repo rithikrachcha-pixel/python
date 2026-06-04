@@ -2,14 +2,14 @@
 {% block title %}WC2026 Fantasy · Build Your Team{% endblock %}
 {% block content %}
 
-<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:20px;">
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
   <div>
-    <h1 style="font-family:'Oswald',sans-serif;font-size:1.8rem;font-weight:700;margin-bottom:4px;">Build Your Squad</h1>
-    <p class="muted" style="font-size:.88rem;">Pick 11 starters + 3 bench · $150M budget · Choose a nation to back</p>
+    <h1 style="font-family:'Oswald',sans-serif;font-size:1.9rem;font-weight:700;margin-bottom:4px;">Build Your Squad</h1>
+    <p class="muted" style="font-size:.86rem;">Pick 11 starters + 3 bench · $150M budget · Choose a nation to back</p>
   </div>
-  <div id="budgetDisplay" style="text-align:right;">
-    <div style="font-family:'Oswald',sans-serif;font-size:2rem;font-weight:700;" id="budgetRemaining">$150.0M</div>
-    <div style="font-size:.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;">Budget Remaining</div>
+  <div id="budgetDisplay" style="text-align:right;background:var(--panel);border:1px solid var(--border2);border-radius:14px;padding:14px 20px;">
+    <div style="font-family:'Oswald',sans-serif;font-size:2.2rem;font-weight:700;color:var(--gold);line-height:1;" id="budgetRemaining">$150.0M</div>
+    <div style="font-size:.68rem;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-top:4px;">Budget Remaining</div>
   </div>
 </div>
 
@@ -18,11 +18,11 @@
 <div class="builder-grid">
   <!-- LEFT: pitch + controls -->
   <div>
-    <div class="card" style="padding:16px;">
+    <div class="card" style="padding:18px;">
       <!-- Formation picker -->
-      <div style="margin-bottom:14px;">
-        <div style="font-size:.72rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Formation</div>
-        <div class="toolbar" style="margin:0;">
+      <div style="margin-bottom:16px;">
+        <div style="font-size:.68rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px;">Formation</div>
+        <div class="toolbar" style="margin:0;gap:7px;">
           <span class="chip active" data-formation="4-3-3" onclick="setFormation('4-3-3')">4-3-3</span>
           <span class="chip" data-formation="4-4-2" onclick="setFormation('4-4-2')">4-4-2</span>
           <span class="chip" data-formation="3-5-2" onclick="setFormation('3-5-2')">3-5-2</span>
@@ -49,10 +49,10 @@
 
     <!-- Back a nation -->
     <div class="nation-card">
-      <div style="font-family:'Oswald',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:6px;">🏆 Back a Nation</div>
-      <p style="font-size:.83rem;color:var(--text3);margin-bottom:12px;line-height:1.6;">
+      <div style="font-family:'Oswald',sans-serif;font-size:1.15rem;font-weight:700;margin-bottom:8px;color:var(--gold);">🏆 Back a Nation</div>
+      <p style="font-size:.83rem;color:var(--text3);margin-bottom:14px;line-height:1.65;">
         Choose one nation to support. Their players in your squad earn <b style="color:var(--gold);">1.5× points</b>.
-        Earn bonus points as they advance through the tournament:
+        Earn bonus points as they advance:
       </p>
       <div class="bonus-track">
         <div class="bonus-stage">Group<span class="pts">+5</span></div>
@@ -63,7 +63,7 @@
         <div class="bonus-stage">Final<span class="pts">+50</span></div>
         <div class="bonus-stage">🏆<span class="pts">+100</span></div>
       </div>
-      <div class="field" style="margin-bottom:14px;">
+      <div class="field" style="margin-bottom:16px;">
         <select id="backedNation"><option value="">— Select a nation to back —</option></select>
       </div>
       <button class="btn gold lg" style="width:100%;justify-content:center;" id="saveBtn" onclick="saveSquad()" disabled>
@@ -73,18 +73,19 @@
   </div>
 
   <!-- RIGHT: player market -->
-  <div class="card" style="padding:18px;">
+  <div class="card" style="padding:20px;">
     <div class="market-header">
       <h2 class="section-title" style="margin:0;">Player Market</h2>
       <select class="sort-select" id="sortSelect" onchange="renderMarket()">
         <option value="price_desc">Price ↓</option>
         <option value="price_asc">Price ↑</option>
         <option value="name_asc">Name A–Z</option>
+        <option value="points_desc">Points ↓</option>
       </select>
     </div>
 
-    <!-- Position filter -->
-    <div class="toolbar" style="margin-bottom:10px;">
+    <!-- Position filter chips -->
+    <div class="toolbar" style="margin-bottom:12px;">
       <span class="chip active" data-pos="ALL" onclick="setPosFilter('ALL')">All</span>
       <span class="chip pos-GK" data-pos="GK" onclick="setPosFilter('GK')">GK</span>
       <span class="chip pos-DEF" data-pos="DEF" onclick="setPosFilter('DEF')">DEF</span>
@@ -94,22 +95,31 @@
 
     <!-- Search + nation filter -->
     <div class="filters-row" style="margin-bottom:10px;">
-      <input class="search-input" id="search" placeholder="🔍 Search player…" oninput="renderMarket()">
+      <input class="search-input" id="search" placeholder="🔍 Search player or nation…" oninput="renderMarket()">
       <select class="filter-select" id="nationFilter" onchange="renderMarket()">
         <option value="">All nations</option>
       </select>
     </div>
 
-    <!-- Value (price) filter -->
-    <div class="filters-row" style="margin-bottom:14px;background:rgba(255,255,255,0.03);padding:10px 12px;border-radius:10px;border:1px solid var(--border);">
-      <div class="value-filter" style="width:100%;flex-wrap:wrap;gap:10px;">
-        <span style="font-weight:600;color:var(--text2);">💰 Max Price:</span>
-        <input type="range" id="maxPrice" min="4" max="15" step="0.5" value="15" oninput="updatePriceLabel();renderMarket()">
-        <span id="maxPriceLabel">≤ $15M</span>
-        <span style="margin-left:auto;">
-          <input type="range" id="minPrice" min="4" max="15" step="0.5" value="4" oninput="updatePriceLabel();renderMarket()">
-          <span style="font-size:.78rem;color:var(--text3);margin-left:4px;">Min: <span id="minPriceLabel" style="color:var(--gold);">$4M</span></span>
-        </span>
+    <!-- Price range filters -->
+    <div style="background:rgba(255,255,255,0.025);padding:12px 14px;border-radius:11px;border:1px solid var(--border);margin-bottom:12px;">
+      <div class="value-filter" style="flex-wrap:wrap;gap:12px;">
+        <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:160px;">
+          <span style="font-weight:600;color:var(--text2);white-space:nowrap;font-size:.82rem;">Max:</span>
+          <input type="range" id="maxPrice" min="4" max="15" step="0.5" value="15" oninput="updatePriceLabel();renderMarket()" style="flex:1;">
+          <span id="maxPriceLabel" style="min-width:50px;">≤ $15M</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:160px;">
+          <span style="font-weight:600;color:var(--text2);white-space:nowrap;font-size:.82rem;">Min:</span>
+          <input type="range" id="minPrice" min="4" max="15" step="0.5" value="4" oninput="updatePriceLabel();renderMarket()" style="flex:1;">
+          <span id="minPriceLabel" style="min-width:40px;">$4M</span>
+        </div>
+      </div>
+      <div style="margin-top:10px;">
+        <label class="affordable-toggle">
+          <input type="checkbox" id="affordableToggle" onchange="renderMarket()">
+          Show only affordable players
+        </label>
       </div>
     </div>
 
@@ -127,7 +137,7 @@
         <tbody id="marketBody"></tbody>
       </table>
     </div>
-    <div id="marketCount" style="text-align:right;font-size:.75rem;color:var(--text3);margin-top:8px;"></div>
+    <div id="marketCount" style="text-align:right;font-size:.73rem;color:var(--text3);margin-top:8px;"></div>
   </div>
 </div>
 

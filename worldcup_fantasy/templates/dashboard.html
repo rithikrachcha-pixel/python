@@ -2,12 +2,14 @@
 {% block title %}WC2026 Fantasy · Dashboard{% endblock %}
 {% block content %}
 
-<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:20px;">
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
   <div>
-    <h1 style="font-family:'Oswald',sans-serif;font-size:1.8rem;font-weight:700;margin-bottom:4px;">Welcome, {{ username }} 👋</h1>
+    <h1 style="font-family:'Oswald',sans-serif;font-size:1.9rem;font-weight:700;margin-bottom:4px;">Welcome, {{ username }} 👋</h1>
     <p class="muted" style="font-size:.82rem;">Your fantasy dashboard · <span id="lastUpdate" class="refresh-note">loading…</span></p>
   </div>
-  <a href="{{ url_for('team_builder') }}" class="btn ghost">← Edit Squad</a>
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+    <a href="{{ url_for('leagues') }}" class="btn ghost">🏟️ Leagues</a>
+  </div>
 </div>
 
 <!-- Stats row -->
@@ -30,27 +32,27 @@
   </div>
 </div>
 
-<!-- Progression track -->
+<!-- Nation progression track -->
 <div class="card">
-  <h2 class="section-title">🏆 <span id="progNation">Your Nation</span>'s Tournament Run</h2>
+  <span class="section-title">🏆 <span id="progNation">Your Nation</span>'s Tournament Run</span>
   <div class="progress-track" id="progressTrack"></div>
-  <div id="progBacked" style="margin-top:10px;font-size:.85rem;color:var(--text3);"></div>
+  <div id="progBacked" style="margin-top:12px;font-size:.84rem;color:var(--text3);"></div>
 </div>
 
 <div class="dash-grid">
   <div>
-    <!-- Points breakdown -->
+    <!-- Starting XI breakdown -->
     <div class="card">
-      <h2 class="section-title">⭐ Starting XI — Points Breakdown</h2>
+      <span class="section-title">⭐ Starting XI — Points Breakdown</span>
       <table class="lb">
         <thead>
           <tr>
             <th>Player</th>
             <th>Pos</th>
-            <th>⚽</th>
-            <th>🅰</th>
-            <th>🧤</th>
-            <th>Saves</th>
+            <th style="text-align:center;">⚽</th>
+            <th style="text-align:center;">🅰</th>
+            <th style="text-align:center;">🧤</th>
+            <th style="text-align:center;">Saves</th>
             <th>Pts</th>
           </tr>
         </thead>
@@ -60,15 +62,15 @@
 
     <!-- Fixtures -->
     <div class="card">
-      <h2 class="section-title">📅 Fixtures &amp; Results</h2>
+      <span class="section-title">📅 Fixtures &amp; Results</span>
       <div id="fixtures"></div>
     </div>
   </div>
 
   <div>
-    <!-- Leaderboard -->
-    <div class="card" style="position:sticky;top:80px;">
-      <h2 class="section-title">📊 Global Leaderboard</h2>
+    <!-- Global leaderboard (sticky) -->
+    <div class="card" style="position:sticky;top:82px;">
+      <span class="section-title">📊 Global Leaderboard</span>
       <table class="lb">
         <thead>
           <tr><th>#</th><th>Manager</th><th>Nation</th><th>Pts</th></tr>

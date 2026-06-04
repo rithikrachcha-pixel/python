@@ -2,7 +2,7 @@ const FLAGS = {
   "Mexico":"🇲🇽","South Africa":"🇿🇦","South Korea":"🇰🇷","Czechia":"🇨🇿",
   "Canada":"🇨🇦","Bosnia-Herzegovina":"🇧🇦","Qatar":"🇶🇦","Switzerland":"🇨🇭",
   "Brazil":"🇧🇷","Morocco":"🇲🇦","Haiti":"🇭🇹","Scotland":"🏴󠁧󠁢󠁳󠁣󠁴󠁿",
-  "United States":"🇺🇸","USA":"🇺🇸","Paraguay":"🇵🇾","Australia":"🇦🇺","Turkiye":"🇹🇷",
+  "United States":"🇺🇸","USA":"🇺🇸","Paraguay":"🇵🇾","Australia":"🇦🇺","Turkiye":"🇹🇷","Turkey":"🇹🇷",
   "Germany":"🇩🇪","Curacao":"🇨🇼","Ivory Coast":"🇨🇮","Ecuador":"🇪🇨",
   "Netherlands":"🇳🇱","Japan":"🇯🇵","Sweden":"🇸🇪","Tunisia":"🇹🇳",
   "Belgium":"🇧🇪","Egypt":"🇪🇬","Iran":"🇮🇷","New Zealand":"🇳🇿",
@@ -34,10 +34,11 @@ const state = {
   picked: new Set(),
 };
 
+/* ─── Helpers ────────────────────────────────────────── */
 function msg(text, ok){
   const el = document.getElementById('msg');
-  el.textContent = text; el.className = 'msg ' + (ok ? 'ok':'err');
-  if(!text) el.className = 'msg';
+  el.textContent = text;
+  el.className = text ? ('msg ' + (ok ? 'ok' : 'err')) : 'msg';
 }
 
 function updatePriceLabel(){
@@ -47,10 +48,22 @@ function updatePriceLabel(){
   document.getElementById('minPriceLabel').textContent = `$${minV.toFixed(1)}M`;
 }
 
+function totalCost(){
+  let c = 0;
+  state.picked.forEach(id => c += state.byId[id].price);
+  return Math.round(c * 10) / 10;
+}
+
+function canAddToStarting(pos){
+  if (pos === 'GK') return state.starting.GK.length < 1;
+  return state.starting[pos].length < FORMATIONS[state.formation][pos];
+}
+
+/* ─── Init ───────────────────────────────────────────── */
 async function init(){
   const [players, nations] = await Promise.all([
-    fetch('/api/players').then(r=>r.json()),
-    fetch('/api/nations').then(r=>r.json()),
+    fetch('/api/players').then(r => r.json()),
+    fetch('/api/nations').then(r => r.json()),
   ]);
   state.all = players;
   players.forEach(p => state.byId[p.id] = p);
@@ -65,8 +78,10 @@ async function init(){
   updatePriceLabel();
   renderMarket();
   renderPitch();
+  updateSaveState();
 }
 
+/* ─── Formation ──────────────────────────────────────── */
 function setFormation(f){
   const need = FORMATIONS[f];
   ['DEF','MID','FWD'].forEach(pos => {
@@ -81,6 +96,7 @@ function setFormation(f){
   renderPitch(); renderMarket(); updateSaveState();
 }
 
+/* ─── Position filter ────────────────────────────────── */
 function setPosFilter(p){
   state.posFilter = p;
   document.querySelectorAll('[data-pos]').forEach(c =>
@@ -88,23 +104,15 @@ function setPosFilter(p){
   renderMarket();
 }
 
-function totalCost(){
-  let c = 0;
-  state.picked.forEach(id => c += state.byId[id].price);
-  return Math.round(c*10)/10;
-}
-
-function canAddToStarting(pos){
-  if(pos === 'GK') return state.starting.GK.length < 1;
-  return state.starting[pos].length < FORMATIONS[state.formation][pos];
-}
-
+/* ─── Add / Remove player ────────────────────────────── */
 function addPlayer(id){
   if(state.picked.has(id)) return;
   const p = state.byId[id];
   const cost = totalCost() + p.price;
-  if(cost > BUDGET){ msg(`Over budget — that would cost $${cost.toFixed(1)}M / $${BUDGET}M.`); return; }
-
+  if(cost > BUDGET){
+    msg(`Over budget — that would cost $${cost.toFixed(1)}M / $${BUDGET}M.`);
+    return;
+  }
   if(canAddToStarting(p.position)){
     state.starting[p.position].push(id);
   } else if(state.bench.length < 3){
@@ -128,6 +136,7 @@ function removePlayer(id){
   renderPitch(); renderMarket(); updateSaveState();
 }
 
+/* ─── Pitch rendering ────────────────────────────────── */
 function slotHtml(id){
   const p = state.byId[id];
   const lastName = p.name.split(' ').slice(-1)[0];
@@ -139,7 +148,10 @@ function slotHtml(id){
   </div>`;
 }
 function emptySlot(pos){
-  return `<div class="slot empty"><span style="font-size:1rem;opacity:.5;">+</span><span style="margin-top:2px;">${pos}</span></div>`;
+  return `<div class="slot empty">
+    <span style="font-size:1.1rem;opacity:.45;">+</span>
+    <span style="margin-top:3px;font-size:.65rem;">${pos}</span>
+  </div>`;
 }
 
 function renderPitch(){
@@ -163,16 +175,20 @@ function renderPitch(){
   document.getElementById('budgetRemaining').textContent = `$${remaining.toFixed(1)}M`;
   document.getElementById('squadCount').textContent = state.picked.size;
   const bar = document.getElementById('budgetBar');
-  bar.querySelector('span').style.width = Math.min(100, (cost/BUDGET)*100) + '%';
+  bar.querySelector('span').style.width = Math.min(100, (cost / BUDGET) * 100) + '%';
   bar.classList.toggle('over', cost > BUDGET);
 }
 
+/* ─── Market rendering ───────────────────────────────── */
 function renderMarket(){
-  const search = (document.getElementById('search').value || '').toLowerCase();
+  const search = (document.getElementById('search').value || '').toLowerCase().trim();
   const nation = document.getElementById('nationFilter').value;
   const sort = document.getElementById('sortSelect').value;
   const maxPrice = parseFloat(document.getElementById('maxPrice').value);
   const minPrice = parseFloat(document.getElementById('minPrice').value);
+  const affordableOnly = document.getElementById('affordableToggle') && document.getElementById('affordableToggle').checked;
+
+  const remaining = BUDGET - totalCost();
 
   let rows = state.all.filter(p => {
     if(state.posFilter !== 'ALL' && p.position !== state.posFilter) return false;
@@ -180,12 +196,14 @@ function renderMarket(){
     if(search && !p.name.toLowerCase().includes(search) && !p.nation.toLowerCase().includes(search)) return false;
     if(p.price > maxPrice) return false;
     if(p.price < minPrice) return false;
+    if(affordableOnly && !state.picked.has(p.id) && p.price > remaining) return false;
     return true;
   });
 
   if(sort === 'price_desc') rows.sort((a,b) => b.price - a.price);
   else if(sort === 'price_asc') rows.sort((a,b) => a.price - b.price);
   else if(sort === 'name_asc') rows.sort((a,b) => a.name.localeCompare(b.name));
+  else if(sort === 'points_desc') rows.sort((a,b) => (b.points||0) - (a.points||0));
 
   const total = rows.length;
   rows = rows.slice(0, 400);
@@ -194,24 +212,26 @@ function renderMarket(){
   body.innerHTML = rows.map(p => {
     const picked = state.picked.has(p.id);
     const affordable = totalCost() + p.price <= BUDGET;
-    return `<tr class="${picked ? 'picked' : ''}">
+    const dim = !picked && !affordable;
+    return `<tr class="${picked ? 'picked' : ''}" style="${dim ? 'opacity:.45;' : ''}">
       <td>
         <span style="font-size:.95rem;">${flag(p.nation)}</span>
-        <span style="font-weight:600;margin-left:4px;">${p.name}</span>
+        <span style="font-weight:600;margin-left:5px;">${p.name}</span>
       </td>
       <td><span class="pos-pill pos-${p.position}">${p.position}</span></td>
-      <td style="color:var(--text3);font-size:.82rem;">${p.club || '—'}</td>
+      <td style="color:var(--text3);font-size:.81rem;">${p.club || '—'}</td>
       <td><span class="price-tag">$${p.price.toFixed(1)}M</span></td>
       <td>${picked
-        ? `<button class="btn sm red" onclick="removePlayer(${p.id})">✕ Remove</button>`
-        : `<button class="btn sm ${!affordable ? 'ghost' : ''}" onclick="addPlayer(${p.id})" ${!affordable && !picked ? 'title="Not enough budget"':''}>+ Add</button>`
+        ? `<button class="btn sm red" onclick="removePlayer(${p.id})">✕</button>`
+        : `<button class="btn sm ${dim ? 'ghost' : ''}" onclick="addPlayer(${p.id})" ${dim ? 'title="Not enough budget"' : ''}>+ Add</button>`
       }</td>
     </tr>`;
-  }).join('') || `<tr><td colspan="5" style="color:var(--text3);padding:20px;text-align:center;">No players match your filters.</td></tr>`;
+  }).join('') || `<tr><td colspan="5" style="color:var(--text3);padding:24px;text-align:center;">No players match your filters.</td></tr>`;
 
   document.getElementById('marketCount').textContent = `Showing ${rows.length} of ${total} players`;
 }
 
+/* ─── Save state ─────────────────────────────────────── */
 function squadComplete(){
   const need = FORMATIONS[state.formation];
   return state.starting.GK.length === 1 &&
@@ -227,29 +247,60 @@ function updateSaveState(){
   const btn = document.getElementById('saveBtn');
   const complete = squadComplete() && backed;
   btn.disabled = !complete;
-  if(complete) btn.textContent = `🔒 Lock In Squad & Start Playing`;
-  else {
-    const need = FORMATIONS[state.formation];
-    const missing = (1 - state.starting.GK.length) + (need.DEF - state.starting.DEF.length) +
-                    (need.MID - state.starting.MID.length) + (need.FWD - state.starting.FWD.length) +
-                    (3 - state.bench.length);
-    btn.textContent = missing > 0 ? `Pick ${missing} more player${missing>1?'s':''}` : !backed ? 'Select a nation to back' : '🔒 Lock In Squad';
+
+  if(complete){
+    btn.textContent = '🔒 Lock In Squad & Start Playing';
+    return;
+  }
+
+  const need = FORMATIONS[state.formation];
+  const gkMissing = 1 - state.starting.GK.length;
+  const defMissing = need.DEF - state.starting.DEF.length;
+  const midMissing = need.MID - state.starting.MID.length;
+  const fwdMissing = need.FWD - state.starting.FWD.length;
+  const benchMissing = 3 - state.bench.length;
+  const totalMissing = gkMissing + defMissing + midMissing + fwdMissing + benchMissing;
+
+  if(totalMissing > 0){
+    btn.textContent = `Pick ${totalMissing} more player${totalMissing > 1 ? 's' : ''}`;
+  } else if(!backed){
+    btn.textContent = 'Select a nation to back';
+  } else {
+    btn.textContent = '🔒 Lock In Squad';
   }
 }
 
+/* ─── Save squad ─────────────────────────────────────── */
 async function saveSquad(){
   const backed = document.getElementById('backedNation').value;
-  const starting_ids = [...state.starting.GK, ...state.starting.DEF,
-                        ...state.starting.MID, ...state.starting.FWD];
+  const starting_ids = [
+    ...state.starting.GK,
+    ...state.starting.DEF,
+    ...state.starting.MID,
+    ...state.starting.FWD
+  ];
   const btn = document.getElementById('saveBtn');
-  btn.disabled = true; btn.textContent = 'Saving…';
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+
   const res = await fetch('/api/squad', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ starting_ids, bench_ids: state.bench, formation: state.formation, backed_nation: backed })
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      starting_ids,
+      bench_ids: state.bench,
+      formation: state.formation,
+      backed_nation: backed
+    })
   });
   const data = await res.json();
-  if(res.ok){ window.location = '/dashboard'; }
-  else { msg(data.error || 'Could not save squad.'); btn.disabled = false; updateSaveState(); }
+  if(res.ok){
+    window.location = '/dashboard';
+  } else {
+    msg(data.error || 'Could not save squad.');
+    btn.disabled = false;
+    updateSaveState();
+  }
 }
 
 init();

@@ -57,32 +57,49 @@
 {% block scripts %}
 <script>
 let mode = 'login';
+
 function showTab(m){
   mode = m;
-  document.getElementById('tab-login').classList.toggle('active', m==='login');
-  document.getElementById('tab-register').classList.toggle('active', m==='register');
-  document.getElementById('submitBtn').textContent = m==='login' ? 'Sign In' : 'Create Account →';
+  document.getElementById('tab-login').classList.toggle('active', m === 'login');
+  document.getElementById('tab-register').classList.toggle('active', m === 'register');
+  document.getElementById('submitBtn').textContent = m === 'login' ? 'Sign In' : 'Create Account →';
   document.getElementById('msg').className = 'msg';
   document.getElementById('username').focus();
 }
+
 function showMsg(text, ok){
   const el = document.getElementById('msg');
-  el.textContent = text; el.className = 'msg ' + (ok ? 'ok' : 'err');
+  el.textContent = text;
+  el.className = 'msg ' + (ok ? 'ok' : 'err');
 }
+
 async function submitAuth(){
   const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value;
   if(!username || !password){ showMsg('Please enter a username and password.'); return; }
   const btn = document.getElementById('submitBtn');
-  btn.disabled = true; btn.textContent = '...';
+  btn.disabled = true;
+  btn.textContent = '…';
   const res = await fetch('/' + mode, {
-    method:'POST', headers:{'Content-Type':'application/json'},
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({username, password})
   });
   const data = await res.json();
-  if(res.ok){ window.location = '/team-builder'; }
-  else { showMsg(data.error || 'Something went wrong.'); btn.disabled = false; btn.textContent = mode==='login'?'Sign In':'Create Account →'; }
+  if(res.ok){
+    window.location = data.redirect || '/dashboard';
+  } else {
+    showMsg(data.error || 'Something went wrong.');
+    btn.disabled = false;
+    btn.textContent = mode === 'login' ? 'Sign In' : 'Create Account →';
+  }
 }
-document.getElementById('password').addEventListener('keydown', e => { if(e.key==='Enter') submitAuth(); });
+
+document.getElementById('password').addEventListener('keydown', e => {
+  if(e.key === 'Enter') submitAuth();
+});
+document.getElementById('username').addEventListener('keydown', e => {
+  if(e.key === 'Enter') submitAuth();
+});
 </script>
 {% endblock %}
