@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}WC2026 Fantasy{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Oswald:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="{{ url_for('index') }}" class="brand" style="text-decoration:none;color:inherit;">
+        <div class="brand-icon">⚽</div>
+        <div>WC2026 Fantasy<small>CANADA · MEXICO · USA 2026</small></div>
+      </a>
+      <nav class="mainnav">
+        {% if session.get('user_id') %}
+          <a href="{{ url_for('team_builder') }}"
+             {% if request.endpoint == 'team_builder' %}class="active"{% endif %}>Team Builder</a>
+          <a href="{{ url_for('dashboard') }}"
+             {% if request.endpoint == 'dashboard' %}class="active"{% endif %}>Dashboard</a>
+          <a href="{{ url_for('leagues') }}"
+             {% if request.endpoint in ('leagues','league_detail') %}class="active"{% endif %}>Leagues</a>
+          <a href="{{ url_for('logout') }}" class="gold">{{ session.get('username') }} ↩</a>
+        {% else %}
+          <a href="{{ url_for('index') }}" class="active">Home</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

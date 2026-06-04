@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}WC2026 Fantasy · Dashboard{% endblock %}
+{% block content %}
+
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
+  <div>
+    <h1 style="font-family:'Oswald',sans-serif;font-size:1.9rem;font-weight:700;margin-bottom:4px;">Welcome, {{ username }} 👋</h1>
+    <p class="muted" style="font-size:.82rem;">Your fantasy dashboard · <span id="lastUpdate" class="refresh-note">loading…</span></p>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+    <a href="{{ url_for('leagues') }}" class="btn ghost">🏟️ Leagues</a>
+  </div>
+</div>
+
+<!-- Stats row -->
+<div class="stat-row">
+  <div class="stat blue">
+    <div class="v" id="statTotal">—</div>
+    <div class="l">Total Points</div>
+  </div>
+  <div class="stat red">
+    <div class="v" id="statPlayers">—</div>
+    <div class="l">Player Points</div>
+  </div>
+  <div class="stat gold">
+    <div class="v" id="statBonus">—</div>
+    <div class="l">Nation Bonus</div>
+  </div>
+  <div class="stat green">
+    <div class="v" id="statRank">—</div>
+    <div class="l">Leaderboard Rank</div>
+  </div>
+</div>
+
+<!-- Nation progression track -->
+<div class="card">
+  <span class="section-title">🏆 <span id="progNation">Your Nation</span>'s Tournament Run</span>
+  <div class="progress-track" id="progressTrack"></div>
+  <div id="progBacked" style="margin-top:12px;font-size:.84rem;color:var(--text3);"></div>
+</div>
+
+<div class="dash-grid">
+  <div>
+    <!-- Starting XI breakdown -->
+    <div class="card">
+      <span class="section-title">⭐ Starting XI — Points Breakdown</span>
+      <table class="lb">
+        <thead>
+          <tr>
+            <th>Player</th>
+            <th>Pos</th>
+            <th style="text-align:center;">⚽</th>
+            <th style="text-align:center;">🅰</th>
+            <th style="text-align:center;">🧤</th>
+            <th style="text-align:center;">Saves</th>
+            <th>Pts</th>
+          </tr>
+        </thead>
+        <tbody id="breakdownBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Fixtures -->
+    <div class="card">
+      <span class="section-title">📅 Fixtures &amp; Results</span>
+      <div id="fixtures"></div>
+    </div>
+  </div>
+
+  <div>
+    <!-- Global leaderboard (sticky) -->
+    <div class="card" style="position:sticky;top:82px;">
+      <span class="section-title">📊 Global Leaderboard</span>
+      <table class="lb">
+        <thead>
+          <tr><th>#</th><th>Manager</th><th>Nation</th><th>Pts</th></tr>
+        </thead>
+        <tbody id="leaderboardBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>window.MY_USERNAME = {{ username|tojson }};</script>
+<script src="{{ url_for('static', filename='js/fixtures.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
