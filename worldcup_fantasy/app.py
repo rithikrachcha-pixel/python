@@ -632,5 +632,50 @@ def admin_advance():
     return jsonify({"ok": True})
 
 
+def auto_seed():
+    """Seed the DB on first deploy if empty (for Postgres/Vercel)."""
+    try:
+        from init_db import (
+            SCHEMA_SQLITE, SCHEMA_PG, seed_players, seed_fixtures,
+            seed_demo_stats, seed_demo_progression, PgAdapter, validate_squads
+        )
+        import sqlite3 as _sq3
+        if IS_PG:
+            import psycopg2 as _pg
+            conn = _pg.connect(DATABASE_URL)
+            db = PgAdapter(conn)
+            for stmt in SCHEMA_PG.split(';'):
+                s = stmt.strip()
+                if s:
+                    try:
+                        db.execute(s)
+                        db.commit()
+                    except Exception:
+                        conn.rollback()
+        else:
+            conn = _sq3.connect(DATABASE)
+            conn.row_factory = _sq3.Row
+            db = conn
+            conn.executescript(SCHEMA_SQLITE)
+
+        already = db.execute("SELECT COUNT(*) FROM players").fetchone()
+        count = already[0] if isinstance(already, (list, tuple)) else already["count"]
+        if count == 0:
+            validate_squads()
+            seed_players(db)
+            seed_fixtures(db)
+            seed_demo_stats(db)
+            seed_demo_progression(db)
+            db.commit()
+            app.logger.info("DB seeded successfully.")
+        conn.close()
+    except Exception as e:
+        app.logger.warning(f"Auto-seed skipped: {e}")
+
+
+with app.app_context():
+    auto_seed()
+
+
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
