@@ -1,8 +1,9 @@
-assesssim.db
-render.yaml
-static/
-templates/
-helloWorld
-tradehub.html
+/assesssim.db
+/render.yaml
+/static/
+/templates/
+/helloWorld
+/tradehub.html
+/tradehub-deploy/
 *.pyc
 __pycache__/
