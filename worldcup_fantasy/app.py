@@ -673,8 +673,15 @@ def auto_seed():
         app.logger.warning(f"Auto-seed skipped: {e}")
 
 
-with app.app_context():
-    auto_seed()
+_seeded = False
+
+
+@app.before_request
+def seed_once():
+    global _seeded
+    if not _seeded:
+        _seeded = True
+        auto_seed()
 
 
 if __name__ == "__main__":
