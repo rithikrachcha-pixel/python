@@ -16,6 +16,13 @@ app.secret_key = os.environ.get("SECRET_KEY", "wc2026-dev-secret")
 DATABASE = os.path.join(os.path.dirname(__file__), "fantasy.db")
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "dev-token")
 
+DATABASE_URL = os.environ.get('DATABASE_URL')
+IS_PG = bool(DATABASE_URL)
+
+if IS_PG:
+    import psycopg2
+    import psycopg2.extras
+
 ROUND_BONUS = {"win": 5, "r32": 8, "r16": 10, "qf": 20, "sf": 30, "final": 50, "winner": 100}
 GOAL_PTS = {"GK": 6, "DEF": 6, "MID": 5, "FWD": 4}
 CS_PTS = {"GK": 4, "DEF": 4, "MID": 1, "FWD": 0}
@@ -30,10 +37,28 @@ BUDGET = 150.0
 
 
 def get_db():
-    if "db" not in g:
-        g.db = sqlite3.connect(DATABASE)
-        g.db.row_factory = sqlite3.Row
+    if 'db' not in g:
+        if IS_PG:
+            conn = psycopg2.connect(DATABASE_URL)
+            g.db = conn
+        else:
+            g.db = sqlite3.connect(DATABASE)
+            g.db.row_factory = sqlite3.Row
     return g.db
+
+
+def db_exec(sql, params=()):
+    db = get_db()
+    if IS_PG:
+        sql = sql.replace('?', '%s')
+        cur = db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(sql, list(params) if params else None)
+        return cur
+    return db.execute(sql, params)
+
+
+def db_commit():
+    get_db().commit()
 
 
 @app.teardown_appcontext
@@ -70,10 +95,10 @@ def calc_player_points(p, backed_nation):
     return {"base": base, "multiplier": multiplier, "points": round(base * multiplier, 1)}
 
 
-def progression_bonus(nation, db):
+def progression_bonus(nation, db=None):
     if not nation:
         return 0, []
-    rows = db.execute(
+    rows = db_exec(
         "SELECT round FROM tournament_rounds WHERE nation=?", (nation,)
     ).fetchall()
     bonus = sum(ROUND_BONUS.get(r["round"], 0) for r in rows)
@@ -81,11 +106,11 @@ def progression_bonus(nation, db):
 
 
 def user_total_points(user_id, db):
-    user = db.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
+    user = db_exec("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
     if not user:
         return 0
     backed = user["backed_nation"]
-    rows = db.execute(
+    rows = db_exec(
         """SELECT p.* FROM players p
            JOIN user_squad us ON p.id = us.player_id
            WHERE us.user_id=? AND us.is_bench=0""",
@@ -116,33 +141,34 @@ def register():
     password = data.get("password") or ""
     if not username or not password:
         return jsonify({"error": "Username and password required"}), 400
-    db = get_db()
     try:
-        db.execute(
+        db_exec(
             "INSERT INTO users (username, password_hash) VALUES (?,?)",
             (username, generate_password_hash(password)),
         )
-        db.commit()
-    except sqlite3.IntegrityError:
+        db_commit()
+    except Exception:
         return jsonify({"error": "Username already taken"}), 409
-    user = db.execute("SELECT id FROM users WHERE username=?", (username,)).fetchone()
+    user = db_exec("SELECT id FROM users WHERE username=?", (username,)).fetchone()
     session["user_id"] = user["id"]
     session["username"] = username
-    return jsonify({"ok": True})
+    # New user: squad not locked, go to team-builder
+    return jsonify({"ok": True, "redirect": "/team-builder"})
 
 
 @app.route("/login", methods=["POST"])
 def login():
     data = request.get_json(silent=True) or {}
-    db = get_db()
-    user = db.execute(
+    user = db_exec(
         "SELECT * FROM users WHERE username=?", (data.get("username", ""),)
     ).fetchone()
     if not user or not check_password_hash(user["password_hash"], data.get("password", "")):
         return jsonify({"error": "Invalid username or password"}), 401
     session["user_id"] = user["id"]
     session["username"] = user["username"]
-    return jsonify({"ok": True})
+    # Redirect based on squad status
+    redirect_url = "/dashboard" if user["squad_locked"] else "/team-builder"
+    return jsonify({"ok": True, "redirect": redirect_url})
 
 
 @app.route("/logout")
@@ -154,8 +180,7 @@ def logout():
 @app.route("/team-builder")
 @login_required
 def team_builder():
-    db = get_db()
-    user = db.execute("SELECT * FROM users WHERE id=?", (session["user_id"],)).fetchone()
+    user = db_exec("SELECT * FROM users WHERE id=?", (session["user_id"],)).fetchone()
     if not user:
         session.clear()
         return redirect(url_for("index"))
@@ -167,8 +192,7 @@ def team_builder():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    db = get_db()
-    user = db.execute("SELECT * FROM users WHERE id=?", (session["user_id"],)).fetchone()
+    user = db_exec("SELECT * FROM users WHERE id=?", (session["user_id"],)).fetchone()
     if not user:
         session.clear()
         return redirect(url_for("index"))
@@ -180,9 +204,8 @@ def dashboard():
 @app.route("/leagues")
 @login_required
 def leagues():
-    db = get_db()
     user_id = session["user_id"]
-    my_leagues = db.execute(
+    my_leagues = db_exec(
         """SELECT l.*, u.username as owner_name,
            (SELECT COUNT(*) FROM league_members lm2 WHERE lm2.league_id=l.id) as member_count
            FROM leagues l
@@ -199,8 +222,7 @@ def leagues():
 @app.route("/league/<code>")
 @login_required
 def league_detail(code):
-    db = get_db()
-    league = db.execute("SELECT * FROM leagues WHERE code=?", (code.upper(),)).fetchone()
+    league = db_exec("SELECT * FROM leagues WHERE code=?", (code.upper(),)).fetchone()
     if not league:
         return redirect(url_for("leagues"))
     return render_template("league_detail.html", username=session["username"],
@@ -211,7 +233,6 @@ def league_detail(code):
 
 @app.route("/api/players")
 def api_players():
-    db = get_db()
     q = "SELECT * FROM players WHERE 1=1"
     params = []
     if request.args.get("position"):
@@ -226,11 +247,11 @@ def api_players():
     if request.args.get("search"):
         q += " AND name LIKE ?"
         params.append("%" + request.args["search"] + "%")
-    rows = db.execute(q + " ORDER BY price DESC, name", params).fetchall()
+    rows = db_exec(q + " ORDER BY price DESC, name", params).fetchall()
 
     backed = None
     if "user_id" in session:
-        u = db.execute("SELECT backed_nation FROM users WHERE id=?", (session["user_id"],)).fetchone()
+        u = db_exec("SELECT backed_nation FROM users WHERE id=?", (session["user_id"],)).fetchone()
         backed = u["backed_nation"] if u else None
 
     out = []
@@ -243,8 +264,7 @@ def api_players():
 
 @app.route("/api/nations")
 def api_nations():
-    db = get_db()
-    rows = db.execute(
+    rows = db_exec(
         "SELECT nation, grp FROM players GROUP BY nation ORDER BY grp, nation"
     ).fetchall()
     return jsonify([{"nation": r["nation"], "group": r["grp"]} for r in rows])
@@ -253,13 +273,12 @@ def api_nations():
 @app.route("/api/squad", methods=["GET", "POST"])
 @login_required
 def api_squad():
-    db = get_db()
-    user = db.execute("SELECT * FROM users WHERE id=?", (session["user_id"],)).fetchone()
+    user = db_exec("SELECT * FROM users WHERE id=?", (session["user_id"],)).fetchone()
     if not user:
         return jsonify({"error": "User not found"}), 404
 
     if request.method == "GET":
-        rows = db.execute(
+        rows = db_exec(
             """SELECT p.*, us.is_bench FROM players p
                JOIN user_squad us ON p.id = us.player_id
                WHERE us.user_id=?""",
@@ -304,7 +323,7 @@ def api_squad():
     placeholders = ",".join("?" * len(all_ids))
     pdb = {
         r["id"]: dict(r)
-        for r in db.execute(
+        for r in db_exec(
             f"SELECT * FROM players WHERE id IN ({placeholders})", all_ids
         ).fetchall()
     }
@@ -323,38 +342,37 @@ def api_squad():
         if have != need:
             return jsonify({"error": f"{formation} needs {need} {pos}, you have {have}"}), 400
 
-    nations = {r["nation"] for r in db.execute("SELECT DISTINCT nation FROM players").fetchall()}
+    nations = {r["nation"] for r in db_exec("SELECT DISTINCT nation FROM players").fetchall()}
     if backed_nation not in nations:
         return jsonify({"error": "Please pick a valid nation to back"}), 400
 
-    db.execute("DELETE FROM user_squad WHERE user_id=?", (session["user_id"],))
+    db_exec("DELETE FROM user_squad WHERE user_id=?", (session["user_id"],))
     for pid in starting:
-        db.execute(
+        db_exec(
             "INSERT INTO user_squad (user_id, player_id, is_bench) VALUES (?,?,0)",
             (session["user_id"], pid),
         )
     for pid in bench:
-        db.execute(
+        db_exec(
             "INSERT INTO user_squad (user_id, player_id, is_bench) VALUES (?,?,1)",
             (session["user_id"], pid),
         )
-    db.execute(
+    db_exec(
         "UPDATE users SET backed_nation=?, formation=?, squad_locked=1, budget_remaining=? WHERE id=?",
         (backed_nation, formation, round(BUDGET - total_cost, 1), session["user_id"]),
     )
-    db.commit()
+    db_commit()
     return jsonify({"ok": True, "budget_remaining": round(BUDGET - total_cost, 1)})
 
 
 @app.route("/api/points")
 @login_required
 def api_points():
-    db = get_db()
-    user = db.execute("SELECT * FROM users WHERE id=?", (session["user_id"],)).fetchone()
+    user = db_exec("SELECT * FROM users WHERE id=?", (session["user_id"],)).fetchone()
     if not user:
         return jsonify({"error": "User not found"}), 404
     backed = user["backed_nation"]
-    rows = db.execute(
+    rows = db_exec(
         """SELECT p.* FROM players p
            JOIN user_squad us ON p.id = us.player_id
            WHERE us.user_id=? AND us.is_bench=0""",
@@ -376,7 +394,7 @@ def api_points():
         })
         total += pts["points"]
 
-    bonus, stages = progression_bonus(backed, db)
+    bonus, stages = progression_bonus(backed, None)
     return jsonify({
         "total": round(total + bonus, 1),
         "player_points": round(total, 1),
@@ -389,13 +407,12 @@ def api_points():
 
 @app.route("/api/leaderboard")
 def api_leaderboard():
-    db = get_db()
-    users = db.execute(
+    users = db_exec(
         "SELECT id, username, backed_nation FROM users WHERE squad_locked=1"
     ).fetchall()
     results = []
     for u in users:
-        rows = db.execute(
+        rows = db_exec(
             """SELECT p.* FROM players p
                JOIN user_squad us ON p.id = us.player_id
                WHERE us.user_id=? AND us.is_bench=0""",
@@ -404,7 +421,7 @@ def api_leaderboard():
         player_pts = sum(
             calc_player_points(dict(r), u["backed_nation"] or "")["points"] for r in rows
         )
-        bonus, _ = progression_bonus(u["backed_nation"], db)
+        bonus, _ = progression_bonus(u["backed_nation"], None)
         results.append({
             "username": u["username"],
             "backed_nation": u["backed_nation"],
@@ -420,15 +437,13 @@ def api_leaderboard():
 
 @app.route("/api/fixtures")
 def api_fixtures():
-    db = get_db()
-    rows = db.execute("SELECT * FROM fixtures ORDER BY match_date, id").fetchall()
+    rows = db_exec("SELECT * FROM fixtures ORDER BY match_date, id").fetchall()
     return jsonify([dict(r) for r in rows])
 
 
 @app.route("/api/tournament")
 def api_tournament():
-    db = get_db()
-    rows = db.execute("SELECT * FROM tournament_rounds ORDER BY achieved_at, id").fetchall()
+    rows = db_exec("SELECT * FROM tournament_rounds ORDER BY achieved_at, id").fetchall()
     return jsonify([dict(r) for r in rows])
 
 
@@ -437,7 +452,6 @@ def api_tournament():
 @app.route("/api/leagues/create", methods=["POST"])
 @login_required
 def api_league_create():
-    db = get_db()
     data = request.get_json(silent=True) or {}
     name = (data.get("name") or "").strip()
     if not name:
@@ -445,63 +459,60 @@ def api_league_create():
     if len(name) > 50:
         return jsonify({"error": "League name too long (max 50 chars)"}), 400
 
-    # Generate unique code
     for _ in range(10):
         code = make_league_code()
-        exists = db.execute("SELECT id FROM leagues WHERE code=?", (code,)).fetchone()
+        exists = db_exec("SELECT id FROM leagues WHERE code=?", (code,)).fetchone()
         if not exists:
             break
 
-    db.execute(
+    db_exec(
         "INSERT INTO leagues (name, code, owner_id) VALUES (?,?,?)",
         (name, code, session["user_id"]),
     )
-    league = db.execute("SELECT id FROM leagues WHERE code=?", (code,)).fetchone()
-    db.execute(
+    league = db_exec("SELECT id FROM leagues WHERE code=?", (code,)).fetchone()
+    db_exec(
         "INSERT INTO league_members (league_id, user_id) VALUES (?,?)",
         (league["id"], session["user_id"]),
     )
-    db.commit()
+    db_commit()
     return jsonify({"ok": True, "code": code, "name": name})
 
 
 @app.route("/api/leagues/join", methods=["POST"])
 @login_required
 def api_league_join():
-    db = get_db()
     data = request.get_json(silent=True) or {}
     code = (data.get("code") or "").strip().upper()
     if not code:
         return jsonify({"error": "League code required"}), 400
 
-    league = db.execute("SELECT * FROM leagues WHERE code=?", (code,)).fetchone()
+    league = db_exec("SELECT * FROM leagues WHERE code=?", (code,)).fetchone()
     if not league:
         return jsonify({"error": "League not found — check the code and try again"}), 404
 
-    already = db.execute(
+    already = db_exec(
         "SELECT id FROM league_members WHERE league_id=? AND user_id=?",
         (league["id"], session["user_id"]),
     ).fetchone()
     if already:
         return jsonify({"error": "You're already in this league"}), 409
 
-    db.execute(
+    db_exec(
         "INSERT INTO league_members (league_id, user_id) VALUES (?,?)",
         (league["id"], session["user_id"]),
     )
-    db.commit()
+    db_commit()
     return jsonify({"ok": True, "code": code, "name": league["name"]})
 
 
 @app.route("/api/leagues/<code>")
 @login_required
 def api_league_detail(code):
-    db = get_db()
-    league = db.execute("SELECT * FROM leagues WHERE code=?", (code.upper(),)).fetchone()
+    league = db_exec("SELECT * FROM leagues WHERE code=?", (code.upper(),)).fetchone()
     if not league:
         return jsonify({"error": "League not found"}), 404
 
-    members = db.execute(
+    members = db_exec(
         """SELECT u.id, u.username, u.backed_nation FROM users u
            JOIN league_members lm ON lm.user_id=u.id
            WHERE lm.league_id=? AND u.squad_locked=1""",
@@ -510,7 +521,7 @@ def api_league_detail(code):
 
     results = []
     for u in members:
-        rows = db.execute(
+        rows = db_exec(
             """SELECT p.* FROM players p
                JOIN user_squad us ON p.id = us.player_id
                WHERE us.user_id=? AND us.is_bench=0""",
@@ -519,7 +530,7 @@ def api_league_detail(code):
         player_pts = sum(
             calc_player_points(dict(r), u["backed_nation"] or "")["points"] for r in rows
         )
-        bonus, _ = progression_bonus(u["backed_nation"], db)
+        bonus, _ = progression_bonus(u["backed_nation"], None)
         results.append({
             "username": u["username"],
             "backed_nation": u["backed_nation"],
@@ -532,8 +543,7 @@ def api_league_detail(code):
     for i, r in enumerate(results):
         r["rank"] = i + 1
 
-    # pending members (no squad yet)
-    pending = db.execute(
+    pending = db_exec(
         """SELECT u.username FROM users u
            JOIN league_members lm ON lm.user_id=u.id
            WHERE lm.league_id=? AND u.squad_locked=0""",
@@ -545,7 +555,7 @@ def api_league_detail(code):
         "code": league["code"],
         "owner_id": league["owner_id"],
         "leaderboard": results,
-        "pending": [r["name"] for r in pending],
+        "pending": [r["username"] for r in pending],
         "member_count": len(results) + len(pending),
     })
 
@@ -553,8 +563,7 @@ def api_league_detail(code):
 @app.route("/api/leagues/my")
 @login_required
 def api_my_leagues():
-    db = get_db()
-    rows = db.execute(
+    rows = db_exec(
         """SELECT l.name, l.code,
            (SELECT COUNT(*) FROM league_members lm2 WHERE lm2.league_id=l.id) as member_count
            FROM leagues l
@@ -577,15 +586,14 @@ def _require_admin():
 def admin_update_stats():
     _require_admin()
     d = request.get_json(silent=True) or {}
-    db = get_db()
-    db.execute(
+    db_exec(
         """UPDATE players SET goals=?, assists=?, clean_sheets=?,
            yellow_cards=?, red_cards=?, saves=? WHERE id=?""",
         (d.get("goals", 0), d.get("assists", 0), d.get("clean_sheets", 0),
          d.get("yellow_cards", 0), d.get("red_cards", 0), d.get("saves", 0),
          d["player_id"]),
     )
-    db.commit()
+    db_commit()
     return jsonify({"ok": True})
 
 
@@ -593,21 +601,20 @@ def admin_update_stats():
 def admin_update_fixture():
     _require_admin()
     d = request.get_json(silent=True) or {}
-    db = get_db()
-    db.execute(
+    db_exec(
         "UPDATE fixtures SET home_score=?, away_score=?, played=1 WHERE id=?",
         (d["home_score"], d["away_score"], d["fixture_id"]),
     )
-    fx = db.execute("SELECT * FROM fixtures WHERE id=?", (d["fixture_id"],)).fetchone()
+    fx = db_exec("SELECT * FROM fixtures WHERE id=?", (d["fixture_id"],)).fetchone()
     if fx and fx["stage"] == "group":
         hs, as_ = d["home_score"], d["away_score"]
         winner = fx["home_team"] if hs > as_ else fx["away_team"] if as_ > hs else None
         if winner:
-            db.execute(
+            db_exec(
                 "INSERT INTO tournament_rounds (nation, round) VALUES (?, 'win')",
                 (winner,),
             )
-    db.commit()
+    db_commit()
     return jsonify({"ok": True})
 
 
@@ -618,11 +625,10 @@ def admin_advance():
     nation, rnd = d.get("nation"), d.get("round")
     if rnd not in ROUND_BONUS:
         return jsonify({"error": "Invalid round"}), 400
-    db = get_db()
-    db.execute(
+    db_exec(
         "INSERT INTO tournament_rounds (nation, round) VALUES (?,?)", (nation, rnd)
     )
-    db.commit()
+    db_commit()
     return jsonify({"ok": True})
 
 
