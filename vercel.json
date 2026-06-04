@@ -3,10 +3,7 @@
   "builds": [
     {
       "src": "api/index.py",
-      "use": "@vercel/python",
-      "config": {
-        "includeFiles": ["worldcup_fantasy/**", "requirements.txt"]
-      }
+      "use": "@vercel/python"
     }
   ],
   "routes": [

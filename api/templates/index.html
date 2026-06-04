@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}WC2026 Fantasy · Home{% endblock %}
+{% block content %}
+
+<section class="hero">
+  <div class="hero-balls">⚽</div>
+  <div class="hero-badge">Summer 2026 · 48 Nations · $150M Budget</div>
+  <h1>World Cup <span class="gold">Fantasy</span><br>Football 2026</h1>
+  <p>Pick your $150M squad from real World Cup 2026 players, back a nation to support, and compete on the global leaderboard. The deeper your nation runs, the bigger your bonus.</p>
+  <div class="hero-btns">
+    <button class="btn gold lg" onclick="showTab('register')">🚀 Play for Free</button>
+    <button class="btn ghost lg" onclick="showTab('login')">Sign In</button>
+  </div>
+</section>
+
+<div class="features">
+  <div class="feature">
+    <span class="ic">💰</span>
+    <h3>$150M Budget</h3>
+    <p>Build a 14-player squad — 11 starters + 3 bench players across your chosen formation.</p>
+  </div>
+  <div class="feature">
+    <span class="ic">🏆</span>
+    <h3>Back a Nation</h3>
+    <p>Choose one country. Earn bonus points every round they advance — up to +100 if they lift the trophy.</p>
+  </div>
+  <div class="feature">
+    <span class="ic">⚡</span>
+    <h3>1.5× Loyalty Boost</h3>
+    <p>Every player from your backed nation scores 1.5× points. Reward your conviction and stack the bonus.</p>
+  </div>
+  <div class="feature">
+    <span class="ic">📊</span>
+    <h3>Live Leaderboard</h3>
+    <p>Points and standings auto-refresh every 30 seconds as matches are played around the world.</p>
+  </div>
+</div>
+
+<div class="card auth-wrap">
+  <div class="auth-tabs">
+    <button id="tab-login" class="active" onclick="showTab('login')">Sign In</button>
+    <button id="tab-register" onclick="showTab('register')">Create Account</button>
+  </div>
+  <div id="msg" class="msg"></div>
+  <div class="field">
+    <label>Username</label>
+    <input id="username" autocomplete="username" placeholder="Enter your username">
+  </div>
+  <div class="field">
+    <label>Password</label>
+    <input id="password" type="password" autocomplete="current-password" placeholder="••••••••">
+  </div>
+  <button class="btn" style="width:100%;justify-content:center;" id="submitBtn" onclick="submitAuth()">Sign In</button>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+let mode = 'login';
+
+function showTab(m){
+  mode = m;
+  document.getElementById('tab-login').classList.toggle('active', m === 'login');
+  document.getElementById('tab-register').classList.toggle('active', m === 'register');
+  document.getElementById('submitBtn').textContent = m === 'login' ? 'Sign In' : 'Create Account →';
+  document.getElementById('msg').className = 'msg';
+  document.getElementById('username').focus();
+}
+
+function showMsg(text, ok){
+  const el = document.getElementById('msg');
+  el.textContent = text;
+  el.className = 'msg ' + (ok ? 'ok' : 'err');
+}
+
+async function submitAuth(){
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  if(!username || !password){ showMsg('Please enter a username and password.'); return; }
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '…';
+  const res = await fetch('/' + mode, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({username, password})
+  });
+  const data = await res.json();
+  if(res.ok){
+    window.location = data.redirect || '/dashboard';
+  } else {
+    showMsg(data.error || 'Something went wrong.');
+    btn.disabled = false;
+    btn.textContent = mode === 'login' ? 'Sign In' : 'Create Account →';
+  }
+}
+
+document.getElementById('password').addEventListener('keydown', e => {
+  if(e.key === 'Enter') submitAuth();
+});
+document.getElementById('username').addEventListener('keydown', e => {
+  if(e.key === 'Enter') submitAuth();
+});
+</script>
+{% endblock %}
