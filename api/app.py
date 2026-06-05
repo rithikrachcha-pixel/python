@@ -2,6 +2,9 @@ import os
 import sqlite3
 import random
 import string
+import urllib.request
+import urllib.error
+import json
 from functools import wraps
 
 from flask import (
@@ -739,6 +742,84 @@ def admin_reseed():
         return jsonify({"ok": True, "players": pc, "fixtures": fc})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
+
+
+# Maps football-data.org team names → our DB names
+TEAM_NAME_MAP = {
+    "Korea Republic": "South Korea",
+    "USA": "United States",
+    "Türkiye": "Turkiye",
+    "Turkey": "Turkiye",
+    "IR Iran": "Iran",
+    "Bosnia and Herzegovina": "Bosnia-Herzegovina",
+    "DR Congo": "Congo DR",
+    "Ivory Coast": "Ivory Coast",
+    "Côte d'Ivoire": "Ivory Coast",
+    "New Zealand": "New Zealand",
+    "Saudi Arabia": "Saudi Arabia",
+    "Cape Verde": "Cape Verde",
+    "Czech Republic": "Czechia",
+    "Czechia": "Czechia",
+}
+
+def normalize_team(name):
+    return TEAM_NAME_MAP.get(name, name)
+
+
+@app.route("/admin/sync-scores")
+def sync_scores():
+    """Fetch live/finished WC2026 results from football-data.org and update DB."""
+    api_key = os.environ.get("FOOTBALL_API_KEY", "")
+    if not api_key:
+        return jsonify({"ok": False, "error": "FOOTBALL_API_KEY not set"}), 500
+
+    try:
+        req = urllib.request.Request(
+            "https://api.football-data.org/v4/competitions/WC/matches?season=2026",
+            headers={"X-Auth-Token": api_key}
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode())
+    except urllib.error.HTTPError as e:
+        return jsonify({"ok": False, "error": f"API error {e.code}"}), 500
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+    updated = 0
+    for m in data.get("matches", []):
+        status = m.get("status")
+        if status not in ("FINISHED", "IN_PLAY", "PAUSED"):
+            continue
+        home = normalize_team(m["homeTeam"]["name"])
+        away = normalize_team(m["awayTeam"]["name"])
+        score = m.get("score", {})
+        full = score.get("fullTime", {})
+        hs = full.get("home")
+        as_ = full.get("away")
+        if hs is None or as_ is None:
+            continue
+        played = 1 if status == "FINISHED" else 0
+        rows = db_exec(
+            "SELECT id FROM fixtures WHERE home_team=? AND away_team=?",
+            (home, away)
+        ).fetchall()
+        if not rows:
+            # try swap
+            rows = db_exec(
+                "SELECT id FROM fixtures WHERE home_team=? AND away_team=?",
+                (away, home)
+            ).fetchall()
+            if rows:
+                hs, as_ = as_, hs
+        for row in rows:
+            fid = row[0] if isinstance(row, (list, tuple)) else row["id"]
+            db_exec(
+                "UPDATE fixtures SET home_score=?, away_score=?, played=? WHERE id=?",
+                (hs, as_, played, fid)
+            )
+            updated += 1
+    get_db().commit()
+    return jsonify({"ok": True, "updated": updated})
 
 
 if __name__ == "__main__":
