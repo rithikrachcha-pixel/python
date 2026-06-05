@@ -191,8 +191,6 @@ def seed_fixtures(db):
 
 
 def seed_demo_stats(db):
-    """Give plausible mid-tournament stats to the priciest players so the demo
-    has a populated leaderboard and points breakdown out of the box."""
     random.seed(2026)
     nations_raw = db.execute("SELECT DISTINCT nation FROM players").fetchall()
     nations = [r[0] if isinstance(r, (list, tuple)) else r["nation"] for r in nations_raw]
@@ -229,7 +227,6 @@ def seed_demo_stats(db):
 
 
 def seed_demo_progression(db):
-    """Mark some group-stage results so backed-team bonuses are visible."""
     fixtures = db.execute(
         "SELECT * FROM fixtures WHERE stage='group' ORDER BY id"
     ).fetchall()
@@ -280,7 +277,6 @@ def main():
         db.close()
         return
 
-    # SQLite path
     if "--reset" in sys.argv and os.path.exists(DB_PATH):
         os.remove(DB_PATH)
         print("Removed existing database.")
