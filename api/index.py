@@ -1,1 +1,2 @@
-from app import app as handler  # noqa: F401
+from app import app
+handler = app
