@@ -9,6 +9,7 @@ const PROGRESSION = [
 ];
 
 let myRank = '—';
+let squadData = null;
 
 /* ─── Stats ──────────────────────────────────────────── */
 function renderStats(p, lb){

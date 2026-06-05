@@ -82,7 +82,7 @@ def login_required(f):
     return wrapper
 
 
-def calc_player_points(p, backed_nation):
+def calc_player_points(p, backed_nation, is_captain=False, captain_boost=1):
     if isinstance(p, sqlite3.Row):
         p = dict(p)
     pos = p["position"]
@@ -95,7 +95,10 @@ def calc_player_points(p, backed_nation):
         - p["red_cards"] * 3
     )
     multiplier = 1.5 if backed_nation and p["nation"] == backed_nation else 1.0
-    return {"base": base, "multiplier": multiplier, "points": round(base * multiplier, 1)}
+    points = round(base * multiplier, 1)
+    if is_captain:
+        points = round(points * captain_boost, 1)
+    return {"base": base, "multiplier": multiplier, "points": points, "is_captain": is_captain, "captain_boost": captain_boost if is_captain else 1}
 
 
 def progression_bonus(nation, db=None):
@@ -113,13 +116,27 @@ def user_total_points(user_id, db):
     if not user:
         return 0
     backed = user["backed_nation"]
+    captain_id = user["captain_id"] if "captain_id" in (user.keys() if hasattr(user, 'keys') else user) else None
+    active_booster = user["active_booster"] if "active_booster" in (user.keys() if hasattr(user, 'keys') else user) else None
+    include_bench = active_booster == "bench_boost"
+    bench_filter = "" if include_bench else " AND us.is_bench=0"
     rows = db_exec(
-        """SELECT p.* FROM players p
+        f"""SELECT p.*, us.is_bench FROM players p
            JOIN user_squad us ON p.id = us.player_id
-           WHERE us.user_id=? AND us.is_bench=0""",
+           WHERE us.user_id=?{bench_filter}""",
         (user_id,),
     ).fetchall()
-    player_pts = sum(calc_player_points(dict(r), backed or "")["points"] for r in rows)
+    player_pts = 0.0
+    for r in rows:
+        d = dict(r)
+        is_cap = captain_id is not None and d["id"] == captain_id
+        if is_cap and active_booster == "triple_captain":
+            boost = 3
+        elif is_cap:
+            boost = 2
+        else:
+            boost = 1
+        player_pts += calc_player_points(d, backed or "", is_captain=is_cap, captain_boost=boost)["points"]
     bonus, _ = progression_bonus(backed, db)
     return round(player_pts + bonus, 1)
 
@@ -295,12 +312,17 @@ def api_squad():
             d["points"] = pts["points"]
             d["multiplier"] = pts["multiplier"]
             squad.append(d)
+        user_dict = dict(user)
         return jsonify({
             "formation": user["formation"],
             "backed_nation": backed,
             "budget_remaining": user["budget_remaining"],
             "locked": bool(user["squad_locked"]),
             "players": squad,
+            "captain_id": user_dict.get("captain_id"),
+            "used_triple_captain": bool(user_dict.get("used_triple_captain", 0)),
+            "used_bench_boost": bool(user_dict.get("used_bench_boost", 0)),
+            "active_booster": user_dict.get("active_booster"),
         })
 
     # POST: save squad
@@ -368,6 +390,49 @@ def api_squad():
     return jsonify({"ok": True, "budget_remaining": round(BUDGET - total_cost, 1)})
 
 
+@app.route("/api/set-captain", methods=["POST"])
+@login_required
+def api_set_captain():
+    data = request.get_json(silent=True) or {}
+    player_id = data.get("player_id")
+    if not player_id:
+        return jsonify({"error": "player_id required"}), 400
+    # Check player is in user's starting XI
+    row = db_exec(
+        "SELECT id FROM user_squad WHERE user_id=? AND player_id=? AND is_bench=0",
+        (session["user_id"], player_id),
+    ).fetchone()
+    if not row:
+        return jsonify({"error": "Player is not in your starting XI"}), 400
+    db_exec("UPDATE users SET captain_id=? WHERE id=?", (player_id, session["user_id"]))
+    db_commit()
+    return jsonify({"ok": True, "captain_id": player_id})
+
+
+@app.route("/api/activate-booster", methods=["POST"])
+@login_required
+def api_activate_booster():
+    data = request.get_json(silent=True) or {}
+    booster = data.get("booster")
+    if booster not in ("triple_captain", "bench_boost"):
+        return jsonify({"error": "Invalid booster. Use 'triple_captain' or 'bench_boost'"}), 400
+    user = db_exec("SELECT * FROM users WHERE id=?", (session["user_id"],)).fetchone()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    user_dict = dict(user)
+    if booster == "triple_captain" and user_dict.get("used_triple_captain"):
+        return jsonify({"error": "Triple Captain booster already used"}), 400
+    if booster == "bench_boost" and user_dict.get("used_bench_boost"):
+        return jsonify({"error": "Bench Boost booster already used"}), 400
+    used_col = "used_triple_captain" if booster == "triple_captain" else "used_bench_boost"
+    db_exec(
+        f"UPDATE users SET {used_col}=1, active_booster=? WHERE id=?",
+        (booster, session["user_id"]),
+    )
+    db_commit()
+    return jsonify({"ok": True, "active_booster": booster})
+
+
 @app.route("/api/points")
 @login_required
 def api_points():
@@ -375,6 +440,9 @@ def api_points():
     if not user:
         return jsonify({"error": "User not found"}), 404
     backed = user["backed_nation"]
+    user_dict = dict(user)
+    captain_id = user_dict.get("captain_id")
+    active_booster = user_dict.get("active_booster")
     rows = db_exec(
         """SELECT p.* FROM players p
            JOIN user_squad us ON p.id = us.player_id
@@ -386,14 +454,21 @@ def api_points():
     total = 0.0
     for r in rows:
         d = dict(r)
-        pts = calc_player_points(d, backed or "")
+        is_cap = captain_id is not None and d["id"] == captain_id
+        if is_cap and active_booster == "triple_captain":
+            boost = 3
+        elif is_cap:
+            boost = 2
+        else:
+            boost = 1
+        pts = calc_player_points(d, backed or "", is_captain=is_cap, captain_boost=boost)
         breakdown.append({
             "name": d["name"], "nation": d["nation"], "position": d["position"],
             "club": d["club"], "goals": d["goals"], "assists": d["assists"],
             "clean_sheets": d["clean_sheets"], "saves": d["saves"],
             "yellow_cards": d["yellow_cards"], "red_cards": d["red_cards"],
             "base_points": pts["base"], "multiplier": pts["multiplier"],
-            "points": pts["points"],
+            "points": pts["points"], "is_captain": is_cap, "captain_boost": pts["captain_boost"],
         })
         total += pts["points"]
 
@@ -660,6 +735,22 @@ def auto_seed():
             conn.row_factory = _sq3.Row
             db = conn
             conn.executescript(SCHEMA_SQLITE)
+
+        # Migrations: add new columns if not exist
+        for migration_sql in [
+            "ALTER TABLE users ADD COLUMN captain_id INTEGER",
+            "ALTER TABLE users ADD COLUMN used_triple_captain INTEGER DEFAULT 0",
+            "ALTER TABLE users ADD COLUMN used_bench_boost INTEGER DEFAULT 0",
+            "ALTER TABLE users ADD COLUMN active_booster TEXT",
+        ]:
+            try:
+                db.execute(migration_sql)
+                db.commit()
+            except Exception:
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
 
         already = db.execute("SELECT COUNT(*) FROM players").fetchone()
         count = already[0] if isinstance(already, (list, tuple)) else already["count"]

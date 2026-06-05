@@ -32,6 +32,7 @@ const state = {
   starting: { GK:[], DEF:[], MID:[], FWD:[] },
   bench: [],
   picked: new Set(),
+  captainId: null,
 };
 
 /* ─── Helpers ────────────────────────────────────────── */
@@ -104,6 +105,20 @@ function setPosFilter(p){
   renderMarket();
 }
 
+/* ─── Captain ────────────────────────────────────────── */
+async function setCaptain(id){
+  state.captainId = id;
+  renderPitch();
+  // If squad is already locked (shouldn't happen in team-builder, but just in case)
+  try {
+    await fetch('/api/set-captain', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({player_id: id})
+    });
+  } catch(e) { /* will be set on save if needed */ }
+}
+
 /* ─── Add / Remove player ────────────────────────────── */
 function addPlayer(id){
   if(state.picked.has(id)) return;
@@ -132,16 +147,22 @@ function removePlayer(id){
   });
   state.bench = state.bench.filter(x => x !== id);
   state.picked.delete(id);
+  if(state.captainId === id) state.captainId = null;
   msg('');
   renderPitch(); renderMarket(); updateSaveState();
 }
 
 /* ─── Pitch rendering ────────────────────────────────── */
-function slotHtml(id){
+function slotHtml(id, isBench){
   const p = state.byId[id];
   const lastName = p.name.split(' ').slice(-1)[0];
-  return `<div class="slot" title="${p.name} · ${p.nation} · $${p.price.toFixed(1)}M">
+  const isCap = !isBench && state.captainId === id;
+  const capBadge = !isBench
+    ? `<button class="captain-btn${isCap ? ' active' : ''}" onclick="setCaptain(${id})" title="Set as captain">C</button>`
+    : '';
+  return `<div class="slot${isCap ? ' is-captain' : ''}" title="${p.name} · ${p.nation} · $${p.price.toFixed(1)}M">
     <button class="remove-btn" onclick="removePlayer(${id})">×</button>
+    ${capBadge}
     <span class="flag-big">${flag(p.nation)}</span>
     <span class="nm">${lastName}</span>
     <span class="pr">$${p.price.toFixed(1)}M</span>
@@ -159,13 +180,13 @@ function renderPitch(){
   const pitch = document.getElementById('pitch');
   const lineup = [['FWD', need.FWD], ['MID', need.MID], ['DEF', need.DEF], ['GK', 1]];
   pitch.innerHTML = lineup.map(([pos, n]) => {
-    let cells = state.starting[pos].map(slotHtml);
+    let cells = state.starting[pos].map(id => slotHtml(id, false));
     while(cells.length < n) cells.push(emptySlot(pos));
     return `<div class="pitch-row">${cells.join('')}</div>`;
   }).join('');
 
   const benchRow = document.getElementById('benchRow');
-  let bcells = state.bench.map(slotHtml);
+  let bcells = state.bench.map(id => slotHtml(id, true));
   while(bcells.length < 3) bcells.push(emptySlot('SUB'));
   benchRow.innerHTML = bcells.join('');
 
