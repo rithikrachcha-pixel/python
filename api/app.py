@@ -704,25 +704,39 @@ def admin_reseed():
         abort(403)
     try:
         from init_db import (seed_players, seed_fixtures,
-                             seed_demo_stats, seed_demo_progression,
-                             validate_squads, PgAdapter, SCHEMA_PG, SCHEMA_SQLITE)
-        import psycopg2
-        conn = psycopg2.connect(DATABASE_URL)
-        db = PgAdapter(conn)
-        db.executescript(SCHEMA_PG)
-        db.execute("DELETE FROM fixtures")
-        db.execute("DELETE FROM players")
-        db.commit()
+                             validate_squads, PgAdapter)
+
+        class DbExecAdapter:
+            """Wrap app's db_exec so init_db seeder functions can use it."""
+            def execute(self, sql, params=()):
+                return db_exec(sql, params)
+            def fetchall(self):
+                return []
+            def fetchone(self):
+                return None
+            def executescript(self, script):
+                for stmt in script.split(';'):
+                    s = stmt.strip()
+                    if s:
+                        db_exec(s)
+            def commit(self):
+                get_db().commit()
+            def close(self):
+                pass
+
+        db = DbExecAdapter()
+        db_exec("DELETE FROM fixtures")
+        db_exec("DELETE FROM players")
+        get_db().commit()
         validate_squads()
         seed_players(db)
         seed_fixtures(db)
-        seed_demo_stats(db)
-        seed_demo_progression(db)
-        db.commit()
-        p = db.execute("SELECT COUNT(*) FROM players").fetchone()[0]
-        f = db.execute("SELECT COUNT(*) FROM fixtures").fetchone()[0]
-        db.close()
-        return jsonify({"ok": True, "players": p, "fixtures": f})
+        get_db().commit()
+        p = db_exec("SELECT COUNT(*) FROM players").fetchone()
+        f = db_exec("SELECT COUNT(*) FROM fixtures").fetchone()
+        pc = p[0] if isinstance(p, (list, tuple)) else p["count"]
+        fc = f[0] if isinstance(f, (list, tuple)) else f["count"]
+        return jsonify({"ok": True, "players": pc, "fixtures": fc})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
 
