@@ -697,5 +697,35 @@ def wipe_users():
     return jsonify({"ok": True, "msg": "All users wiped."})
 
 
+@app.route("/admin/reseed")
+def admin_reseed():
+    token = request.args.get("token", "")
+    if token != ADMIN_TOKEN:
+        abort(403)
+    try:
+        from init_db import (seed_players, seed_fixtures,
+                             seed_demo_stats, seed_demo_progression,
+                             validate_squads, PgAdapter, SCHEMA_PG, SCHEMA_SQLITE)
+        import psycopg2
+        conn = psycopg2.connect(DATABASE_URL)
+        db = PgAdapter(conn)
+        db.executescript(SCHEMA_PG)
+        db.execute("DELETE FROM fixtures")
+        db.execute("DELETE FROM players")
+        db.commit()
+        validate_squads()
+        seed_players(db)
+        seed_fixtures(db)
+        seed_demo_stats(db)
+        seed_demo_progression(db)
+        db.commit()
+        p = db.execute("SELECT COUNT(*) FROM players").fetchone()[0]
+        f = db.execute("SELECT COUNT(*) FROM fixtures").fetchone()[0]
+        db.close()
+        return jsonify({"ok": True, "players": p, "fixtures": f})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
