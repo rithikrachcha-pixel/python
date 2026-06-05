@@ -684,5 +684,18 @@ def seed_once():
         auto_seed()
 
 
+@app.route("/admin/wipe-users")
+def wipe_users():
+    token = request.args.get("token", "")
+    if token != ADMIN_TOKEN:
+        abort(403)
+    db_exec("DELETE FROM user_squad")
+    db_exec("DELETE FROM league_members")
+    db_exec("DELETE FROM leagues")
+    db_exec("DELETE FROM users")
+    get_db().commit()
+    return jsonify({"ok": True, "msg": "All users wiped."})
+
+
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
