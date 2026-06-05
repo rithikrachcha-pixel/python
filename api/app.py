@@ -265,7 +265,7 @@ def api_players():
 @app.route("/api/nations")
 def api_nations():
     rows = db_exec(
-        "SELECT nation, grp FROM players GROUP BY nation ORDER BY grp, nation"
+        "SELECT nation, grp FROM players GROUP BY nation, grp ORDER BY grp, nation"
     ).fetchall()
     return jsonify([{"nation": r["nation"], "group": r["grp"]} for r in rows])
 
