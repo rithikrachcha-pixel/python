@@ -297,12 +297,50 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
 .gnews-item a:hover{color:var(--accent)}
 .gnews-meta{font-size:11px;color:var(--text3);font-family:var(--font-mono)}
 @media(max-width:900px){.grid2{grid-template-columns:1fr}.grid4{grid-template-columns:1fr 1fr}}
-@media(max-width:700px){.sidebar{display:none}.dive-stats-grid{grid-template-columns:1fr 1fr}.dive-price{font-size:32px}.dive-name-big{font-size:22px}.dive-tab-nav{padding:12px 14px;font-size:12px}.dive-tab-content{padding:16px}.dive-panel{border-radius:16px}}
+@media(max-width:700px){.sidebar{position:fixed;left:-240px;top:0;bottom:0;z-index:150;transition:left .25s ease;height:100vh;overflow-y:auto}.sidebar.open{left:0}.sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:149}.sidebar-backdrop.open{display:block}.dive-stats-grid{grid-template-columns:1fr 1fr}.dive-price{font-size:32px}.dive-name-big{font-size:22px}.dive-tab-nav{padding:12px 14px;font-size:12px}.dive-tab-content{padding:16px}.dive-panel{border-radius:16px}}
+.hamburger-btn{display:none;background:none;border:none;cursor:pointer;padding:6px;color:var(--text2);margin-right:6px}
+.hamburger-btn svg{width:20px;height:20px}
+@media(max-width:700px){.hamburger-btn{display:flex;align-items:center;justify-content:center}}
+/* Candlestick */
+.candle-up{color:var(--green)}
+.candle-down{color:var(--red)}
+/* Heatmap */
+.heatmap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;margin-top:12px}
+.heatmap-cell{border-radius:8px;padding:10px 12px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
+.heatmap-cell:hover{transform:scale(1.03)}
+.heatmap-cell .hm-ticker{font-family:var(--font-mono);font-size:12px;font-weight:600;margin-bottom:2px}
+.heatmap-cell .hm-chg{font-family:var(--font-mono);font-size:13px;font-weight:700}
+.heatmap-cell .hm-cap{font-size:9px;opacity:.65;font-family:var(--font-mono);margin-top:1px}
+/* Calendar */
+.cal-event{display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg3);border-radius:8px;margin-bottom:6px;cursor:pointer;transition:border .15s;border:1px solid transparent}
+.cal-event:hover{border-color:var(--border2)}
+.cal-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.cal-title{font-size:12px;font-weight:500;flex:1}
+.cal-date{font-size:10px;font-family:var(--font-mono);color:var(--text3)}
+.cal-badge{font-size:9px;font-family:var(--font-mono);padding:1px 6px;border-radius:4px;font-weight:700}
+/* Portfolio Analytics */
+.analytics-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:16px}
+.analytics-chip{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;text-align:center}
+.analytics-chip .a-val{font-family:var(--font-mono);font-size:18px;font-weight:600;margin-bottom:2px}
+.analytics-chip .a-lbl{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);font-family:var(--font-mono)}
+/* Risk Calc */
+.risk-calc{background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:18px;margin-top:16px}
+.risk-result{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
+.risk-result-item{background:var(--bg2);border-radius:8px;padding:10px;text-align:center}
+.risk-result-item .rv{font-family:var(--font-mono);font-size:16px;font-weight:600;margin-bottom:2px}
+.risk-result-item .rl{font-size:10px;color:var(--text3);font-family:var(--font-mono)}
+/* SL/TP inputs */
+.sltp-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+/* Allocation pie - text-based */
+.alloc-bar{margin-bottom:6px}
+.alloc-bar-track{height:6px;background:var(--bg4);border-radius:3px;overflow:hidden;margin-top:3px}
+.alloc-bar-fill{height:100%;border-radius:3px}
 </style>
 </head>
 <body>
 
 <div class="notif" id="notif"></div>
+<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar()"></div>
 
 <!-- STOCK DEEP DIVE OVERLAY -->
 <div class="dive-overlay" id="diveOverlay" style="display:none" onclick="closeDive(event)">
@@ -389,6 +427,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
           <div class="dive-chart-type">
             <button class="active" onclick="setChartType('line',this)">Line</button>
             <button onclick="setChartType('bar',this)">Bar</button>
+            <button onclick="setChartType('candle',this)">Candle</button>
           </div>
           <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono)" id="diveOHLC"></div>
         </div>
@@ -510,6 +549,16 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
       <div class="stat-label">Estimated Total</div>
       <div class="stat-val" id="modal-total">$189.34</div>
     </div>
+    <div class="sltp-row" id="sltp-wrap">
+      <div class="form-group">
+        <label class="form-label">Stop-Loss ($) <span style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+        <input type="number" class="form-input" id="modal-sl" placeholder="e.g. 182.00" step="0.01">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Take-Profit ($) <span style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+        <input type="number" class="form-input" id="modal-tp" placeholder="e.g. 200.00" step="0.01">
+      </div>
+    </div>
     <div class="modal-actions">
       <button class="modal-cancel" onclick="closeModal()">Cancel</button>
       <button class="modal-confirm" id="modal-confirm" onclick="confirmTrade()">Confirm Buy</button>
@@ -587,6 +636,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
         <input type="text" placeholder="Search any ticker… AAPL, TSLA, SHEL, NVDA" id="searchInput" oninput="onSearch(this.value)" onblur="hideSugg()" onkeydown="if(event.key==='Enter'){event.preventDefault();const v=this.value.trim();if(v){hideSugg();openStockDive(v);}}">
         <div class="search-suggestions" id="searchSugg"></div>
       </div>
+      <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleSidebar()" aria-label="Menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
       <div class="tb-region">
         <button class="active" id="regUS" onclick="setRegion('US')">🇺🇸 US</button>
         <button id="regUK" onclick="setRegion('UK')">🇬🇧 UK</button>
@@ -641,7 +693,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
         </div>
         <div class="section-title">Trending Stocks</div>
         <div id="stockGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:20px"></div>
-        <div class="grid2">
+        <div class="grid2" style="margin-bottom:20px">
           <div class="card">
             <div style="font-family:var(--font-head);font-size:16px;font-weight:700;margin-bottom:14px">Latest News</div>
             <div id="quickNews"></div>
@@ -650,6 +702,18 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
             <div style="font-family:var(--font-head);font-size:16px;font-weight:700;margin-bottom:14px">Your Watchlist</div>
             <div id="dashWatchlist"></div>
             <button class="add-watch-btn" onclick="showPage('watchlist',document.querySelector('.nav-item:nth-child(6)'))">+ Manage Watchlist</button>
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="card">
+            <div style="font-family:var(--font-head);font-size:16px;font-weight:700;margin-bottom:4px">Sector Heatmap</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:12px">Live % change by sector</div>
+            <div class="heatmap-grid" id="sectorHeatmap"></div>
+          </div>
+          <div class="card">
+            <div style="font-family:var(--font-head);font-size:16px;font-weight:700;margin-bottom:4px">Earnings Calendar</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:12px">Upcoming events &amp; releases</div>
+            <div id="earningsCalendar"></div>
           </div>
         </div>
       </div>
@@ -674,6 +738,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
           <div class="tab" onclick="filterMarket('energy',this)">Energy</div>
           <div class="tab" onclick="filterMarket('finance',this)">Finance</div>
           <div class="tab" onclick="filterMarket('uk',this)">🇬🇧 UK</div>
+          <div class="tab" onclick="filterMarket('crypto',this)">₿ Crypto</div>
         </div>
         <div id="marketsTable">
           <div style="display:grid;grid-template-columns:80px 1fr 110px 100px 100px 90px 120px;gap:0;border:1px solid var(--border);border-radius:var(--r2);overflow:hidden">
@@ -720,7 +785,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
           <div style="font-family:var(--font-head);font-size:16px;font-weight:700;margin-bottom:14px">Holdings</div>
           <div id="holdingsTable"></div>
         </div>
-        <div class="grid2">
+        <div class="grid2" style="margin-bottom:16px">
           <div class="card">
             <div style="font-family:var(--font-head);font-size:16px;font-weight:700;margin-bottom:14px">Performance Chart</div>
             <div class="chart-wrap"><canvas id="portChart"></canvas></div>
@@ -728,6 +793,31 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
           <div class="card">
             <div style="font-family:var(--font-head);font-size:16px;font-weight:700;margin-bottom:14px">Transaction History</div>
             <div id="txHistory" style="max-height:260px;overflow-y:auto"></div>
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="card">
+            <div style="font-family:var(--font-head);font-size:16px;font-weight:700;margin-bottom:12px">Portfolio Analytics</div>
+            <div class="analytics-row" id="portAnalytics"></div>
+            <div style="font-family:var(--font-head);font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text2)">Sector Allocation</div>
+            <div id="sectorAlloc"></div>
+          </div>
+          <div class="card">
+            <div style="font-family:var(--font-head);font-size:16px;font-weight:700;margin-bottom:12px">Position Risk Calculator</div>
+            <div class="risk-calc">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+                <div class="form-group"><label class="form-label">Account Size ($)</label><input class="form-input" id="rc-account" type="number" value="10000" placeholder="10000"></div>
+                <div class="form-group"><label class="form-label">Risk % per trade</label><input class="form-input" id="rc-risk" type="number" value="2" step="0.1" placeholder="2"></div>
+                <div class="form-group"><label class="form-label">Entry Price ($)</label><input class="form-input" id="rc-entry" type="number" placeholder="e.g. 189.34"></div>
+                <div class="form-group"><label class="form-label">Stop-Loss Price ($)</label><input class="form-input" id="rc-stop" type="number" placeholder="e.g. 182.00"></div>
+              </div>
+              <button class="run-btn" style="margin-top:0" onclick="calcRisk()">Calculate Position Size</button>
+              <div class="risk-result" id="riskResult" style="margin-top:12px;display:none">
+                <div class="risk-result-item"><div class="rv" id="rc-shares">—</div><div class="rl">Max Shares</div></div>
+                <div class="risk-result-item"><div class="rv" id="rc-dollar">—</div><div class="rl">$ at Risk</div></div>
+                <div class="risk-result-item"><div class="rv" id="rc-position">—</div><div class="rl">Position Size</div></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -941,7 +1031,14 @@ const STOCKS_UK = [
   {ticker:'VOD',name:'Vodafone Group',price:0.76,chg:-0.01,pct:-1.30,pe:9.1,mktcap:'£21B',sector:'telecom',currency:'£'},
   {ticker:'LLOY',name:'Lloyds Banking Group',price:0.53,chg:0.01,pct:1.92,pe:7.8,mktcap:'£37B',sector:'finance',currency:'£'},
 ];
-const ALL_STOCKS = [...STOCKS_US,...STOCKS_UK];
+const STOCKS_CRYPTO = [
+  {ticker:'BTC',name:'Bitcoin',price:67420.50,chg:1240.30,pct:1.88,pe:'—',mktcap:'$1.32T',sector:'crypto',currency:'$',isCrypto:true},
+  {ticker:'ETH',name:'Ethereum',price:3512.80,chg:-42.10,pct:-1.18,pe:'—',mktcap:'$422B',sector:'crypto',currency:'$',isCrypto:true},
+  {ticker:'SOL',name:'Solana',price:168.42,chg:5.30,pct:3.25,pe:'—',mktcap:'$77B',sector:'crypto',currency:'$',isCrypto:true},
+  {ticker:'XRP',name:'Ripple XRP',price:0.618,chg:0.012,pct:1.98,pe:'—',mktcap:'$34B',sector:'crypto',currency:'$',isCrypto:true},
+  {ticker:'BNB',name:'BNB Chain',price:412.90,chg:-3.20,pct:-0.77,pe:'—',mktcap:'$60B',sector:'crypto',currency:'$',isCrypto:true},
+];
+const ALL_STOCKS = [...STOCKS_US,...STOCKS_UK,...STOCKS_CRYPTO];
 
 const INDICES = [
   {name:'S&P 500',val:'5,847',chg:'+0.84%',pos:true},
@@ -1072,7 +1169,7 @@ function showPage(id, el) {
 // TICKER BANNER
 // ================================================
 function buildTickerBanner() {
-  const items = ALL_STOCKS.slice(0,14);
+  const items = [...STOCKS_US.slice(0,10),...STOCKS_CRYPTO.slice(0,3)];
   const html = items.map(s=>`
     <div class="ticker-item" onclick="openStockDive('${s.ticker}')">
       <span class="ticker-sym">${s.ticker}</span>
@@ -1319,8 +1416,9 @@ async function loadAINews() {
 function renderMarketsTable(filter) {
   filter = filter||state.marketFilter;
   const stocks = ALL_STOCKS.filter(s=>{
-    if(filter==='uk') return !!s.currency;
-    if(filter==='all') return state.region==='BOTH'?true:state.region==='UK'?!!s.currency:!s.currency;
+    if(filter==='uk') return !!s.currency && !s.isCrypto;
+    if(filter==='crypto') return !!s.isCrypto;
+    if(filter==='all') return state.region==='BOTH'?true:state.region==='UK'?!!s.currency&&!s.isCrypto:!s.currency&&!s.isCrypto;
     return s.sector===filter;
   });
   document.getElementById('marketsRows').innerHTML = stocks.map(s=>`
@@ -1338,7 +1436,7 @@ function renderMarketsTable(filter) {
 function filterMarket(f,btn) {
   state.marketFilter=f;
   document.querySelectorAll('#page-markets .tab').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');
+  if(btn) btn.classList.add('active');
   renderMarketsTable(f);
 }
 
@@ -1388,7 +1486,7 @@ function renderPortfolio() {
       }).join('')
     : '<div style="color:var(--text3);font-size:13px;padding:20px 0">No holdings yet. Buy stocks from Markets or Dashboard.</div>';
 
-  renderPortChart(); renderTxHistory();
+  renderPortChart(); renderTxHistory(); renderPortfolioAnalytics();
 }
 
 function renderPortChart() {
@@ -1429,6 +1527,10 @@ function openTrade(ticker, isBuy) {
   document.getElementById('modal-price').textContent=(stock.currency||'$')+stock.price.toFixed(2);
   document.getElementById('modal-cash').textContent='$'+state.cash.toFixed(2);
   document.getElementById('modal-qty').value=1;
+  document.getElementById('modal-sl').value='';
+  document.getElementById('modal-tp').value='';
+  // Only show SL/TP on buy
+  document.getElementById('sltp-wrap').style.display=isBuy?'grid':'none';
   document.getElementById('modal-confirm').textContent='Confirm '+(isBuy?'Buy':'Sell');
   document.getElementById('modal-confirm').className='modal-confirm'+(isBuy?'':' red');
   document.getElementById('modal').style.display='flex';
@@ -1448,12 +1550,14 @@ function confirmTrade() {
   if(m.isBuy) {
     if(total>state.cash) return notify('Insufficient cash','error');
     state.cash-=total;
+    const sl=parseFloat(document.getElementById('modal-sl').value)||null;
+    const tp=parseFloat(document.getElementById('modal-tp').value)||null;
     if(state.portfolio[m.ticker]) {
       const p=state.portfolio[m.ticker];
       const ns=p.shares+qty;
-      state.portfolio[m.ticker]={shares:ns,avgCost:(p.avgCost*p.shares+m.stock.price*qty)/ns};
+      state.portfolio[m.ticker]={shares:ns,avgCost:(p.avgCost*p.shares+m.stock.price*qty)/ns,sl:sl||p.sl,tp:tp||p.tp};
     } else {
-      state.portfolio[m.ticker]={shares:qty,avgCost:m.stock.price};
+      state.portfolio[m.ticker]={shares:qty,avgCost:m.stock.price,sl,tp};
     }
     notify('Bought '+qty+' shares of '+m.ticker,'success');
   } else {
@@ -1902,6 +2006,12 @@ function setChartType(type, btn) {
   document.querySelectorAll('.dive-chart-type button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   diveState.chartType=type;
+  if(type==='candle') {
+    // Render custom candlestick on canvas
+    if(diveState.chartInst){ diveState.chartInst.destroy(); diveState.chartInst=null; }
+    renderCandlestickChart();
+    return;
+  }
   if(diveState.chartInst){
     diveState.chartInst.config.type=type;
     if(type==='bar'){
@@ -1912,7 +2022,64 @@ function setChartType(type, btn) {
       diveState.chartInst.data.datasets[0].fill=true;
     }
     diveState.chartInst.update();
+  } else {
+    // Rebuild line/bar after candle was shown
+    renderDiveChart(diveState.period);
   }
+}
+
+function renderCandlestickChart() {
+  const canvas=document.getElementById('diveChart');
+  const ctx=canvas.getContext('2d');
+  const stock=diveState.stock;
+  if(!stock) return;
+  // Generate OHLC data
+  const count=40;
+  const ohlc=[];
+  let price=stock.price*0.9;
+  for(let i=0;i<count;i++){
+    const open=price;
+    const move=(Math.random()-0.48)*price*0.025;
+    const close=Math.max(0.01,open+move);
+    const high=Math.max(open,close)*(1+Math.random()*0.012);
+    const low=Math.min(open,close)*(1-Math.random()*0.012);
+    ohlc.push({open,high,low,close});
+    price=close;
+  }
+  const W=canvas.offsetWidth||700, H=canvas.offsetHeight||260;
+  canvas.width=W; canvas.height=H;
+  ctx.clearRect(0,0,W,H);
+  const PAD={l:44,r:16,t:10,b:30};
+  const chartW=W-PAD.l-PAD.r, chartH=H-PAD.t-PAD.b;
+  const minP=Math.min(...ohlc.map(o=>o.low));
+  const maxP=Math.max(...ohlc.map(o=>o.high));
+  const range=maxP-minP||1;
+  const toY=v=>PAD.t+chartH-(v-minP)/range*chartH;
+  const candleW=Math.max(4,Math.floor(chartW/count*0.6));
+  const spacing=chartW/count;
+  // Grid lines
+  ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=PAD.t+chartH*i/4;
+    ctx.beginPath(); ctx.moveTo(PAD.l,y); ctx.lineTo(W-PAD.r,y); ctx.stroke();
+    const val=maxP-(range*i/4);
+    ctx.fillStyle='#555c6e'; ctx.font='10px DM Mono,monospace'; ctx.textAlign='right';
+    ctx.fillText('$'+val.toFixed(2),PAD.l-4,y+4);
+  }
+  // Candles
+  ohlc.forEach((c,i)=>{
+    const x=PAD.l+i*spacing+spacing/2;
+    const isUp=c.close>=c.open;
+    const col=isUp?'#00e5a0':'#ff4757';
+    const openY=toY(c.open), closeY=toY(c.close), highY=toY(c.high), lowY=toY(c.low);
+    // Wick
+    ctx.strokeStyle=col; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(x,highY); ctx.lineTo(x,lowY); ctx.stroke();
+    // Body
+    ctx.fillStyle=col;
+    const bodyY=Math.min(openY,closeY), bodyH=Math.max(2,Math.abs(closeY-openY));
+    ctx.fillRect(x-candleW/2,bodyY,candleW,bodyH);
+  });
 }
 
 function filterDiveNews(filter, btn) {
@@ -2323,6 +2490,153 @@ function renderDiveAI(tab, text) {
 }
 
 // ================================================
+// MOBILE SIDEBAR TOGGLE
+// ================================================
+function toggleSidebar() {
+  const sb=document.getElementById('shell')?.querySelector('.sidebar')||document.querySelector('.sidebar');
+  const bd=document.getElementById('sidebarBackdrop');
+  const open=sb.classList.toggle('open');
+  bd.classList.toggle('open',open);
+}
+
+// ================================================
+// RISK CALCULATOR
+// ================================================
+function calcRisk() {
+  const account=parseFloat(document.getElementById('rc-account').value)||10000;
+  const riskPct=(parseFloat(document.getElementById('rc-risk').value)||2)/100;
+  const entry=parseFloat(document.getElementById('rc-entry').value);
+  const stop=parseFloat(document.getElementById('rc-stop').value);
+  if(!entry||!stop||entry<=0||stop<=0) return notify('Enter entry and stop-loss prices','error');
+  if(stop>=entry) return notify('Stop-loss must be below entry price','error');
+  const riskPerShare=entry-stop;
+  const dollarRisk=account*riskPct;
+  const shares=Math.floor(dollarRisk/riskPerShare);
+  const positionSize=shares*entry;
+  document.getElementById('rc-shares').textContent=shares;
+  document.getElementById('rc-dollar').textContent='$'+dollarRisk.toFixed(2);
+  document.getElementById('rc-position').textContent='$'+positionSize.toFixed(2);
+  document.getElementById('riskResult').style.display='grid';
+}
+
+// ================================================
+// PORTFOLIO ANALYTICS
+// ================================================
+function renderPortfolioAnalytics() {
+  const holdings=Object.entries(state.portfolio);
+  const el=document.getElementById('portAnalytics');
+  const allocEl=document.getElementById('sectorAlloc');
+  if(!el) return;
+  if(!holdings.length) {
+    el.innerHTML='<div style="color:var(--text3);font-size:12px;grid-column:1/-1">No holdings yet.</div>';
+    if(allocEl) allocEl.innerHTML='';
+    return;
+  }
+  let totalVal=0,totalCost=0;
+  const sectorMap={};
+  const dailyPnls=[];
+  holdings.forEach(([t,p])=>{
+    const s=ALL_STOCKS.find(x=>x.ticker===t);
+    if(!s) return;
+    const val=s.price*p.shares;
+    const cost=p.avgCost*p.shares;
+    totalVal+=val; totalCost+=cost;
+    const sec=s.sector||'other';
+    sectorMap[sec]=(sectorMap[sec]||0)+val;
+    dailyPnls.push((s.pct/100)*val);
+  });
+  const totalReturn=totalCost>0?(totalVal-totalCost)/totalCost*100:0;
+  // Simulated Sharpe (educational)
+  const avgDailyReturn=totalReturn/252;
+  const stddev=Math.abs(totalReturn)*0.015+0.3;
+  const sharpe=(avgDailyReturn/stddev*Math.sqrt(252)).toFixed(2);
+  // Max drawdown simulation
+  const maxDD=-(Math.random()*8+2).toFixed(2);
+  // Beta approximation
+  const beta=(0.8+Math.random()*0.6).toFixed(2);
+  el.innerHTML=[
+    {val:(totalReturn>=0?'+':'')+totalReturn.toFixed(2)+'%',lbl:'Total Return',col:totalReturn>=0?'var(--green)':'var(--red)'},
+    {val:sharpe,lbl:'Sharpe Ratio',col:sharpe>1?'var(--green)':sharpe>0?'var(--amber)':'var(--red)'},
+    {val:maxDD+'%',lbl:'Max Drawdown',col:'var(--red)'},
+    {val:beta,lbl:'Beta',col:'var(--text)'},
+    {val:holdings.length,lbl:'Positions',col:'var(--text)'},
+    {val:'$'+totalVal.toFixed(0),lbl:'Equity Value',col:'var(--accent)'},
+  ].map(c=>`<div class="analytics-chip"><div class="a-val" style="color:${c.col}">${c.val}</div><div class="a-lbl">${c.lbl}</div></div>`).join('');
+  // Sector allocation bars
+  if(allocEl) {
+    const COLORS=['#00e5a0','#0af','#a29bfe','#ffa502','#ff4757','#2ed573'];
+    const sorted=Object.entries(sectorMap).sort((a,b)=>b[1]-a[1]);
+    allocEl.innerHTML=sorted.map(([sec,val],i)=>{
+      const pct=totalVal>0?(val/totalVal*100).toFixed(1):0;
+      const col=COLORS[i%COLORS.length];
+      return `<div class="alloc-bar"><div style="display:flex;justify-content:space-between;font-size:11px;font-family:var(--font-mono)"><span style="color:${col};text-transform:capitalize">${sec}</span><span style="color:var(--text3)">${pct}%</span></div><div class="alloc-bar-track"><div class="alloc-bar-fill" style="width:${pct}%;background:${col}"></div></div></div>`;
+    }).join('');
+  }
+}
+
+// ================================================
+// SECTOR HEATMAP
+// ================================================
+function renderSectorHeatmap() {
+  const el=document.getElementById('sectorHeatmap');
+  if(!el) return;
+  const sectorGroups={};
+  ALL_STOCKS.forEach(s=>{
+    if(!sectorGroups[s.sector]) sectorGroups[s.sector]={sum:0,count:0,stocks:[]};
+    sectorGroups[s.sector].sum+=s.pct;
+    sectorGroups[s.sector].count++;
+    sectorGroups[s.sector].stocks.push(s.ticker);
+  });
+  const sectors=Object.entries(sectorGroups).map(([name,g])=>({name,avg:g.sum/g.count,stocks:g.stocks}));
+  sectors.sort((a,b)=>Math.abs(b.avg)-Math.abs(a.avg));
+  el.innerHTML=sectors.map(sec=>{
+    const pct=sec.avg;
+    const intensity=Math.min(Math.abs(pct)/3,1);
+    const bg=pct>=0
+      ?`rgba(0,229,160,${0.08+intensity*0.35})`
+      :`rgba(255,71,87,${0.08+intensity*0.35})`;
+    const col=pct>=0?'var(--green)':'var(--red)';
+    const tickers=sec.stocks.slice(0,3).join(', ')+(sec.stocks.length>3?'…':'');
+    return `<div class="heatmap-cell" style="background:${bg}" onclick="filterMarket('${sec.name}',null)">
+      <div class="hm-ticker" style="color:${col};text-transform:capitalize">${sec.name}</div>
+      <div class="hm-chg" style="color:${col}">${pct>=0?'+':''}${pct.toFixed(2)}%</div>
+      <div class="hm-cap" style="color:var(--text3)">${tickers}</div>
+    </div>`;
+  }).join('');
+}
+
+// ================================================
+// EARNINGS CALENDAR
+// ================================================
+const EARNINGS_EVENTS = [
+  {ticker:'AAPL',date:'Jun 12',type:'Earnings',desc:'Q2 FY2026 Results',color:'var(--accent)'},
+  {ticker:'MSFT',date:'Jun 13',type:'Earnings',desc:'Q4 FY2026 Preview',color:'var(--accent)'},
+  {ticker:'NVDA',date:'Jun 18',type:'Earnings',desc:'Q1 FY2027 Results',color:'var(--green)'},
+  {ticker:'Fed',date:'Jun 11',type:'FOMC',desc:'Interest Rate Decision',color:'var(--amber)'},
+  {ticker:'JPM',date:'Jun 14',type:'Earnings',desc:'Q2 2026 Results',color:'var(--accent)'},
+  {ticker:'TSLA',date:'Jun 20',type:'Earnings',desc:'Q2 Delivery Report',color:'var(--red)'},
+  {ticker:'CPI',date:'Jun 11',type:'Economic',desc:'US CPI Inflation Data',color:'var(--purple)'},
+  {ticker:'NFP',date:'Jun 13',type:'Economic',desc:'Non-Farm Payrolls',color:'var(--purple)'},
+  {ticker:'SHEL',date:'Jun 16',type:'Dividend',desc:'Ex-Dividend Date',color:'var(--amber)'},
+  {ticker:'AZN',date:'Jun 19',type:'Earnings',desc:'H1 2026 Interim Results',color:'var(--accent)'},
+];
+function renderEarningsCalendar() {
+  const el=document.getElementById('earningsCalendar');
+  if(!el) return;
+  el.innerHTML=EARNINGS_EVENTS.map(ev=>`
+    <div class="cal-event">
+      <div class="cal-dot" style="background:${ev.color}"></div>
+      <div style="flex:1">
+        <div class="cal-title">${ev.ticker} — ${ev.desc}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="cal-date">${ev.date}</div>
+        <div class="cal-badge" style="background:${ev.color}22;color:${ev.color}">${ev.type}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ================================================
 // REGION
 // ================================================
 function setRegion(r) {
@@ -2380,6 +2694,8 @@ function init() {
   renderStrategyLibrary();
   renderGlossary();
   renderLearn();
+  renderSectorHeatmap();
+  renderEarningsCalendar();
   updatePortfolioValue();
   updateMarketStatus();
   setInterval(updateMarketStatus, 60000);
@@ -2396,9 +2712,11 @@ function init() {
 
   // Live price ticks every 3s
   setInterval(()=>{
-    ALL_STOCKS.forEach(s=>{ s.price=Math.max(0.01,s.price*(1+(Math.random()-0.5)*0.002)); });
+    ALL_STOCKS.forEach(s=>{ s.price=Math.max(0.01,s.price*(1+(Math.random()-0.5)*(s.isCrypto?0.004:0.002))); s.pct=+(s.pct+(Math.random()-0.5)*0.05).toFixed(2); });
     updatePortfolioValue();
     buildTickerBanner();
+    // Refresh heatmap periodically
+    renderSectorHeatmap();
     // Check price alerts
     state.alerts.forEach(a=>{
       const s=ALL_STOCKS.find(x=>x.ticker===a.ticker);
@@ -2406,6 +2724,26 @@ function init() {
         a.triggered=true; notify(`🔔 Alert: ${a.ticker} hit ${a.currency||'$'}${a.price}!`,'success'); saveState();
       }
     });
+    // Check SL/TP for open positions
+    for(const [t,p] of Object.entries(state.portfolio)){
+      const s=ALL_STOCKS.find(x=>x.ticker===t);
+      if(!s) continue;
+      if(p.sl&&s.price<=p.sl){
+        notify(`🛑 Stop-Loss triggered for ${t} at $${s.price.toFixed(2)}`,'error');
+        const total=p.shares*s.price;
+        state.cash+=total;
+        state.transactions.push({type:'SELL',ticker:t,shares:p.shares,price:s.price,time:new Date().toLocaleTimeString()+' (SL)'});
+        delete state.portfolio[t];
+        updatePortfolioValue(); saveState();
+      } else if(p.tp&&s.price>=p.tp){
+        notify(`✅ Take-Profit triggered for ${t} at $${s.price.toFixed(2)}`,'success');
+        const total=p.shares*s.price;
+        state.cash+=total;
+        state.transactions.push({type:'SELL',ticker:t,shares:p.shares,price:s.price,time:new Date().toLocaleTimeString()+' (TP)'});
+        delete state.portfolio[t];
+        updatePortfolioValue(); saveState();
+      }
+    }
   },3000);
 }
 
