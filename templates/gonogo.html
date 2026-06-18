@@ -44,30 +44,16 @@
 
   <div id="game-area" class="hidden">
     <div class="hud">
-      <div class="hud-item">
-        <div class="hud-value" id="trial-num">1</div>
-        <div class="hud-label">Trial</div>
-      </div>
-      <div class="hud-item">
-        <div class="hud-value" id="hits-count" style="color:var(--success)">0</div>
-        <div class="hud-label">Hits</div>
-      </div>
-      <div class="hud-item">
-        <div class="hud-value" id="fa-count" style="color:var(--danger)">0</div>
-        <div class="hud-label">False Alarms</div>
-      </div>
-      <div class="hud-item">
-        <div class="hud-value" id="rt-avg" style="color:var(--warning)">—</div>
-        <div class="hud-label">Avg RT (ms)</div>
-      </div>
+      <div class="hud-item"><div class="hud-value" id="trial-num">1</div><div class="hud-label">Trial</div></div>
+      <div class="hud-item"><div class="hud-value" id="hits-count" style="color:var(--success)">0</div><div class="hud-label">Hits</div></div>
+      <div class="hud-item"><div class="hud-value" id="fa-count" style="color:var(--danger)">0</div><div class="hud-label">False Alarms</div></div>
+      <div class="hud-item"><div class="hud-value" id="rt-avg" style="color:var(--warning)">—</div><div class="hud-label">Avg RT (ms)</div></div>
     </div>
-
     <div class="game-arena">
       <p id="countdown-msg" class="text-muted" style="font-size:1.5rem"></p>
       <div id="stimulus" class="gonogo-blank gonogo-stimulus hidden"></div>
       <div id="trial-msg" style="font-size:1.1rem;color:var(--text-muted);min-height:2rem;margin-top:0.5rem"></div>
     </div>
-
     <div style="text-align:center;margin-top:1.5rem">
       <button id="go-btn" class="btn btn-success btn-lg" onclick="respond()">GO ⚡</button>
       <p class="key-hint mt-1">or press <kbd>Space</kbd></p>
@@ -80,30 +66,12 @@
     <div class="score-display" id="final-score">0%</div>
     <p class="text-muted">Accuracy Score</p>
     <div class="results-grid" style="max-width:600px;margin:1.5rem auto">
-      <div class="result-card">
-        <div class="rc-value" id="r-hits">0</div>
-        <div class="rc-label">Hits (correct Go)</div>
-      </div>
-      <div class="result-card">
-        <div class="rc-value" id="r-misses">0</div>
-        <div class="rc-label">Misses (missed Go)</div>
-      </div>
-      <div class="result-card">
-        <div class="rc-value" id="r-fa">0</div>
-        <div class="rc-label">False Alarms</div>
-      </div>
-      <div class="result-card">
-        <div class="rc-value" id="r-cr">0</div>
-        <div class="rc-label">Correct Rejections</div>
-      </div>
-      <div class="result-card">
-        <div class="rc-value" id="r-rt">0ms</div>
-        <div class="rc-label">Avg Reaction Time</div>
-      </div>
-      <div class="result-card">
-        <div class="rc-value" id="r-dprime">0</div>
-        <div class="rc-label">d' (sensitivity)</div>
-      </div>
+      <div class="result-card"><div class="rc-value" id="r-hits">0</div><div class="rc-label">Hits (correct Go)</div></div>
+      <div class="result-card"><div class="rc-value" id="r-misses">0</div><div class="rc-label">Misses (missed Go)</div></div>
+      <div class="result-card"><div class="rc-value" id="r-fa">0</div><div class="rc-label">False Alarms</div></div>
+      <div class="result-card"><div class="rc-value" id="r-cr">0</div><div class="rc-label">Correct Rejections</div></div>
+      <div class="result-card"><div class="rc-value" id="r-rt">0ms</div><div class="rc-label">Avg Reaction Time</div></div>
+      <div class="result-card"><div class="rc-value" id="r-dprime">0</div><div class="rc-label">d' (sensitivity)</div></div>
     </div>
     <div class="notice" id="profile-desc" style="max-width:500px;margin:0 auto"></div>
     <div id="leaderboard-area" style="max-width:600px;margin:1.5rem auto;text-align:left"></div>
@@ -117,28 +85,14 @@
 
 {% block scripts %}
 <script>
-  const TOTAL_TRIALS = 100;
-  const GO_RATIO = 0.7;
-  const STIMULUS_DURATION = 600;
-  const ISI_MIN = 800;   // inter-stimulus interval
-  const ISI_MAX = 1600;
-
-  let selectedDiff = 'average';
-  let trialIdx = 0;
-  let isGo = false;
-  let stimulusActive = false;
-  let stimulusStart = 0;
-  let stimulusTimer = null;
-  let itiTimer = null;
-
+  const TOTAL_TRIALS = 100, GO_RATIO = 0.7, STIMULUS_DURATION = 600, ISI_MIN = 800, ISI_MAX = 1600;
+  let selectedDiff = 'average', trialIdx = 0, isGo = false, stimulusActive = false;
+  let stimulusStart = 0, stimulusTimer = null, itiTimer = null;
   let hits = 0, misses = 0, falseAlarms = 0, correctRejects = 0;
-  let reactionTimes = [];
-  let responded = false;
+  let reactionTimes = [], responded = false;
 
-  // Build randomised trial sequence
   const trials = [];
   for (let i = 0; i < TOTAL_TRIALS; i++) trials.push(Math.random() < GO_RATIO);
-  // Shuffle
   for (let i = trials.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [trials[i], trials[j]] = [trials[j], trials[i]];
@@ -147,7 +101,6 @@
   function startGame() {
     document.getElementById('instructions').classList.add('hidden');
     document.getElementById('game-area').classList.remove('hidden');
-
     let cnt = 3;
     const msg = document.getElementById('countdown-msg');
     msg.textContent = cnt;
@@ -161,75 +114,42 @@
   function nextTrial() {
     if (trialIdx >= TOTAL_TRIALS) { endGame(); return; }
     document.getElementById('trial-num').textContent = trialIdx + 1;
-
-    responded = false;
-    isGo = trials[trialIdx];
-    trialIdx++;
-
-    const isi = ISI_MIN + Math.random() * (ISI_MAX - ISI_MIN);
-    itiTimer = setTimeout(showStimulus, isi);
+    responded = false; isGo = trials[trialIdx]; trialIdx++;
+    itiTimer = setTimeout(showStimulus, ISI_MIN + Math.random() * (ISI_MAX - ISI_MIN));
   }
 
   function showStimulus() {
     const el = document.getElementById('stimulus');
     el.className = isGo ? 'gonogo-go gonogo-stimulus' : 'gonogo-nogo gonogo-stimulus';
-    el.textContent = isGo ? '●' : '●';
-    el.classList.remove('hidden');
-    stimulusActive = true;
-    stimulusStart = performance.now();
+    el.textContent = '●'; el.classList.remove('hidden');
+    stimulusActive = true; stimulusStart = performance.now();
     document.getElementById('trial-msg').textContent = '';
-
     stimulusTimer = setTimeout(() => {
       hideStimulus();
       if (!responded) {
-        if (isGo) {
-          misses++;
-          showTrialFeedback('Miss ✗', 'var(--danger)');
-        } else {
-          correctRejects++;
-        }
-        updateHUD();
-        nextTrial();
+        if (isGo) { misses++; showTrialFeedback('Miss ✗', 'var(--danger)'); }
+        else { correctRejects++; }
+        updateHUD(); nextTrial();
       }
     }, STIMULUS_DURATION);
   }
 
   function hideStimulus() {
-    const el = document.getElementById('stimulus');
-    el.classList.add('hidden');
-    stimulusActive = false;
+    document.getElementById('stimulus').classList.add('hidden'); stimulusActive = false;
   }
 
   function respond() {
-    if (responded) return;
-    responded = true;
-
-    if (!stimulusActive) {
-      // Premature press — treat as false alarm if NoGo was pending or just noise
-      return;
-    }
-
-    clearTimeout(stimulusTimer);
-    hideStimulus();
+    if (responded) return; responded = true;
+    if (!stimulusActive) return;
+    clearTimeout(stimulusTimer); hideStimulus();
     const rt = Math.round(performance.now() - stimulusStart);
-
-    if (isGo) {
-      hits++;
-      reactionTimes.push(rt);
-      showTrialFeedback(`Hit! ${rt}ms`, 'var(--success)');
-    } else {
-      falseAlarms++;
-      showTrialFeedback('False Alarm ✗', 'var(--danger)');
-    }
-
-    updateHUD();
-    nextTrial();
+    if (isGo) { hits++; reactionTimes.push(rt); showTrialFeedback(`Hit! ${rt}ms`, 'var(--success)'); }
+    else { falseAlarms++; showTrialFeedback('False Alarm ✗', 'var(--danger)'); }
+    updateHUD(); nextTrial();
   }
 
   function showTrialFeedback(msg, color) {
-    const el = document.getElementById('trial-msg');
-    el.textContent = msg;
-    el.style.color = color;
+    const el = document.getElementById('trial-msg'); el.textContent = msg; el.style.color = color;
   }
 
   function updateHUD() {
@@ -242,52 +162,39 @@
   function endGame() {
     document.getElementById('game-area').classList.add('hidden');
     document.getElementById('results-area').classList.remove('hidden');
-
     const totalGo = trials.filter(t => t).length;
     const totalNoGo = TOTAL_TRIALS - totalGo;
-
     const accuracy = Math.round(((hits + correctRejects) / TOTAL_TRIALS) * 100);
     document.getElementById('final-score').textContent = accuracy + '%';
     document.getElementById('r-hits').textContent = hits;
     document.getElementById('r-misses').textContent = misses;
     document.getElementById('r-fa').textContent = falseAlarms;
     document.getElementById('r-cr').textContent = correctRejects;
-
     const avgRT = reactionTimes.length ? Math.round(reactionTimes.reduce((a,b)=>a+b,0)/reactionTimes.length) : 0;
     document.getElementById('r-rt').textContent = avgRT + 'ms';
-
-    // d' sensitivity index
-    let hr = hits / Math.max(totalGo, 1);
-    let far = falseAlarms / Math.max(totalNoGo, 1);
-    hr = Math.max(0.01, Math.min(0.99, hr));
-    far = Math.max(0.01, Math.min(0.99, far));
-    const dprime = (probit(hr) - probit(far)).toFixed(2);
-    document.getElementById('r-dprime').textContent = dprime;
-
+    let hr = hits / Math.max(totalGo, 1), far = falseAlarms / Math.max(totalNoGo, 1);
+    hr = Math.max(0.01, Math.min(0.99, hr)); far = Math.max(0.01, Math.min(0.99, far));
+    document.getElementById('r-dprime').textContent = (probit(hr) - probit(far)).toFixed(2);
     let desc;
     if (falseAlarms > 15) desc = "High impulsivity detected — you responded frequently to No-Go signals. Practice slowing your reaction and checking before pressing.";
     else if (misses > 20) desc = "You missed many Go signals, possibly due to over-caution. Try to stay alert throughout.";
     else if (accuracy >= 90) desc = "Excellent impulse control and attention. You respond accurately and consistently — a strong result for roles requiring careful decision-making.";
     else desc = "Good performance overall. Continue practising to improve both speed and accuracy together.";
-
     document.getElementById('profile-desc').textContent = '🧠 ' + desc;
     loadLeaderboard(accuracy, 'gonogo');
   }
 
   function setDiff(btn) {
     document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected-diff'));
-    btn.classList.add('selected-diff');
-    selectedDiff = btn.dataset.d;
+    btn.classList.add('selected-diff'); selectedDiff = btn.dataset.d;
   }
 
   async function loadLeaderboard(userScore, gameName) {
     const res = await fetch('/sim/bot/leaderboard', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({score: userScore, difficulty: selectedDiff, game: gameName, count: 12})
     });
-    const data = await res.json();
-    const lb = data.leaderboard;
+    const data = await res.json(); const lb = data.leaderboard;
     let html = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.5rem">
       <h3 style="font-size:1rem;font-weight:700;margin-bottom:0.25rem">🏆 Leaderboard</h3>
       <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1rem">You ranked <strong style="color:var(--accent)">#${data.user_rank}</strong> out of ${data.total_candidates} — top <strong style="color:var(--accent)">${Math.round(100-data.percentile+100/data.total_candidates)}%</strong></p>
@@ -306,27 +213,17 @@
   }
 
   function probit(p) {
-    // Beasley-Springer-Moro algorithm approximation
-    const a = [-3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02, 1.383577518672690e+02, -3.066479806614716e+01, 2.506628277459239e+00];
-    const b = [-5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02, 6.680131188771972e+01, -1.328068155288572e+01];
-    const c = [-7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00, -2.549732539343734e+00, 4.374664141464968e+00, 2.938163982698783e+00];
-    const d = [7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00, 3.754408661907416e+00];
+    const a = [-3.969683028665376e+01,2.209460984245205e+02,-2.759285104469687e+02,1.383577518672690e+02,-3.066479806614716e+01,2.506628277459239e+00];
+    const b = [-5.447609879822406e+01,1.615858368580409e+02,-1.556989798598866e+02,6.680131188771972e+01,-1.328068155288572e+01];
+    const c = [-7.784894002430293e-03,-3.223964580411365e-01,-2.400758277161838e+00,-2.549732539343734e+00,4.374664141464968e+00,2.938163982698783e+00];
+    const d = [7.784695709041462e-03,3.224671290700398e-01,2.445134137142996e+00,3.754408661907416e+00];
     const plow = 0.02425, phigh = 1 - plow;
     let q, r;
-    if (p < plow) {
-      q = Math.sqrt(-2*Math.log(p));
-      return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
-    } else if (p <= phigh) {
-      q = p - 0.5; r = q*q;
-      return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q / (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
-    } else {
-      q = Math.sqrt(-2*Math.log(1-p));
-      return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
-    }
+    if (p < plow) { q = Math.sqrt(-2*Math.log(p)); return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1); }
+    else if (p <= phigh) { q = p-0.5; r = q*q; return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1); }
+    else { q = Math.sqrt(-2*Math.log(1-p)); return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1); }
   }
 
-  document.addEventListener('keydown', e => {
-    if (e.code === 'Space') { e.preventDefault(); respond(); }
-  });
+  document.addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); respond(); } });
 </script>
 {% endblock %}

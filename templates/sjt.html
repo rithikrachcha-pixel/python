@@ -25,7 +25,6 @@
       <li>For each scenario, select the <strong>Most Effective</strong> and <strong>Least Effective</strong> response.</li>
       <li>You must select <em>two different</em> options — one best, one worst.</li>
       <li>Consider what a <strong>competent, professional employee</strong> would do — not just what sounds nice.</li>
-      <li>There are no trick questions — answers reflect real professional competencies.</li>
     </ul>
     <div class="notice" style="margin-top:1rem">
       💡 <strong>Tip:</strong> Cappfinity assesses "strengths" like curiosity, resilience, and collaboration. Avoid extremes — neither passive nor confrontational approaches score well.
@@ -44,9 +43,7 @@
 
   <div id="game-area" class="hidden">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-      <div class="progress-bar-wrap" style="flex:1;margin-right:1rem;margin-bottom:0">
-        <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
-      </div>
+      <div class="progress-bar-wrap" style="flex:1;margin-right:1rem;margin-bottom:0"><div class="progress-bar-fill" id="progress-bar" style="width:0%"></div></div>
       <div class="timer" id="timer">30:00</div>
     </div>
     <div id="question-area"></div>
@@ -55,9 +52,7 @@
       <span id="q-counter" class="text-muted" style="font-size:0.85rem"></span>
       <button id="next-btn" class="btn btn-primary btn-sm" onclick="navigate(1)">Next →</button>
     </div>
-    <div style="text-align:center;margin-top:1.5rem">
-      <button class="btn btn-success" onclick="submitTest()">Submit Test</button>
-    </div>
+    <div style="text-align:center;margin-top:1.5rem"><button class="btn btn-success" onclick="submitTest()">Submit Test</button></div>
   </div>
 
   <div id="results-area" class="hidden" style="text-align:center;padding:2rem">
@@ -77,150 +72,26 @@
 {% block scripts %}
 <script>
 const scenarios = [
-  {
-    scenario: "You are a first-year analyst on a team. Your manager asks you to prepare a client presentation for tomorrow. After completing a draft, you notice your manager has included some data in their original brief that appears to be outdated by 6 months. The presentation is due in 3 hours.",
-    options: [
-      "Update the data yourself using the most recent sources you can find, and flag the changes to your manager with an explanation.",
-      "Use the data as given — your manager knows the client and you don't want to overstep.",
-      "Email your manager immediately highlighting the potential issue, ask for guidance, and prepare a version with updated data to present as an alternative.",
-      "Delay the presentation and spend the full 3 hours trying to find the exact latest figures from internal systems.",
-      "Tell the client directly during the presentation that some data may be outdated."
-    ],
-    best: 2,
-    worst: 4,
-    explanation: "Option C is best: raises the issue promptly, offers a solution, and respects hierarchy. Option E is worst: going directly to the client undermines your manager and damages the firm's credibility."
-  },
-  {
-    scenario: "You are working remotely on an important project with a tight deadline. A colleague messages you asking for urgent help with a separate task — it will take about an hour. Your deadline is in 4 hours and you estimate you need at least 3 hours to finish your own work.",
-    options: [
-      "Ignore the message and focus entirely on your deadline.",
-      "Help your colleague immediately — they asked first.",
-      "Respond promptly, explain your situation, offer to help after your deadline, and suggest another colleague who might assist sooner.",
-      "Agree to help, work on both simultaneously, and hope to finish everything in time.",
-      "Tell your manager about the conflict so they can make the decision for you."
-    ],
-    best: 2,
-    worst: 1,
-    explanation: "Option C demonstrates time management, communication, and helpfulness. Option B is worst: it sacrifices your own priority without communication and may cause both tasks to fail."
-  },
-  {
-    scenario: "During a team meeting, a senior colleague makes an error in their analysis that you notice — it could lead to a significant misallocation of resources. The meeting continues with decisions being made based on this flawed analysis.",
-    options: [
-      "Stay silent — it's not your place to challenge a senior colleague in public.",
-      "Interrupt immediately and loudly correct the error in front of everyone.",
-      "Make a note and raise it with your manager privately after the meeting.",
-      "Politely speak up during the meeting: 'I just want to double-check one figure — I may be missing something, but I calculated X differently.'",
-      "Send a follow-up email to all meeting attendees correcting the error."
-    ],
-    best: 3,
-    worst: 1,
-    explanation: "Option D is best: respectful, timely, and constructive. Option B is worst: confrontational, embarrassing, and damages team dynamics."
-  },
-  {
-    scenario: "You have been assigned a project you find deeply uninteresting, but it is important to the team. You are three days in and finding it very difficult to stay motivated. Your work quality has started to slip slightly.",
-    options: [
-      "Push through — motivation is irrelevant, professionalism means finishing regardless.",
-      "Ask your manager to reassign the project to someone who finds it more engaging.",
-      "Break the project into small goals, reward yourself for each milestone, and remind yourself of its importance to the team.",
-      "Do the minimum required to technically complete the project on time.",
-      "Tell a colleague you find the project boring and see if they want to swap.",
-      "Speak with your manager, acknowledge the work quality issue, and discuss strategies to improve your engagement."
-    ],
-    best: 5,
-    worst: 3,
-    explanation: "Option F is best: self-aware, professional, and proactive about improvement. Option D is worst: deliberately minimising effort is neither professional nor helpful to the team."
-  },
-  {
-    scenario: "You are the only analyst who knows how to use a critical software tool your team relies on. You have been asked to document the process, but documentation takes time away from billable project work. Your performance review weights billable hours heavily.",
-    options: [
-      "Prioritise billable work entirely — documentation can wait indefinitely.",
-      "Document the process fully in your own time (evenings/weekends) to avoid affecting billable hours.",
-      "Raise the conflict with your manager, explain the long-term team risk of being a single point of failure, and agree on a schedule that balances documentation with billable time.",
-      "Create only minimal documentation — just enough to say you've done it.",
-      "Teach a colleague verbally instead of writing anything down."
-    ],
-    best: 2,
-    worst: 0,
-    explanation: "Option C is best: communicates the business risk and finds a balanced solution. Option A is worst: ignores a real team dependency risk and is short-sighted."
-  },
-  {
-    scenario: "A client sends you an aggressive email complaining about the quality of work delivered by your team — some complaints are valid, others are unfair. Your manager is travelling and unreachable for 4 hours.",
-    options: [
-      "Forward the email to your manager and wait 4 hours before responding.",
-      "Reply defensively, addressing each of the client's points.",
-      "Acknowledge the email promptly, thank the client for their feedback, confirm you are reviewing the concerns and will respond in full within the hour, then brief your manager as soon as they're reachable.",
-      "Escalate immediately to your manager's manager.",
-      "Call the client to discuss the complaints verbally without involving your manager."
-    ],
-    best: 2,
-    worst: 3,
-    explanation: "Option C is best: buys time professionally, keeps the client engaged, and handles it at the right level. Option D is worst: unnecessary escalation over your manager's head is inappropriate here."
-  },
-  {
-    scenario: "You are midway through an internship and realise you have been working on a task using the wrong methodology for two weeks. Starting again would take another week. You are not sure if anyone else knows.",
-    options: [
-      "Quietly restart using the correct method and hope nobody notices the delay.",
-      "Inform your manager immediately, explain what happened, and present a plan for correcting the work.",
-      "Submit the work knowing it uses the wrong method — the outcome might still be acceptable.",
-      "Ask a colleague if they think anyone will notice, and decide based on their response.",
-      "Ask to extend the deadline and restart without explaining why."
-    ],
-    best: 1,
-    worst: 2,
-    explanation: "Option B is best: honest, proactive, and solution-oriented — a key strength Cappfinity assesses. Option C is worst: knowingly submitting flawed work is professionally dishonest."
-  },
-  {
-    scenario: "You notice a colleague consistently taking credit for the team's ideas in group meetings. It's affecting team morale and several people have mentioned it to you privately. The colleague is well-regarded by management.",
-    options: [
-      "Raise a formal complaint with HR immediately.",
-      "Do nothing — it's not your problem and getting involved could harm your reputation.",
-      "Speak privately and constructively with the colleague, sharing your observations and impact on the team.",
-      "Bring it up in the next team meeting in front of everyone.",
-      "Mention it to your manager in a one-to-one as a team dynamic concern, framing it as a process issue rather than a personal attack."
-    ],
-    best: 4,
-    worst: 3,
-    explanation: "Option E is best: professional, addresses the structural issue without drama. Option D is worst: public confrontation would embarrass the colleague and could escalate conflict."
-  },
-  {
-    scenario: "You receive feedback from a client that your written communication style is 'too technical and hard to follow'. You strongly believe your level of technical detail is appropriate and necessary.",
-    options: [
-      "Continue writing as you have — the client simply needs to raise their technical literacy.",
-      "Adjust your writing style for this client while maintaining technical rigour — add plain-language summaries, define jargon, and ask for specific feedback on what is unclear.",
-      "Ask your manager to handle all written communication with this client.",
-      "Send the client a simpler version of all future documents but include the detailed version as an appendix.",
-      "Tell the client that the technical detail is required and cannot be removed."
-    ],
-    best: 1,
-    worst: 0,
-    explanation: "Option B is best: adapts to the client's needs while preserving quality — strong communication flexibility. Option A is worst: dismissing client feedback is unprofessional and client-centric thinking is core to most professional roles."
-  },
-  {
-    scenario: "It is 10pm before a major deliverable is due. You have finished your section and it is good work. A teammate messages saying they are significantly behind and the whole submission may be incomplete without help.",
-    options: [
-      "It's their problem — you finished your part on time.",
-      "Offer to help for an hour, then review your own work to ensure your contribution is still strong.",
-      "Take over their section entirely and do it yourself.",
-      "Tell your manager straight away so they're not surprised.",
-      "Stay up all night helping without telling anyone, even if the quality suffers."
-    ],
-    best: 1,
-    worst: 4,
-    explanation: "Option B is best: collaborative, bounded, and responsible. Option E is worst: sacrificing sleep and quality without communication leads to worse outcomes for everyone."
-  }
+  { scenario: "You are a first-year analyst on a team. Your manager asks you to prepare a client presentation for tomorrow. After completing a draft, you notice your manager has included some data in their original brief that appears to be outdated by 6 months. The presentation is due in 3 hours.", options: ["Update the data yourself using the most recent sources you can find, and flag the changes to your manager with an explanation.", "Use the data as given — your manager knows the client and you don't want to overstep.", "Email your manager immediately highlighting the potential issue, ask for guidance, and prepare a version with updated data to present as an alternative.", "Delay the presentation and spend the full 3 hours trying to find the exact latest figures from internal systems.", "Tell the client directly during the presentation that some data may be outdated."], best: 2, worst: 4, explanation: "Option C is best: raises the issue promptly, offers a solution, and respects hierarchy. Option E is worst: going directly to the client undermines your manager and damages the firm's credibility." },
+  { scenario: "You are working remotely on an important project with a tight deadline. A colleague messages you asking for urgent help with a separate task — it will take about an hour. Your deadline is in 4 hours and you estimate you need at least 3 hours to finish your own work.", options: ["Ignore the message and focus entirely on your deadline.", "Help your colleague immediately — they asked first.", "Respond promptly, explain your situation, offer to help after your deadline, and suggest another colleague who might assist sooner.", "Agree to help, work on both simultaneously, and hope to finish everything in time.", "Tell your manager about the conflict so they can make the decision for you."], best: 2, worst: 1, explanation: "Option C demonstrates time management, communication, and helpfulness. Option B is worst: it sacrifices your own priority without communication." },
+  { scenario: "During a team meeting, a senior colleague makes an error in their analysis that you notice — it could lead to a significant misallocation of resources. The meeting continues with decisions being made based on this flawed analysis.", options: ["Stay silent — it's not your place to challenge a senior colleague in public.", "Interrupt immediately and loudly correct the error in front of everyone.", "Make a note and raise it with your manager privately after the meeting.", "Politely speak up during the meeting: 'I just want to double-check one figure — I may be missing something, but I calculated X differently.'", "Send a follow-up email to all meeting attendees correcting the error."], best: 3, worst: 1, explanation: "Option D is best: respectful, timely, and constructive. Option B is worst: confrontational, embarrassing, and damages team dynamics." },
+  { scenario: "You have been assigned a project you find deeply uninteresting, but it is important to the team. You are three days in and finding it very difficult to stay motivated. Your work quality has started to slip slightly.", options: ["Push through — motivation is irrelevant, professionalism means finishing regardless.", "Ask your manager to reassign the project to someone who finds it more engaging.", "Break the project into small goals, reward yourself for each milestone, and remind yourself of its importance to the team.", "Do the minimum required to technically complete the project on time.", "Tell a colleague you find the project boring and see if they want to swap.", "Speak with your manager, acknowledge the work quality issue, and discuss strategies to improve your engagement."], best: 5, worst: 3, explanation: "Option F is best: self-aware, professional, and proactive about improvement. Option D is worst: deliberately minimising effort is neither professional nor helpful to the team." },
+  { scenario: "You are the only analyst who knows how to use a critical software tool your team relies on. You have been asked to document the process, but documentation takes time away from billable project work. Your performance review weights billable hours heavily.", options: ["Prioritise billable work entirely — documentation can wait indefinitely.", "Document the process fully in your own time (evenings/weekends) to avoid affecting billable hours.", "Raise the conflict with your manager, explain the long-term team risk of being a single point of failure, and agree on a schedule that balances documentation with billable time.", "Create only minimal documentation — just enough to say you've done it.", "Teach a colleague verbally instead of writing anything down."], best: 2, worst: 0, explanation: "Option C is best: communicates the business risk and finds a balanced solution. Option A is worst: ignores a real team dependency risk and is short-sighted." },
+  { scenario: "A client sends you an aggressive email complaining about the quality of work delivered by your team — some complaints are valid, others are unfair. Your manager is travelling and unreachable for 4 hours.", options: ["Forward the email to your manager and wait 4 hours before responding.", "Reply defensively, addressing each of the client's points.", "Acknowledge the email promptly, thank the client for their feedback, confirm you are reviewing the concerns and will respond in full within the hour, then brief your manager as soon as they're reachable.", "Escalate immediately to your manager's manager.", "Call the client to discuss the complaints verbally without involving your manager."], best: 2, worst: 3, explanation: "Option C is best: buys time professionally, keeps the client engaged. Option D is worst: unnecessary escalation over your manager's head." },
+  { scenario: "You are midway through an internship and realise you have been working on a task using the wrong methodology for two weeks. Starting again would take another week. You are not sure if anyone else knows.", options: ["Quietly restart using the correct method and hope nobody notices the delay.", "Inform your manager immediately, explain what happened, and present a plan for correcting the work.", "Submit the work knowing it uses the wrong method — the outcome might still be acceptable.", "Ask a colleague if they think anyone will notice, and decide based on their response.", "Ask to extend the deadline and restart without explaining why."], best: 1, worst: 2, explanation: "Option B is best: honest, proactive, and solution-oriented. Option C is worst: knowingly submitting flawed work is professionally dishonest." },
+  { scenario: "You notice a colleague consistently taking credit for the team's ideas in group meetings. It's affecting team morale and several people have mentioned it to you privately. The colleague is well-regarded by management.", options: ["Raise a formal complaint with HR immediately.", "Do nothing — it's not your problem and getting involved could harm your reputation.", "Speak privately and constructively with the colleague, sharing your observations and impact on the team.", "Bring it up in the next team meeting in front of everyone.", "Mention it to your manager in a one-to-one as a team dynamic concern, framing it as a process issue rather than a personal attack."], best: 4, worst: 3, explanation: "Option E is best: professional, addresses the structural issue without drama. Option D is worst: public confrontation." },
+  { scenario: "You receive feedback from a client that your written communication style is 'too technical and hard to follow'. You strongly believe your level of technical detail is appropriate and necessary.", options: ["Continue writing as you have — the client simply needs to raise their technical literacy.", "Adjust your writing style for this client while maintaining technical rigour — add plain-language summaries, define jargon, and ask for specific feedback on what is unclear.", "Ask your manager to handle all written communication with this client.", "Send the client a simpler version of all future documents but include the detailed version as an appendix.", "Tell the client that the technical detail is required and cannot be removed."], best: 1, worst: 0, explanation: "Option B is best: adapts to the client's needs while preserving quality. Option A is worst: dismissing client feedback is unprofessional." },
+  { scenario: "It is 10pm before a major deliverable is due. You have finished your section and it is good work. A teammate messages saying they are significantly behind and the whole submission may be incomplete without help.", options: ["It's their problem — you finished your part on time.", "Offer to help for an hour, then review your own work to ensure your contribution is still strong.", "Take over their section entirely and do it yourself.", "Tell your manager straight away so they're not surprised.", "Stay up all night helping without telling anyone, even if the quality suffers."], best: 1, worst: 4, explanation: "Option B is best: collaborative, bounded, and responsible. Option E is worst: sacrificing sleep and quality without communication leads to worse outcomes for everyone." }
 ];
 
-  let selectedDiff = 'average';
-  let currentQ = 0;
+  let selectedDiff = 'average', currentQ = 0;
   let answers = new Array(scenarios.length).fill(null).map(() => ({ best: null, worst: null }));
-  let timerInterval = null;
-  let secondsLeft = 30 * 60;
+  let timerInterval = null, secondsLeft = 30 * 60;
 
   function startGame() {
     document.getElementById('instructions').classList.add('hidden');
     document.getElementById('game-area').classList.remove('hidden');
-    renderQuestion(0);
-    startTimer();
+    renderQuestion(0); startTimer();
   }
 
   function startTimer() {
@@ -237,27 +108,21 @@ const scenarios = [
 
   function renderQuestion(idx) {
     currentQ = idx;
-    const q = scenarios[idx];
-    const saved = answers[idx];
+    const q = scenarios[idx]; const saved = answers[idx];
     document.getElementById('q-counter').textContent = `Scenario ${idx+1} of ${scenarios.length}`;
     document.getElementById('progress-bar').style.width = ((idx+1)/scenarios.length*100) + '%';
     document.getElementById('prev-btn').disabled = idx === 0;
     document.getElementById('next-btn').disabled = idx === scenarios.length - 1;
-
     let html = `<div class="question-card">
       <div class="question-number">Scenario ${idx+1}</div>
-      <div class="question-text" style="background:var(--bg3);border-left:3px solid var(--cappfinity, #00B894);padding:1rem;border-radius:0 var(--radius) var(--radius) 0;margin-bottom:1rem;font-size:0.92rem;line-height:1.7">${q.scenario}</div>
+      <div class="question-text" style="background:var(--bg3);border-left:3px solid #00B894;padding:1rem;border-radius:0 var(--radius) var(--radius) 0;margin-bottom:1rem;font-size:0.92rem;line-height:1.7">${q.scenario}</div>
       <p class="sjt-instruction">Select the <strong style="color:var(--success)">Most Effective</strong> and <strong style="color:var(--danger)">Least Effective</strong> response:</p>
       <div class="sjt-options">`;
-
     q.options.forEach((opt, i) => {
-      let cls = '';
-      let badge = String.fromCharCode(65 + i);
+      let cls = '', badge = String.fromCharCode(65 + i);
       if (saved.best === i) { cls = 'best'; badge = '✓ Best'; }
       else if (saved.worst === i) { cls = 'worst'; badge = '✗ Worst'; }
-      html += `<button class="sjt-option ${cls}" onclick="sjtSelect(${idx},${i},this)">
-        <span class="sjt-rank-badge">${badge}</span>${opt}
-      </button>`;
+      html += `<button class="sjt-option ${cls}" onclick="sjtSelect(${idx},${i},this)"><span class="sjt-rank-badge">${badge}</span>${opt}</button>`;
     });
     html += `</div></div>`;
     document.getElementById('question-area').innerHTML = html;
@@ -265,89 +130,50 @@ const scenarios = [
 
   function sjtSelect(qIdx, optIdx, el) {
     const saved = answers[qIdx];
-    const btns = document.querySelectorAll('.sjt-option');
     const letters = 'ABCDEFGHIJ';
-
-    if (saved.best === optIdx) {
-      saved.best = null;
-      el.classList.remove('best');
-      el.querySelector('.sjt-rank-badge').textContent = letters[optIdx];
-    } else if (saved.worst === optIdx) {
-      saved.worst = null;
-      el.classList.remove('worst');
-      el.querySelector('.sjt-rank-badge').textContent = letters[optIdx];
-    } else if (saved.best === null) {
-      saved.best = optIdx;
-      el.classList.add('best');
-      el.querySelector('.sjt-rank-badge').textContent = '✓ Best';
-    } else if (saved.worst === null && saved.best !== optIdx) {
-      saved.worst = optIdx;
-      el.classList.add('worst');
-      el.querySelector('.sjt-rank-badge').textContent = '✗ Worst';
-    }
+    if (saved.best === optIdx) { saved.best = null; el.classList.remove('best'); el.querySelector('.sjt-rank-badge').textContent = letters[optIdx]; }
+    else if (saved.worst === optIdx) { saved.worst = null; el.classList.remove('worst'); el.querySelector('.sjt-rank-badge').textContent = letters[optIdx]; }
+    else if (saved.best === null) { saved.best = optIdx; el.classList.add('best'); el.querySelector('.sjt-rank-badge').textContent = '✓ Best'; }
+    else if (saved.worst === null && saved.best !== optIdx) { saved.worst = optIdx; el.classList.add('worst'); el.querySelector('.sjt-rank-badge').textContent = '✗ Worst'; }
   }
 
-  function navigate(dir) {
-    const next = currentQ + dir;
-    if (next >= 0 && next < scenarios.length) renderQuestion(next);
-  }
+  function navigate(dir) { const next = currentQ + dir; if (next >= 0 && next < scenarios.length) renderQuestion(next); }
 
   function submitTest() {
     clearInterval(timerInterval);
     document.getElementById('game-area').classList.add('hidden');
     document.getElementById('results-area').classList.remove('hidden');
-
-    let score = 0;
-    const maxScore = scenarios.length * 2;
-    let reviewHtml = '';
-
+    let score = 0; const maxScore = scenarios.length * 2; let reviewHtml = '';
     scenarios.forEach((q, i) => {
       const a = answers[i];
-      const bestCorrect = a.best === q.best;
-      const worstCorrect = a.worst === q.worst;
-      const pts = (bestCorrect ? 1 : 0) + (worstCorrect ? 1 : 0);
-      score += pts;
-
+      const bestCorrect = a.best === q.best, worstCorrect = a.worst === q.worst;
+      const pts = (bestCorrect ? 1 : 0) + (worstCorrect ? 1 : 0); score += pts;
       reviewHtml += `<div class="question-card" style="margin-bottom:1rem">
-        <div class="question-number" style="color:${pts===2?'var(--success)':pts===1?'var(--warning)':'var(--danger)'}">
-          Scenario ${i+1} — ${pts}/2 points
-        </div>
-        <div style="font-size:0.85rem;background:var(--bg3);padding:0.75rem;border-radius:var(--radius);margin-bottom:0.75rem;line-height:1.6">${q.scenario}</div>
+        <div class="question-number" style="color:${pts===2?'var(--success)':pts===1?'var(--warning)':'var(--danger)'}">Scenario ${i+1} — ${pts}/2 points</div>
+        <div style="font-size:0.85rem;background:var(--bg3);padding:0.75rem;border-radius:var(--radius);margin-bottom:0.75rem">${q.scenario}</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;font-size:0.82rem">
-          <div>
-            <div style="color:var(--text-muted);margin-bottom:0.25rem">Your Best:</div>
-            <strong style="color:${bestCorrect?'var(--success)':'var(--danger)'}">${a.best !== null ? q.options[a.best] : 'Not selected'}</strong>
-          </div>
-          <div>
-            <div style="color:var(--text-muted);margin-bottom:0.25rem">Your Worst:</div>
-            <strong style="color:${worstCorrect?'var(--success)':'var(--danger)'}">${a.worst !== null ? q.options[a.worst] : 'Not selected'}</strong>
-          </div>`;
+          <div><div style="color:var(--text-muted)">Your Best:</div><strong style="color:${bestCorrect?'var(--success)':'var(--danger)'}">${a.best !== null ? q.options[a.best] : 'Not selected'}</strong></div>
+          <div><div style="color:var(--text-muted)">Your Worst:</div><strong style="color:${worstCorrect?'var(--success)':'var(--danger)'}">${a.worst !== null ? q.options[a.worst] : 'Not selected'}</strong></div>`;
       if (!bestCorrect) reviewHtml += `<div><div style="color:var(--text-muted)">Correct Best:</div><strong style="color:var(--success)">${q.options[q.best]}</strong></div>`;
       if (!worstCorrect) reviewHtml += `<div><div style="color:var(--text-muted)">Correct Worst:</div><strong style="color:var(--success)">${q.options[q.worst]}</strong></div>`;
       reviewHtml += `</div><div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.5rem">💡 ${q.explanation}</div></div>`;
     });
-
     document.getElementById('final-score').textContent = `${score} / ${maxScore}`;
     document.getElementById('review-area').innerHTML = reviewHtml;
-
-    const sjtScore = Math.round((score / maxScore) * 100);
-    loadLeaderboard(sjtScore, 'sjt');
+    loadLeaderboard(Math.round((score / maxScore) * 100), 'sjt');
   }
 
   function setDiff(btn) {
     document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected-diff'));
-    btn.classList.add('selected-diff');
-    selectedDiff = btn.dataset.d;
+    btn.classList.add('selected-diff'); selectedDiff = btn.dataset.d;
   }
 
   async function loadLeaderboard(userScore, gameName) {
     const res = await fetch('/sim/bot/leaderboard', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({score: userScore, difficulty: selectedDiff, game: gameName, count: 12})
     });
-    const data = await res.json();
-    const lb = data.leaderboard;
+    const data = await res.json(); const lb = data.leaderboard;
     let html = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.5rem">
       <h3 style="font-size:1rem;font-weight:700;margin-bottom:0.25rem">🏆 Leaderboard</h3>
       <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1rem">You ranked <strong style="color:var(--accent)">#${data.user_rank}</strong> out of ${data.total_candidates} — top <strong style="color:var(--accent)">${Math.round(100-data.percentile+100/data.total_candidates)}%</strong></p>
