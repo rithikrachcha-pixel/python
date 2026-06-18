@@ -75,159 +75,22 @@
 
 {% block scripts %}
 <script>
-// Each question: sequence of 4 cells (row), answer is the 4th (index 3) or displayed differently
-// We show 3 items + ? and 4 answer options. The emoji represent abstract shapes.
-// Rules are described via the pattern and explanation.
-
 const questions = [
-  {
-    type: "sequence",
-    label: "What comes next in the sequence?",
-    sequence: ["🔴", "🟠", "🟡", "?"],
-    options: ["🟢", "🔵", "🟡", "🟣"],
-    answer: 0,
-    explanation: "The sequence follows the rainbow order: Red → Orange → Yellow → Green."
-  },
-  {
-    type: "sequence",
-    label: "What comes next in the sequence?",
-    sequence: ["▲", "▲▲", "▲▲▲", "?"],
-    options: ["▲▲▲▲", "▲", "▲▲", "▲▲▲▲▲"],
-    answer: 0,
-    explanation: "Each step adds one triangle. After 3 triangles comes 4."
-  },
-  {
-    type: "matrix3x3",
-    label: "Which shape completes the 3×3 matrix?",
-    grid: [
-      ["🔵","🔵","🔵"],
-      ["🔵","🔵","🔵"],
-      ["🔵","🔵","?"]
-    ],
-    options: ["🔵", "🔴", "🟡", "⬛"],
-    answer: 0,
-    explanation: "All cells in the matrix are blue circles. The missing cell must also be a blue circle."
-  },
-  {
-    type: "matrix3x3",
-    label: "Which shape completes the 3×3 matrix?",
-    grid: [
-      ["🔴","🟠","🟡"],
-      ["🟢","🔵","🟣"],
-      ["⚫","⬜","?"]
-    ],
-    options: ["🟤", "🔴", "🟡", "🟢"],
-    answer: 0,
-    explanation: "The matrix moves through spectrum colours. After black and white comes brown (neutral)."
-  },
-  {
-    type: "sequence",
-    label: "What comes next in the sequence?",
-    sequence: ["⬜", "🔲", "⬛", "?"],
-    options: ["⬜", "🔲", "⬛", "🟦"],
-    answer: 0,
-    explanation: "The sequence cycles: white → grey → black → white (restart). The next is white (⬜)."
-  },
-  {
-    type: "matrix3x3",
-    label: "Which shape completes the 3×3 matrix?",
-    grid: [
-      ["◼","◼◼","◼◼◼"],
-      ["●","●●","●●●"],
-      ["▲","▲▲","?"]
-    ],
-    options: ["▲▲▲", "▲", "▲▲▲▲", "●●●"],
-    answer: 0,
-    explanation: "Each row: count increases 1→2→3. Each column: shape stays the same. Row 3: ▲, ▲▲, ▲▲▲."
-  },
-  {
-    type: "sequence",
-    label: "What comes next in the sequence?",
-    sequence: ["1️⃣", "2️⃣", "4️⃣", "?"],
-    options: ["5️⃣", "6️⃣", "7️⃣", "8️⃣"],
-    answer: 3,
-    explanation: "The sequence doubles: 1 → 2 → 4 → 8."
-  },
-  {
-    type: "matrix3x3",
-    label: "Which shape completes the 3×3 matrix?",
-    grid: [
-      ["🔺","🔺","🔺"],
-      ["🔶","🔶","🔶"],
-      ["🔷","🔷","?"]
-    ],
-    options: ["🔷", "🔺", "🔶", "🔹"],
-    answer: 0,
-    explanation: "Each row contains the same shape across all three cells. Row 3 uses blue diamonds (🔷)."
-  },
-  {
-    type: "sequence",
-    label: "What comes next in the sequence?",
-    sequence: ["🌑", "🌒", "🌓", "?"],
-    options: ["🌔", "🌕", "🌙", "🌑"],
-    answer: 0,
-    explanation: "The sequence follows moon phases: new → crescent → half → gibbous (🌔)."
-  },
-  {
-    type: "matrix3x3",
-    label: "Which shape completes the 3×3 matrix?",
-    grid: [
-      ["⬛","⬛","⬛"],
-      ["⬜","⬜","⬜"],
-      ["⬛","⬜","?"]
-    ],
-    options: ["⬛", "⬜", "🟦", "🟥"],
-    answer: 0,
-    explanation: "Column pattern: Col 1 = ⬛⬜⬛, Col 2 = ⬛⬜⬜, Col 3 follows ⬛⬜? — the alternating pattern continues with ⬛."
-  },
-  {
-    type: "sequence",
-    label: "What comes next in the sequence?",
-    sequence: ["🟦🟦🟦", "🟦🟦", "🟦", "?"],
-    options: ["🟦🟦🟦🟦", "🟦", "(empty)", "🟥"],
-    answer: 2,
-    explanation: "The sequence decreases by one blue square each step: 3 → 2 → 1 → 0 (empty)."
-  },
-  {
-    type: "matrix3x3",
-    label: "Which shape completes the 3×3 matrix?",
-    grid: [
-      ["🔴🔵","🔵🔴","🔴🔵"],
-      ["🟡🟢","🟢🟡","🟡🟢"],
-      ["🟠🟣","🟣🟠","?"]
-    ],
-    options: ["🟠🟣", "🟣🟠", "🔴🔵", "🟡🟢"],
-    answer: 0,
-    explanation: "Each row alternates between two colours in AB, BA, AB pattern. Row 3: 🟠🟣, 🟣🟠, 🟠🟣."
-  },
-  {
-    type: "sequence",
-    label: "What comes next in the sequence?",
-    sequence: ["⬆️", "➡️", "⬇️", "?"],
-    options: ["⬅️", "⬆️", "↗️", "↩️"],
-    answer: 0,
-    explanation: "The arrows rotate 90° clockwise: up → right → down → left (⬅️)."
-  },
-  {
-    type: "matrix3x3",
-    label: "Which shape completes the 3×3 matrix?",
-    grid: [
-      ["1️⃣","2️⃣","3️⃣"],
-      ["4️⃣","5️⃣","6️⃣"],
-      ["7️⃣","8️⃣","?"]
-    ],
-    options: ["9️⃣", "0️⃣", "1️⃣", "🔟"],
-    answer: 0,
-    explanation: "The matrix contains consecutive numbers 1–9. The missing cell is 9."
-  },
-  {
-    type: "sequence",
-    label: "What comes next in the sequence?",
-    sequence: ["🌱", "🌿", "🌲", "?"],
-    options: ["🌳", "🌵", "🍂", "🌾"],
-    answer: 0,
-    explanation: "The sequence shows plant growth stages: sprout → herb → pine → large tree (🌳)."
-  }
+  { type: "sequence", label: "What comes next in the sequence?", sequence: ["🔴", "🟠", "🟡", "?"], options: ["🟢", "🔵", "🟡", "🟣"], answer: 0, explanation: "The sequence follows the rainbow order: Red → Orange → Yellow → Green." },
+  { type: "sequence", label: "What comes next in the sequence?", sequence: ["▲", "▲▲", "▲▲▲", "?"], options: ["▲▲▲▲", "▲", "▲▲", "▲▲▲▲▲"], answer: 0, explanation: "Each step adds one triangle. After 3 triangles comes 4." },
+  { type: "matrix3x3", label: "Which shape completes the 3×3 matrix?", grid: [["🔵","🔵","🔵"],["🔵","🔵","🔵"],["🔵","🔵","?"]], options: ["🔵", "🔴", "🟡", "⬛"], answer: 0, explanation: "All cells in the matrix are blue circles. The missing cell must also be a blue circle." },
+  { type: "matrix3x3", label: "Which shape completes the 3×3 matrix?", grid: [["🔴","🟠","🟡"],["🟢","🔵","🟣"],["⚫","⬜","?"]], options: ["🟤", "🔴", "🟡", "🟢"], answer: 0, explanation: "The matrix moves through spectrum colours. After black and white comes brown (neutral)." },
+  { type: "sequence", label: "What comes next in the sequence?", sequence: ["⬜", "🔲", "⬛", "?"], options: ["⬜", "🔲", "⬛", "🟦"], answer: 0, explanation: "The sequence cycles: white → grey → black → white (restart). The next is white (⬜)." },
+  { type: "matrix3x3", label: "Which shape completes the 3×3 matrix?", grid: [["◼","◼◼","◼◼◼"],["●","●●","●●●"],["▲","▲▲","?"]], options: ["▲▲▲", "▲", "▲▲▲▲", "●●●"], answer: 0, explanation: "Each row: count increases 1→2→3. Each column: shape stays the same. Row 3: ▲, ▲▲, ▲▲▲." },
+  { type: "sequence", label: "What comes next in the sequence?", sequence: ["1️⃣", "2️⃣", "4️⃣", "?"], options: ["5️⃣", "6️⃣", "7️⃣", "8️⃣"], answer: 3, explanation: "The sequence doubles: 1 → 2 → 4 → 8." },
+  { type: "matrix3x3", label: "Which shape completes the 3×3 matrix?", grid: [["🔺","🔺","🔺"],["🔶","🔶","🔶"],["🔷","🔷","?"]], options: ["🔷", "🔺", "🔶", "🔹"], answer: 0, explanation: "Each row contains the same shape across all three cells. Row 3 uses blue diamonds (🔷)." },
+  { type: "sequence", label: "What comes next in the sequence?", sequence: ["🌑", "🌒", "🌓", "?"], options: ["🌔", "🌕", "🌙", "🌑"], answer: 0, explanation: "The sequence follows moon phases: new → crescent → half → gibbous (🌔)." },
+  { type: "matrix3x3", label: "Which shape completes the 3×3 matrix?", grid: [["⬛","⬛","⬛"],["⬜","⬜","⬜"],["⬛","⬜","?"]], options: ["⬛", "⬜", "🟦", "🟥"], answer: 0, explanation: "Column pattern: Col 1 = ⬛⬜⬛, Col 2 = ⬛⬜⬜, Col 3 follows ⬛⬜? — the alternating pattern continues with ⬛." },
+  { type: "sequence", label: "What comes next in the sequence?", sequence: ["🟦🟦🟦", "🟦🟦", "🟦", "?"], options: ["🟦🟦🟦🟦", "🟦", "(empty)", "🟥"], answer: 2, explanation: "The sequence decreases by one blue square each step: 3 → 2 → 1 → 0 (empty)." },
+  { type: "matrix3x3", label: "Which shape completes the 3×3 matrix?", grid: [["🔴🔵","🔵🔴","🔴🔵"],["🟡🟢","🟢🟡","🟡🟢"],["🟠🟣","🟣🟠","?"]], options: ["🟠🟣", "🟣🟠", "🔴🔵", "🟡🟢"], answer: 0, explanation: "Each row alternates between two colours in AB, BA, AB pattern. Row 3: 🟠🟣, 🟣🟠, 🟠🟣." },
+  { type: "sequence", label: "What comes next in the sequence?", sequence: ["⬆️", "➡️", "⬇️", "?"], options: ["⬅️", "⬆️", "↗️", "↩️"], answer: 0, explanation: "The arrows rotate 90° clockwise: up → right → down → left (⬅️)." },
+  { type: "matrix3x3", label: "Which shape completes the 3×3 matrix?", grid: [["1️⃣","2️⃣","3️⃣"],["4️⃣","5️⃣","6️⃣"],["7️⃣","8️⃣","?"]], options: ["9️⃣", "0️⃣", "1️⃣", "🔟"], answer: 0, explanation: "The matrix contains consecutive numbers 1–9. The missing cell is 9." },
+  { type: "sequence", label: "What comes next in the sequence?", sequence: ["🌱", "🌿", "🌲", "?"], options: ["🌳", "🌵", "🍂", "🌾"], answer: 0, explanation: "The sequence shows plant growth stages: sprout → herb → pine → large tree (🌳)." }
 ];
 
   let selectedDiff = 'average';
@@ -268,15 +131,7 @@ const questions = [
       patternHtml = `<div style="display:flex;gap:0.5rem;justify-content:center;flex-wrap:wrap;margin-bottom:1.5rem">`;
       q.sequence.forEach((cell, i) => {
         const isQ = cell === '?';
-        patternHtml += `<div style="
-          width:72px;height:72px;
-          background:${isQ?'rgba(77,159,255,0.1)':'var(--bg3)'};
-          border:2px ${isQ?'dashed rgba(77,159,255,0.6)':'solid var(--border)'};
-          border-radius:10px;
-          display:flex;align-items:center;justify-content:center;
-          font-size:1.6rem;
-          color:${isQ?'var(--accent)':'inherit'}
-        ">${isQ?'?':cell}</div>`;
+        patternHtml += `<div style="width:72px;height:72px;background:${isQ?'rgba(77,159,255,0.1)':'var(--bg3)'};border:2px ${isQ?'dashed rgba(77,159,255,0.6)':'solid var(--border)'};border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;color:${isQ?'var(--accent)':'inherit'}">${isQ?'?':cell}</div>`;
       });
       patternHtml += `</div>`;
     } else if (q.type === 'matrix3x3') {
@@ -284,15 +139,7 @@ const questions = [
       q.grid.forEach(row => {
         row.forEach(cell => {
           const isQ = cell === '?';
-          patternHtml += `<div style="
-            width:72px;height:72px;
-            background:${isQ?'rgba(77,159,255,0.1)':'var(--bg3)'};
-            border:2px ${isQ?'dashed rgba(77,159,255,0.6)':'solid var(--border)'};
-            border-radius:8px;
-            display:flex;align-items:center;justify-content:center;
-            font-size:1.5rem;
-            color:${isQ?'var(--accent)':'inherit'}
-          ">${isQ?'?':cell}</div>`;
+          patternHtml += `<div style="width:72px;height:72px;background:${isQ?'rgba(77,159,255,0.1)':'var(--bg3)'};border:2px ${isQ?'dashed rgba(77,159,255,0.6)':'solid var(--border)'};border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:${isQ?'var(--accent)':'inherit'}">${isQ?'?':cell}</div>`;
         });
       });
       patternHtml += `</div>`;
@@ -346,19 +193,14 @@ const questions = [
           <strong style="color:${correct?'var(--success)':'var(--danger)'}">${userAns !== null ? q.options[userAns] : 'Not answered'}</strong>
         </div>`;
       if (!correct) {
-        reviewHtml += `<div style="font-size:0.85rem;text-align:left">
-          <span style="color:var(--text-muted)">Correct: </span>
-          <strong style="color:var(--success)">${q.options[q.answer]}</strong>
-        </div>`;
+        reviewHtml += `<div style="font-size:0.85rem;text-align:left"><span style="color:var(--text-muted)">Correct: </span><strong style="color:var(--success)">${q.options[q.answer]}</strong></div>`;
       }
       reviewHtml += `<div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.3rem;text-align:left">💡 ${q.explanation}</div></div>`;
     });
 
     document.getElementById('final-score').textContent = `${score} / ${questions.length}`;
     document.getElementById('review-area').innerHTML = reviewHtml;
-
-    const inductiveScore = Math.round((score / questions.length) * 100);
-    loadLeaderboard(inductiveScore, 'inductive');
+    loadLeaderboard(Math.round((score / questions.length) * 100), 'inductive');
   }
 
   function setDiff(btn) {

@@ -76,141 +76,26 @@
 {% block scripts %}
 <script>
 const questions = [
-  {
-    q: "What is the time complexity of binary search on a sorted array of n elements?",
-    opts: ["O(n)", "O(n log n)", "O(log n)", "O(1)"],
-    ans: 2,
-    exp: "Binary search halves the search space each step, giving O(log n) time complexity."
-  },
-  {
-    q: "What does the following Python code print?\n\ndef f(n):\n    if n <= 1: return n\n    return f(n-1) + f(n-2)\n\nprint(f(6))",
-    opts: ["6", "8", "13", "21"],
-    ans: 1,
-    exp: "f is the Fibonacci function. f(6) = f(5)+f(4) = 5+3 = 8."
-  },
-  {
-    q: "Which data structure would be most efficient for implementing a 'recently used' cache that evicts the least recently used item?",
-    opts: ["Stack", "Queue", "Hash map + Doubly linked list (LRU Cache)", "Binary search tree"],
-    ans: 2,
-    exp: "LRU cache is classically implemented with a hash map for O(1) lookup and a doubly linked list to track recency."
-  },
-  {
-    q: "What is the space complexity of merge sort?",
-    opts: ["O(1)", "O(log n)", "O(n)", "O(n log n)"],
-    ans: 2,
-    exp: "Merge sort requires O(n) auxiliary space to hold the merged halves."
-  },
-  {
-    q: "In Python, what does the following snippet output?\n\nx = [1, 2, 3]\ny = x\ny.append(4)\nprint(x)",
-    opts: ["[1, 2, 3]", "[1, 2, 3, 4]", "[4]", "Error"],
-    ans: 1,
-    exp: "y = x assigns by reference (both point to the same list), so appending to y also modifies x."
-  },
-  {
-    q: "Which sorting algorithm has the best worst-case time complexity?",
-    opts: ["Quick sort — O(n log n)", "Bubble sort — O(n²)", "Merge sort — O(n log n)", "Insertion sort — O(n²)"],
-    ans: 2,
-    exp: "Merge sort guarantees O(n log n) in all cases. Quick sort degrades to O(n²) in the worst case."
-  },
-  {
-    q: "Given a stack (LIFO), if you push 1, 2, 3 and then pop twice, what is the top of the stack?",
-    opts: ["1", "2", "3", "Empty"],
-    ans: 0,
-    exp: "Push order: 1, 2, 3. Pop removes 3, then 2. Top is now 1."
-  },
-  {
-    q: "What SQL query retrieves all employees who earn more than the average salary?\n",
-    opts: [
-      "SELECT * FROM employees WHERE salary > AVG(salary)",
-      "SELECT * FROM employees WHERE salary > (SELECT AVG(salary) FROM employees)",
-      "SELECT * FROM employees HAVING salary > AVG(salary)",
-      "SELECT * FROM employees WHERE salary = MAX(salary)"
-    ],
-    ans: 1,
-    exp: "Aggregate functions cannot be used directly in WHERE. A subquery is needed: WHERE salary > (SELECT AVG(salary) FROM employees)."
-  },
-  {
-    q: "What is the output of this JavaScript snippet?\n\nconsole.log(typeof null);",
-    opts: ["'null'", "'object'", "'undefined'", "'boolean'"],
-    ans: 1,
-    exp: "typeof null returns 'object' — a well-known JavaScript quirk dating from the language's origin."
-  },
-  {
-    q: "In object-oriented programming, which principle does 'a Square class should not inherit from a Rectangle class if it breaks the contract of Rectangle's methods' illustrate?",
-    opts: ["Single Responsibility Principle", "Open/Closed Principle", "Liskov Substitution Principle", "Interface Segregation Principle"],
-    ans: 2,
-    exp: "LSP states that subclasses must be substitutable for their base class without breaking program correctness — Square/Rectangle is the canonical violation example."
-  },
-  {
-    q: "What is the time complexity of inserting an element into a hash table (average case)?",
-    opts: ["O(log n)", "O(n)", "O(1)", "O(n log n)"],
-    ans: 2,
-    exp: "Hash tables provide O(1) average-case insertion via direct-address hashing."
-  },
-  {
-    q: "Which traversal of a binary search tree visits nodes in ascending sorted order?",
-    opts: ["Pre-order", "In-order", "Post-order", "Level-order (BFS)"],
-    ans: 1,
-    exp: "In-order traversal (left → root → right) visits BST nodes in ascending order."
-  },
-  {
-    q: "What does the following Python generator produce?\n\ndef gen():\n    for i in range(3):\n        yield i * i\n\nprint(list(gen()))",
-    opts: ["[0, 1, 2]", "[0, 1, 4]", "[1, 4, 9]", "[0, 2, 4]"],
-    ans: 1,
-    exp: "i takes values 0, 1, 2; i*i gives 0, 1, 4."
-  },
-  {
-    q: "A system must handle 10,000 concurrent connections with low latency. Which architecture is most appropriate?",
-    opts: [
-      "Single-threaded synchronous server",
-      "Event-driven asynchronous server (e.g. Node.js / asyncio)",
-      "One new process per connection",
-      "Polling with a fixed delay loop"
-    ],
-    ans: 1,
-    exp: "Event-driven async servers handle many concurrent connections efficiently with a single thread using non-blocking I/O — far more scalable than per-connection processes."
-  },
-  {
-    q: "What is the output?\n\nprint([x for x in range(5) if x % 2 == 0])",
-    opts: ["[1, 3]", "[0, 2, 4]", "[0, 1, 2, 3, 4]", "[2, 4]"],
-    ans: 1,
-    exp: "Range(5) = 0,1,2,3,4; keeping even numbers gives [0, 2, 4]."
-  },
-  {
-    q: "Depth-first search (DFS) on a graph uses which data structure internally (or via recursion)?",
-    opts: ["Queue", "Priority queue (heap)", "Stack", "Hash map"],
-    ans: 2,
-    exp: "DFS uses a stack (explicitly or via the call stack in recursion) to track nodes to visit."
-  },
-  {
-    q: "Which of the following is NOT a stable sorting algorithm?",
-    opts: ["Merge sort", "Bubble sort", "Insertion sort", "Quick sort (standard)"],
-    ans: 3,
-    exp: "Standard quick sort is not stable — equal elements may be reordered. Merge, bubble, and insertion sort are all stable."
-  },
-  {
-    q: "In a relational database, what does a FOREIGN KEY constraint enforce?",
-    opts: [
-      "That the column contains unique values",
-      "That every value in the column exists in a referenced column of another table",
-      "That the column cannot be NULL",
-      "That the column is indexed for fast lookup"
-    ],
-    ans: 1,
-    exp: "A FOREIGN KEY ensures referential integrity — every value must match a value in the referenced primary key column."
-  },
-  {
-    q: "What design pattern provides a single global instance of a class and a global access point to it?",
-    opts: ["Factory", "Observer", "Singleton", "Decorator"],
-    ans: 2,
-    exp: "The Singleton pattern restricts instantiation to one object and provides a global access point."
-  },
-  {
-    q: "What is the worst-case time complexity of finding an element in a balanced binary search tree with n nodes?",
-    opts: ["O(1)", "O(log n)", "O(n)", "O(n²)"],
-    ans: 1,
-    exp: "A balanced BST has height O(log n), so search takes O(log n) in the worst case."
-  }
+  { q: "What is the time complexity of binary search on a sorted array of n elements?", opts: ["O(n)", "O(n log n)", "O(log n)", "O(1)"], ans: 2, exp: "Binary search halves the search space each step, giving O(log n) time complexity." },
+  { q: "What does the following Python code print?\n\ndef f(n):\n    if n <= 1: return n\n    return f(n-1) + f(n-2)\n\nprint(f(6))", opts: ["6", "8", "13", "21"], ans: 1, exp: "f is the Fibonacci function. f(6) = f(5)+f(4) = 5+3 = 8." },
+  { q: "Which data structure would be most efficient for implementing a 'recently used' cache that evicts the least recently used item?", opts: ["Stack", "Queue", "Hash map + Doubly linked list (LRU Cache)", "Binary search tree"], ans: 2, exp: "LRU cache is classically implemented with a hash map for O(1) lookup and a doubly linked list to track recency." },
+  { q: "What is the space complexity of merge sort?", opts: ["O(1)", "O(log n)", "O(n)", "O(n log n)"], ans: 2, exp: "Merge sort requires O(n) auxiliary space to hold the merged halves." },
+  { q: "In Python, what does the following snippet output?\n\nx = [1, 2, 3]\ny = x\ny.append(4)\nprint(x)", opts: ["[1, 2, 3]", "[1, 2, 3, 4]", "[4]", "Error"], ans: 1, exp: "y = x assigns by reference (both point to the same list), so appending to y also modifies x." },
+  { q: "Which sorting algorithm has the best worst-case time complexity?", opts: ["Quick sort — O(n log n)", "Bubble sort — O(n²)", "Merge sort — O(n log n)", "Insertion sort — O(n²)"], ans: 2, exp: "Merge sort guarantees O(n log n) in all cases. Quick sort degrades to O(n²) in the worst case." },
+  { q: "Given a stack (LIFO), if you push 1, 2, 3 and then pop twice, what is the top of the stack?", opts: ["1", "2", "3", "Empty"], ans: 0, exp: "Push order: 1, 2, 3. Pop removes 3, then 2. Top is now 1." },
+  { q: "What SQL query retrieves all employees who earn more than the average salary?\n", opts: ["SELECT * FROM employees WHERE salary > AVG(salary)", "SELECT * FROM employees WHERE salary > (SELECT AVG(salary) FROM employees)", "SELECT * FROM employees HAVING salary > AVG(salary)", "SELECT * FROM employees WHERE salary = MAX(salary)"], ans: 1, exp: "Aggregate functions cannot be used directly in WHERE. A subquery is needed: WHERE salary > (SELECT AVG(salary) FROM employees)." },
+  { q: "What is the output of this JavaScript snippet?\n\nconsole.log(typeof null);", opts: ["'null'", "'object'", "'undefined'", "'boolean'"], ans: 1, exp: "typeof null returns 'object' — a well-known JavaScript quirk dating from the language's origin." },
+  { q: "In object-oriented programming, which principle does 'a Square class should not inherit from a Rectangle class if it breaks the contract of Rectangle's methods' illustrate?", opts: ["Single Responsibility Principle", "Open/Closed Principle", "Liskov Substitution Principle", "Interface Segregation Principle"], ans: 2, exp: "LSP states that subclasses must be substitutable for their base class without breaking program correctness — Square/Rectangle is the canonical violation example." },
+  { q: "What is the time complexity of inserting an element into a hash table (average case)?", opts: ["O(log n)", "O(n)", "O(1)", "O(n log n)"], ans: 2, exp: "Hash tables provide O(1) average-case insertion via direct-address hashing." },
+  { q: "Which traversal of a binary search tree visits nodes in ascending sorted order?", opts: ["Pre-order", "In-order", "Post-order", "Level-order (BFS)"], ans: 1, exp: "In-order traversal (left → root → right) visits BST nodes in ascending order." },
+  { q: "What does the following Python generator produce?\n\ndef gen():\n    for i in range(3):\n        yield i * i\n\nprint(list(gen()))", opts: ["[0, 1, 2]", "[0, 1, 4]", "[1, 4, 9]", "[0, 2, 4]"], ans: 1, exp: "i takes values 0, 1, 2; i*i gives 0, 1, 4." },
+  { q: "A system must handle 10,000 concurrent connections with low latency. Which architecture is most appropriate?", opts: ["Single-threaded synchronous server", "Event-driven asynchronous server (e.g. Node.js / asyncio)", "One new process per connection", "Polling with a fixed delay loop"], ans: 1, exp: "Event-driven async servers handle many concurrent connections efficiently with a single thread using non-blocking I/O — far more scalable than per-connection processes." },
+  { q: "What is the output?\n\nprint([x for x in range(5) if x % 2 == 0])", opts: ["[1, 3]", "[0, 2, 4]", "[0, 1, 2, 3, 4]", "[2, 4]"], ans: 1, exp: "Range(5) = 0,1,2,3,4; keeping even numbers gives [0, 2, 4]." },
+  { q: "Depth-first search (DFS) on a graph uses which data structure internally (or via recursion)?", opts: ["Queue", "Priority queue (heap)", "Stack", "Hash map"], ans: 2, exp: "DFS uses a stack (explicitly or via the call stack in recursion) to track nodes to visit." },
+  { q: "Which of the following is NOT a stable sorting algorithm?", opts: ["Merge sort", "Bubble sort", "Insertion sort", "Quick sort (standard)"], ans: 3, exp: "Standard quick sort is not stable — equal elements may be reordered. Merge, bubble, and insertion sort are all stable." },
+  { q: "In a relational database, what does a FOREIGN KEY constraint enforce?", opts: ["That the column contains unique values", "That every value in the column exists in a referenced column of another table", "That the column cannot be NULL", "That the column is indexed for fast lookup"], ans: 1, exp: "A FOREIGN KEY ensures referential integrity — every value must match a value in the referenced primary key column." },
+  { q: "What design pattern provides a single global instance of a class and a global access point to it?", opts: ["Factory", "Observer", "Singleton", "Decorator"], ans: 2, exp: "The Singleton pattern restricts instantiation to one object and provides a global access point." },
+  { q: "What is the worst-case time complexity of finding an element in a balanced binary search tree with n nodes?", opts: ["O(1)", "O(log n)", "O(n)", "O(n²)"], ans: 1, exp: "A balanced BST has height O(log n), so search takes O(log n) in the worst case." }
 ];
 
 let currentQ = 0;
@@ -263,11 +148,8 @@ function renderQuestion(idx) {
 
   q.opts.forEach((opt, i) => {
     const sel = answers[idx] === i ? 'selected' : '';
-    const optText = opt.includes('\n')
-      ? `<code style="font-family:monospace">${opt}</code>`
-      : opt;
     html += `<li><button class="option-btn ${sel}" onclick="selectAnswer(${idx},${i},this)">
-      <span class="option-letter">${String.fromCharCode(65+i)}</span>${optText}
+      <span class="option-letter">${String.fromCharCode(65+i)}</span>${opt}
     </button></li>`;
   });
   html += `</ul></div>`;
@@ -308,10 +190,7 @@ function submitTest() {
         <strong style="color:${correct?'var(--success)':'var(--danger)'}">${userAnsIdx !== null ? q.opts[userAnsIdx] : 'Not answered'}</strong>
       </div>`;
     if (!correct) {
-      reviewHtml += `<div style="font-size:0.85rem;margin-top:0.2rem">
-        <span style="color:var(--text-muted)">Correct: </span>
-        <strong style="color:var(--success)">${q.opts[q.ans]}</strong>
-      </div>`;
+      reviewHtml += `<div style="font-size:0.85rem;margin-top:0.2rem"><span style="color:var(--text-muted)">Correct: </span><strong style="color:var(--success)">${q.opts[q.ans]}</strong></div>`;
     }
     reviewHtml += `<div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.3rem">💡 ${q.exp}</div></div>`;
   });

@@ -45,38 +45,19 @@
 
   <div id="game-area" class="hidden">
     <div class="hud">
-      <div class="hud-item">
-        <div class="hud-value" id="balloon-num">1</div>
-        <div class="hud-label">Balloon</div>
-      </div>
-      <div class="hud-item">
-        <div class="hud-value" id="current-pumps">0</div>
-        <div class="hud-label">Pumps</div>
-      </div>
-      <div class="hud-item">
-        <div class="hud-value" id="current-earn" style="color:var(--warning)">$0.00</div>
-        <div class="hud-label">This Balloon</div>
-      </div>
-      <div class="hud-item">
-        <div class="hud-value" id="total-earn" style="color:var(--success)">$0.00</div>
-        <div class="hud-label">Total Banked</div>
-      </div>
+      <div class="hud-item"><div class="hud-value" id="balloon-num">1</div><div class="hud-label">Balloon</div></div>
+      <div class="hud-item"><div class="hud-value" id="current-pumps">0</div><div class="hud-label">Pumps</div></div>
+      <div class="hud-item"><div class="hud-value" id="current-earn" style="color:var(--warning)">$0.00</div><div class="hud-label">This Balloon</div></div>
+      <div class="hud-item"><div class="hud-value" id="total-earn" style="color:var(--success)">$0.00</div><div class="hud-label">Total Banked</div></div>
     </div>
-
     <div class="game-arena" id="arena">
-      <div class="balloon-container">
-        <div id="balloon" class="balloon" style="width:80px;height:80px"></div>
-      </div>
+      <div class="balloon-container"><div id="balloon" class="balloon" style="width:80px;height:80px"></div></div>
     </div>
-
-    <div class="balloon-controls" style="justify-content:center; margin-top:1.5rem">
+    <div class="balloon-controls" style="justify-content:center;margin-top:1.5rem">
       <button id="btn-pump" class="btn btn-primary btn-lg" onclick="pump()">💨 Pump (+$0.05)</button>
       <button id="btn-collect" class="btn btn-success btn-lg" onclick="collect()">✅ Collect &amp; Next</button>
     </div>
-
-    <p class="text-center text-muted mt-2" style="font-size:0.82rem">
-      Press <kbd>Space</kbd> to pump &nbsp;·&nbsp; <kbd>Enter</kbd> to collect
-    </p>
+    <p class="text-center text-muted mt-2" style="font-size:0.82rem">Press <kbd>Space</kbd> to pump &nbsp;·&nbsp; <kbd>Enter</kbd> to collect</p>
   </div>
 
   <div id="results-area" class="hidden" style="text-align:center;padding:2rem">
@@ -85,22 +66,10 @@
     <div class="score-display" id="final-total">$0.00</div>
     <p class="text-muted">Total Earned</p>
     <div class="results-grid" style="max-width:500px;margin:1.5rem auto">
-      <div class="result-card">
-        <div class="rc-value" id="r-avg-pumps">0</div>
-        <div class="rc-label">Avg Pumps / Balloon</div>
-      </div>
-      <div class="result-card">
-        <div class="rc-value" id="r-pops">0</div>
-        <div class="rc-label">Balloons Popped</div>
-      </div>
-      <div class="result-card">
-        <div class="rc-value" id="r-collects">0</div>
-        <div class="rc-label">Successful Collects</div>
-      </div>
-      <div class="result-card">
-        <div class="rc-value" id="r-profile">—</div>
-        <div class="rc-label">Risk Profile</div>
-      </div>
+      <div class="result-card"><div class="rc-value" id="r-avg-pumps">0</div><div class="rc-label">Avg Pumps / Balloon</div></div>
+      <div class="result-card"><div class="rc-value" id="r-pops">0</div><div class="rc-label">Balloons Popped</div></div>
+      <div class="result-card"><div class="rc-value" id="r-collects">0</div><div class="rc-label">Successful Collects</div></div>
+      <div class="result-card"><div class="rc-value" id="r-profile">—</div><div class="rc-label">Risk Profile</div></div>
     </div>
     <div class="notice" id="profile-desc" style="max-width:500px;margin:0 auto"></div>
     <div id="leaderboard-area" style="max-width:600px;margin:1.5rem auto;text-align:left"></div>
@@ -116,35 +85,22 @@
 <script>
   const MAX_BALLOONS = 20;
   const EARN_PER_PUMP = 0.05;
-
   let selectedDiff = 'average';
-  let balloonNum = 0;
-  let pumps = 0;
-  let currentEarn = 0;
-  let totalEarned = 0;
-  let pops = 0;
-  let collects = 0;
-  let allPumps = [];
-  let gameRunning = false;
+  let balloonNum = 0, pumps = 0, currentEarn = 0, totalEarned = 0, pops = 0, collects = 0;
+  let allPumps = [], gameRunning = false;
 
-  // Pop probability grows with pumps (logistic style)
-  function popChance(p) {
-    return 1 - Math.pow(0.95, p);
-  }
+  function popChance(p) { return 1 - Math.pow(0.95, p); }
 
   function startGame() {
     document.getElementById('instructions').classList.add('hidden');
     document.getElementById('game-area').classList.remove('hidden');
-    gameRunning = true;
-    nextBalloon();
+    gameRunning = true; nextBalloon();
   }
 
   function nextBalloon() {
     balloonNum++;
     if (balloonNum > MAX_BALLOONS) { endGame(); return; }
-    pumps = 0; currentEarn = 0;
-    updateHUD();
-    resetBalloon();
+    pumps = 0; currentEarn = 0; updateHUD(); resetBalloon();
     document.getElementById('btn-pump').disabled = false;
     document.getElementById('btn-collect').disabled = false;
   }
@@ -165,9 +121,7 @@
     const b = document.getElementById('balloon');
     if (!b) return;
     const size = Math.min(80 + pumps * 8, 280);
-    b.style.width = size + 'px';
-    b.style.height = size + 'px';
-    // colour shift red->yellow as it gets bigger
+    b.style.width = size + 'px'; b.style.height = size + 'px';
     const r = Math.min(255, 180 + pumps * 3);
     const g = Math.max(30, 107 - pumps * 4);
     b.style.background = `radial-gradient(circle at 35% 35%, rgba(255,255,255,0.4), transparent 60%), linear-gradient(135deg, rgb(${r},${g},80), rgb(${r-20},${g-20},40))`;
@@ -175,102 +129,63 @@
 
   function pump() {
     if (!gameRunning) return;
-    const chance = popChance(pumps + 1);
-    if (Math.random() < chance) {
-      popBalloon();
-    } else {
-      pumps++;
-      currentEarn = pumps * EARN_PER_PUMP;
-      updateHUD();
-      updateBalloonSize();
-    }
+    if (Math.random() < popChance(pumps + 1)) { popBalloon(); }
+    else { pumps++; currentEarn = pumps * EARN_PER_PUMP; updateHUD(); updateBalloonSize(); }
   }
 
   function popBalloon() {
-    allPumps.push(pumps);
-    pops++;
+    allPumps.push(pumps); pops++;
     document.getElementById('btn-pump').disabled = true;
     document.getElementById('btn-collect').disabled = true;
-
-    const arena = document.getElementById('arena');
-    arena.innerHTML = '<div class="balloon-pop">💥</div>';
+    document.getElementById('arena').innerHTML = '<div class="balloon-pop">💥</div>';
     showFeedback('💥');
-
-    setTimeout(() => {
-      pumps = 0; currentEarn = 0;
-      updateHUD();
-      if (balloonNum < MAX_BALLOONS) nextBalloon();
-      else endGame();
-    }, 1200);
+    setTimeout(() => { pumps = 0; currentEarn = 0; updateHUD(); if (balloonNum < MAX_BALLOONS) nextBalloon(); else endGame(); }, 1200);
   }
 
   function collect() {
     if (!gameRunning || pumps === 0) return;
-    allPumps.push(pumps);
-    collects++;
-    totalEarned += currentEarn;
-    showFeedback('✅');
-    updateHUD();
-
+    allPumps.push(pumps); collects++; totalEarned += currentEarn;
+    showFeedback('✅'); updateHUD();
     document.getElementById('btn-pump').disabled = true;
     document.getElementById('btn-collect').disabled = true;
-    setTimeout(() => {
-      if (balloonNum < MAX_BALLOONS) nextBalloon();
-      else endGame();
-    }, 600);
+    setTimeout(() => { if (balloonNum < MAX_BALLOONS) nextBalloon(); else endGame(); }, 600);
   }
 
   function showFeedback(emoji) {
-    const el = document.createElement('div');
-    el.className = 'feedback-overlay';
-    el.textContent = emoji;
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 700);
+    const el = document.createElement('div'); el.className = 'feedback-overlay'; el.textContent = emoji;
+    document.body.appendChild(el); setTimeout(() => el.remove(), 700);
   }
 
   function endGame() {
     gameRunning = false;
     document.getElementById('game-area').classList.add('hidden');
     document.getElementById('results-area').classList.remove('hidden');
-
     const avgPumps = allPumps.length ? (allPumps.reduce((a,b)=>a+b,0)/allPumps.length).toFixed(1) : 0;
     document.getElementById('final-total').textContent = '$' + totalEarned.toFixed(2);
     document.getElementById('r-avg-pumps').textContent = avgPumps;
     document.getElementById('r-pops').textContent = pops;
     document.getElementById('r-collects').textContent = collects;
-
     let profile, desc;
-    if (avgPumps < 5) {
-      profile = 'Risk-Averse'; desc = 'You tend to be very cautious and prefer certainty over potential gain. Firms seeking risk-tolerant candidates may view this differently to conservative roles.';
-    } else if (avgPumps < 12) {
-      profile = 'Balanced'; desc = 'You show a healthy balance between caution and risk-taking — a trait valued across most professional environments.';
-    } else if (avgPumps < 20) {
-      profile = 'Risk-Tolerant'; desc = 'You are comfortable with risk and pursue higher rewards. This is valued in trading, consulting, and entrepreneurial roles.';
-    } else {
-      profile = 'High-Risk Taker'; desc = 'You pump aggressively, suggesting a very high risk appetite. This can be a strength in certain roles but may indicate impulsivity.';
-    }
-
+    if (avgPumps < 5) { profile = 'Risk-Averse'; desc = 'You tend to be very cautious and prefer certainty over potential gain.'; }
+    else if (avgPumps < 12) { profile = 'Balanced'; desc = 'You show a healthy balance between caution and risk-taking — a trait valued across most professional environments.'; }
+    else if (avgPumps < 20) { profile = 'Risk-Tolerant'; desc = 'You are comfortable with risk and pursue higher rewards. This is valued in trading, consulting, and entrepreneurial roles.'; }
+    else { profile = 'High-Risk Taker'; desc = 'You pump aggressively, suggesting a very high risk appetite. This can be a strength in certain roles but may indicate impulsivity.'; }
     document.getElementById('r-profile').textContent = profile;
     document.getElementById('profile-desc').textContent = '🧠 ' + desc;
-
-    const bartScore = Math.min(100, Math.round(totalEarned / 20));
-    loadLeaderboard(bartScore, 'bart');
+    loadLeaderboard(Math.min(100, Math.round(totalEarned / 20)), 'bart');
   }
 
   function setDiff(btn) {
     document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected-diff'));
-    btn.classList.add('selected-diff');
-    selectedDiff = btn.dataset.d;
+    btn.classList.add('selected-diff'); selectedDiff = btn.dataset.d;
   }
 
   async function loadLeaderboard(userScore, gameName) {
     const res = await fetch('/sim/bot/leaderboard', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({score: userScore, difficulty: selectedDiff, game: gameName, count: 12})
     });
-    const data = await res.json();
-    const lb = data.leaderboard;
+    const data = await res.json(); const lb = data.leaderboard;
     let html = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.5rem">
       <h3 style="font-size:1rem;font-weight:700;margin-bottom:0.25rem">🏆 Leaderboard</h3>
       <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1rem">You ranked <strong style="color:var(--accent)">#${data.user_rank}</strong> out of ${data.total_candidates} — top <strong style="color:var(--accent)">${Math.round(100-data.percentile+100/data.total_candidates)}%</strong></p>
