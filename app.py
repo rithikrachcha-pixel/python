@@ -1,20 +1,18 @@
 """Flask application for AssessSim — internship assessment game simulator."""
 import json
+import math
 import os
 import random
 import sqlite3
 from functools import wraps
 from flask import Flask, g, jsonify, render_template, request, session
-try:
-    import anthropic as _anthropic_module
-except ImportError:
-    _anthropic_module = None
-
 from werkzeug.security import check_password_hash, generate_password_hash
 
 app = Flask(__name__)
-app.secret_key = 'assessment-sim-secret-2024'
-DATABASE = os.path.join(os.path.dirname(__file__), 'assesssim.db')
+app.secret_key = os.environ.get('SESSION_SECRET', 'assessment-sim-secret-2024')
+# On Vercel the project filesystem is read-only; use /tmp for SQLite
+_db_dir = '/tmp' if os.environ.get('VERCEL') else os.path.dirname(__file__)
+DATABASE = os.path.join(_db_dir, 'assesssim.db')
 
 
 # ---------------------------------------------------------------------------
@@ -86,8 +84,8 @@ BOT_PROFILES = [
     {'name': 'Mohammed Al-Rashid', 'school': 'Final Year Physics @ Oxford', 'avatar': 'MA'},
     {'name': 'Emma Watson', 'school': '1st Year Maths and Economics @ LSE', 'avatar': 'EW'},
     {'name': 'Yuki Tanaka', 'school': '2nd Year Maths @ Cambridge', 'avatar': 'YT'},
-    {'name': "Liam O'Brien", 'school': 'Final Year Engineering @ Imperial', 'avatar': 'LO'},
-    {'name': 'Yuti Kumar', 'school': '1st Year E AND M @ Oxford', 'avatar': 'YK'},
+    {'name': 'Liam O\'Brien', 'school': 'Final Year Engineering @ Imperial', 'avatar': 'LO'},
+    {'name': 'Yuti Kumar', 'school': '1st Year E AND M  @ Oxford', 'avatar': 'YK'},
     {'name': 'Oscar Martinez', 'school': 'Intern, McKinsey', 'avatar': 'OM'},
     {'name': 'Isabella Romano', 'school': '2nd Year Finance @ Bocconi', 'avatar': 'IR'},
     {'name': 'Kai Williams', 'school': 'Final Year Law @ Cambridge', 'avatar': 'KW'},
@@ -100,19 +98,18 @@ BOT_PROFILES = [
     {'name': 'Sienna Park', 'school': 'MORSE Graduate candidate', 'avatar': 'SP'},
     {'name': 'Ethan Brown', 'school': '1st Year PPE @ LSE', 'avatar': 'EB'},
     {'name': 'Violet Chen', 'school': 'Final Year Computer Science @ Cambridge', 'avatar': 'VC'},
-    {'name': 'Angad Arya', 'school': '1st Year Econ @ Cambridge', 'avatar': 'AA'},
-    {'name': 'Harper Taylor', 'school': 'Intern, Goldman Sachs', 'avatar': 'HT'},
-    {'name': 'Jay Shah', 'school': '1st Year CS @ Imperial', 'avatar': 'JS'},
+    {'name': 'Angad Arya', 'school': '1st Year Econ @ Cambridge', 'avatar': 'NM'},
+    {'name': 'Harper Taylor', 'school': 'Intern, goldman.com', 'avatar': 'HT'},
+    {'name': 'Jay Shah', 'school': '1st Year CS @ Imperial', 'avatar': 'JG'},
     {'name': 'Garv Gupta', 'school': 'First Year Econ @ UCL', 'avatar': 'GG'},
     {'name': 'Arnav Sharma', 'school': '1st Year JMC @ Oxford', 'avatar': 'AS'},
     {'name': 'Mia Anderson', 'school': '1st Year MORSE @ Warwick', 'avatar': 'MA'},
     {'name': 'Leo Rossi', 'school': 'Analyst, Goldman Sachs', 'avatar': 'LR'},
-    {'name': 'Olivia Delaney', 'school': 'Final Year Economics @ LSE', 'avatar': 'OD'},
+    {'name': 'Olivia Delaney', 'school': 'Final Year economics @ LSE', 'avatar': 'OD'},
     {'name': 'Aurora Davis', 'school': '2nd Year JMC @ Imperial', 'avatar': 'AD'},
 ]
 
 def generate_bot_score(difficulty_level, game_type='general'):  # pylint: disable=unused-argument
-    """Generate a bot score using normal distribution based on difficulty tier."""
     tiers = {
         'easy': {'mean': 45, 'std': 15},
         'average': {'mean': 65, 'std': 10},
@@ -120,48 +117,36 @@ def generate_bot_score(difficulty_level, game_type='general'):  # pylint: disabl
         'cut_throat': {'mean': 94, 'std': 4},
     }
     tier = tiers.get(difficulty_level, tiers['average'])
-    u1, u2 = random.random(), random.random()
-    z = (-2 * (u1 ** 0.5)) * (2 * 3.14159 * u2) ** 0.5
+    u1, u2 = max(1e-10, random.random()), random.random()
+    z = math.sqrt(-2 * math.log(u1)) * math.cos(2 * math.pi * u2)
     score = tier['mean'] + z * tier['std']
     return max(0, min(100, score))
 
-@app.route('/api/bot/profiles', methods=['GET'])
+@app.route('/sim/bot/profiles', methods=['GET'])
 def get_bot_profiles():
-    """Return a sample of bot profiles."""
     sample = random.sample(BOT_PROFILES, min(10, len(BOT_PROFILES)))
     return jsonify({'bots': sample})
 
-@app.route('/api/bot/leaderboard', methods=['POST'])
+@app.route('/sim/bot/leaderboard', methods=['POST'])
 def get_leaderboard():
-    """Generate a competitive leaderboard based on user score and difficulty."""
     data = request.get_json()
     user_score = data.get('score', 0)
     difficulty = data.get('difficulty', 'average')
     game_type = data.get('game', 'general')
     count = data.get('count', 10)
     leaderboard = []
-    leaderboard.append({
-        'rank': 0, 'name': 'You', 'school': 'Your Profile',
-        'score': user_score, 'is_user': True, 'avatar': 'YOU'
-    })
+    leaderboard.append({'rank': 0, 'name': 'You', 'school': 'Your Profile', 'score': user_score, 'is_user': True, 'avatar': 'YOU'})
     bots_to_show = random.sample(BOT_PROFILES, min(count, len(BOT_PROFILES)))
     for bot in bots_to_show:
         bot_score = generate_bot_score(difficulty, game_type)
-        leaderboard.append({
-            'rank': 0, 'name': bot['name'], 'school': bot['school'],
-            'score': round(bot_score, 1), 'is_user': False, 'avatar': bot['avatar']
-        })
+        leaderboard.append({'rank': 0, 'name': bot['name'], 'school': bot['school'], 'score': round(bot_score, 1), 'is_user': False, 'avatar': bot['avatar']})
     leaderboard.sort(key=lambda x: x['score'], reverse=True)
     for i, entry in enumerate(leaderboard):
         entry['rank'] = i + 1
     user_entry = next((e for e in leaderboard if e['is_user']), None)
     user_rank = user_entry['rank'] if user_entry else 0
     percentile = 100 * (1 - (user_rank - 1) / len(leaderboard))
-    return jsonify({
-        'leaderboard': leaderboard, 'user_rank': user_rank,
-        'total_candidates': len(leaderboard),
-        'percentile': round(percentile, 1), 'difficulty': difficulty
-    })
+    return jsonify({'leaderboard': leaderboard, 'user_rank': user_rank, 'total_candidates': len(leaderboard), 'percentile': round(percentile, 1), 'difficulty': difficulty})
 
 
 # ---------------------------------------------------------------------------
@@ -170,7 +155,6 @@ def get_leaderboard():
 
 @app.route('/')
 def index():
-    """Render the home page."""
     return render_template('index.html')
 
 @app.route('/game/bart')
@@ -209,6 +193,52 @@ def sjt():
 def attention():
     return render_template('attention.html')
 
+@app.route('/game/watson-glaser')
+def watson_glaser():
+    return render_template('watson_glaser.html')
+
+@app.route('/game/coding')
+def coding():
+    return render_template('coding.html')
+
+@app.route('/game/korn-ferry')
+def korn_ferry():
+    return render_template('korn_ferry.html')
+
+@app.route('/game/aon-verbal')
+def aon_verbal():
+    return render_template('aon_verbal.html')
+
+@app.route('/game/aon-scales')
+def aon_scales():
+    return render_template('aon_scales.html')
+
+@app.route('/game/aon-error')
+def aon_error():
+    return render_template('aon_error.html')
+
+@app.route('/game/cappfinity-numerical')
+def cappfinity_numerical():
+    return render_template('cappfinity_numerical.html')
+
+@app.route('/game/personality')
+def personality():
+    return render_template('personality.html')
+
+@app.route('/game/pst')
+def pst():
+    return render_template('pst.html')
+
+@app.route('/game/skim')
+def skim():
+    return render_template('skim.html')
+
+@app.route('/dashboard')
+def dashboard():
+    if 'user_id' not in session:
+        return render_template('index.html')
+    return render_template('dashboard.html')
+
 @app.route('/results')
 def results():
     score_data = request.args.get('data', '{}')
@@ -219,9 +249,8 @@ def results():
 # Auth API
 # ---------------------------------------------------------------------------
 
-@app.route('/api/register', methods=['POST'])
+@app.route('/sim/register', methods=['POST'])
 def api_register():
-    """Register a new user account."""
     data = request.get_json(silent=True) or {}
     username = (data.get('username') or '').strip()
     email = (data.get('email') or '').strip().lower()
@@ -234,10 +263,8 @@ def api_register():
         return jsonify({'error': 'Password must be at least 6 characters'}), 400
     db = get_db()
     try:
-        db.execute(
-            'INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)',
-            (username, email, generate_password_hash(password))
-        )
+        db.execute('INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)',
+                   (username, email, generate_password_hash(password)))
         db.commit()
     except sqlite3.IntegrityError as e:
         field = 'Email' if 'email' in str(e) else 'Username'
@@ -245,13 +272,11 @@ def api_register():
     user = db.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
     session['user_id'] = user['id']
     session['username'] = user['username']
-    payload = {'id': user['id'], 'username': user['username'], 'email': user['email']}
-    return jsonify({'user': payload})
+    return jsonify({'user': {'id': user['id'], 'username': user['username'], 'email': user['email']}})
 
 
-@app.route('/api/login', methods=['POST'])
+@app.route('/sim/login', methods=['POST'])
 def api_login():
-    """Log in with username and password."""
     data = request.get_json(silent=True) or {}
     username = (data.get('username') or '').strip()
     password = data.get('password') or ''
@@ -263,17 +288,16 @@ def api_login():
         return jsonify({'error': 'Invalid username or password'}), 401
     session['user_id'] = user['id']
     session['username'] = user['username']
-    payload = {'id': user['id'], 'username': user['username'], 'email': user['email']}
-    return jsonify({'user': payload})
+    return jsonify({'user': {'id': user['id'], 'username': user['username'], 'email': user['email']}})
 
 
-@app.route('/api/logout', methods=['POST'])
+@app.route('/sim/logout', methods=['POST'])
 def api_logout():
     session.clear()
     return jsonify({'success': True})
 
 
-@app.route('/api/me')
+@app.route('/sim/me')
 def api_me():
     if 'user_id' not in session:
         return jsonify({'error': 'Not logged in'}), 401
@@ -290,7 +314,7 @@ def api_me():
 # Score API
 # ---------------------------------------------------------------------------
 
-@app.route('/api/save-score', methods=['POST'])
+@app.route('/sim/save-score', methods=['POST'])
 @login_required
 def api_save_score():
     data = request.get_json(silent=True) or {}
@@ -304,37 +328,29 @@ def api_save_score():
     except (TypeError, ValueError):
         return jsonify({'error': 'score must be a number'}), 400
     db = get_db()
-    db.execute(
-        'INSERT INTO scores (user_id, game, score, details) VALUES (?, ?, ?, ?)',
-        (session['user_id'], game, score, json.dumps(details) if details else None)
-    )
+    db.execute('INSERT INTO scores (user_id, game, score, details) VALUES (?, ?, ?, ?)',
+               (session['user_id'], game, score, json.dumps(details) if details else None))
     db.commit()
     return jsonify({'success': True})
 
 
-@app.route('/api/scores')
+@app.route('/sim/scores')
 @login_required
 def api_scores():
     db = get_db()
-    rows = db.execute(
-        'SELECT game, score, details, played_at FROM scores WHERE user_id = ? ORDER BY played_at DESC',
-        (session['user_id'],)
-    ).fetchall()
-    scores = [{
-        'game': r['game'], 'score': r['score'],
-        'details': json.loads(r['details']) if r['details'] else None,
-        'played_at': r['played_at']
-    } for r in rows]
+    rows = db.execute('SELECT game, score, details, played_at FROM scores WHERE user_id = ? ORDER BY played_at DESC',
+                      (session['user_id'],)).fetchall()
+    scores = []
+    for row in rows:
+        scores.append({'game': row['game'], 'score': row['score'],
+                       'details': json.loads(row['details']) if row['details'] else None,
+                       'played_at': row['played_at']})
     return jsonify({'scores': scores})
 
-
-# ---------------------------------------------------------------------------
-# Run
-# ---------------------------------------------------------------------------
 
 with app.app_context():
     init_db()
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5001))
+    port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', debug=False, port=port)

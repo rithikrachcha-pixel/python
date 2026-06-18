@@ -1,15 +1,15 @@
 {
   "version": 2,
+  "builds": [
+    {
+      "src": "app.py",
+      "use": "@vercel/python"
+    }
+  ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/api/app.py"
-    }
-  ],
-  "crons": [
-    {
-      "path": "/admin/sync-scores",
-      "schedule": "*/30 * * * *"
+      "dest": "app.py"
     }
   ]
 }
