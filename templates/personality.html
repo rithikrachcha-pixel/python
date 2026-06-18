@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}Personality & Strengths Profile — AssessSim{% endblock %}
+{% block content %}
+<div class="game-page">
+  <div class="game-header">
+    <div class="game-header-icon" style="background:linear-gradient(135deg,#a29bfe,#6c5ce7)">🧭</div>
+    <div>
+      <h1>Personality &amp; Strengths Profile</h1>
+      <p>Cappfinity / Pymetrics &mdash; Strengths-Based Self-Report</p>
+    </div>
+  </div>
+  <div class="game-meta">
+    <div class="game-meta-item">📋 <strong>30</strong>&nbsp;statements</div>
+    <div class="game-meta-item">⏱️ <strong>~15 min</strong></div>
+    <div class="game-meta-item">🏦 HSBC · Lloyds · Standard Chartered · Citi</div>
+  </div>
+
+  <div id="instructions" class="instructions">
+    <h2>📋 Instructions</h2>
+    <ul>
+      <li>Rate each statement on a scale of <strong>1 (Strongly Disagree) to 5 (Strongly Agree)</strong>.</li>
+      <li>There are <strong>no right or wrong answers</strong> — answer honestly and quickly.</li>
+      <li>Employers use this to match your profile to their competency framework.</li>
+      <li>Avoid extreme responses to every statement — realistic self-assessment is key.</li>
+    </ul>
+    <div class="notice" style="margin-top:1rem">💡 <strong>Tip:</strong> Banks like HSBC and Lloyds use strength profiles to check for curiosity, resilience, and collaboration. Answer as you genuinely are at your best, not as you wish you were.</div>
+    <button class="btn btn-primary mt-2" onclick="startGame()">Start Profile</button>
+  </div>
+
+  <div id="game-area" class="hidden">
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+    </div>
+    <div id="question-area" style="margin-top:1.5rem"></div>
+    <div style="display:flex;gap:1rem;justify-content:space-between;margin-top:1.5rem">
+      <button class="btn btn-outline btn-sm" id="prev-btn" onclick="navigate(-1)">← Previous</button>
+      <span id="q-counter" class="text-muted" style="font-size:0.85rem;align-self:center"></span>
+      <button class="btn btn-primary btn-sm" id="next-btn" onclick="navigate(1)">Next →</button>
+    </div>
+    <div style="text-align:center;margin-top:1.5rem">
+      <button class="btn btn-success" onclick="submitProfile()">Submit Profile</button>
+    </div>
+  </div>
+
+  <div id="results-area" class="hidden" style="max-width:600px;margin:0 auto;padding:2rem">
+    <h2 style="font-size:1.8rem;margin-bottom:0.5rem;text-align:center">Your Strengths Profile</h2>
+    <p class="text-muted mb-2" style="text-align:center">Based on your responses across 6 competency dimensions</p>
+    <div class="trait-bars" id="trait-bars-area" style="margin-top:1.5rem"></div>
+    <div class="notice success-notice" style="margin-top:1.5rem;text-align:center">
+      ✅ Profile saved to your dashboard. Employers see a normalised version of this output.
+    </div>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button class="btn btn-outline" onclick="location.reload()">Redo Profile</button>
+      <a href="/" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const STATEMENTS = [
+  {text:'I enjoy tackling problems I have never seen before.',dim:'Curiosity'},
+  {text:'I remain composed when facing tight deadlines.',dim:'Resilience'},
+  {text:'I actively seek feedback on my work.',dim:'Growth'},
+  {text:'I find it easy to understand others\' perspectives.',dim:'Empathy'},
+  {text:'I like setting ambitious targets for myself.',dim:'Drive'},
+  {text:'I am comfortable working independently without close supervision.',dim:'Autonomy'},
+  {text:'I frequently come up with creative solutions to problems.',dim:'Curiosity'},
+  {text:'When things go wrong, I recover quickly and move on.',dim:'Resilience'},
+  {text:'I enjoy collaborating with people who have different working styles.',dim:'Empathy'},
+  {text:'I regularly read about topics outside my field of study.',dim:'Curiosity'},
+  {text:'I set myself goals even when not required to.',dim:'Drive'},
+  {text:'I find it easy to adapt when plans change unexpectedly.',dim:'Resilience'},
+  {text:'I tend to ask questions before diving into a task.',dim:'Growth'},
+  {text:'I make sure everyone in a group has a chance to contribute.',dim:'Empathy'},
+  {text:'I push myself harder when competition increases.',dim:'Drive'},
+  {text:'I take ownership of my mistakes without prompting.',dim:'Growth'},
+  {text:'I feel energised after working on complex analytical tasks.',dim:'Curiosity'},
+  {text:'I keep going when tasks become frustrating or repetitive.',dim:'Resilience'},
+  {text:'I notice when colleagues are under pressure before they say so.',dim:'Empathy'},
+  {text:'I consistently meet commitments, even when difficult.',dim:'Drive'},
+  {text:'I actively look for ways to do my work more efficiently.',dim:'Growth'},
+  {text:'I am comfortable challenging ideas I disagree with, respectfully.',dim:'Autonomy'},
+  {text:'I find satisfaction in mastering technical or complex subjects.',dim:'Curiosity'},
+  {text:'I manage my energy levels well across long projects.',dim:'Resilience'},
+  {text:'I adapt my communication style depending on my audience.',dim:'Empathy'},
+  {text:'I strive to exceed expectations rather than just meet them.',dim:'Drive'},
+  {text:'I seek out stretch assignments outside my comfort zone.',dim:'Growth'},
+  {text:'I can make decisions confidently with incomplete information.',dim:'Autonomy'},
+  {text:'I am motivated by problems with no obvious answer.',dim:'Curiosity'},
+  {text:'I maintain high standards even when under significant pressure.',dim:'Drive'},
+];
+
+const DIMS=['Curiosity','Resilience','Growth','Empathy','Drive','Autonomy'];
+const LABELS=['Strongly Disagree','Disagree','Neutral','Agree','Strongly Agree'];
+const COLORS={'Curiosity':'var(--accent)','Resilience':'var(--success)','Growth':'var(--accent2)','Empathy':'#fd79a8','Drive':'var(--warning)','Autonomy':'var(--danger)'};
+
+let current=0, answers={};
+
+function startGame(){document.getElementById('instructions').classList.add('hidden');document.getElementById('game-area').classList.remove('hidden');showQ();}
+
+function showQ(){
+  const s=STATEMENTS[current];
+  document.getElementById('progress-bar').style.width=`${((current+1)/STATEMENTS.length)*100}%`;
+  document.getElementById('q-counter').textContent=`${current+1} of ${STATEMENTS.length}`;
+  document.getElementById('prev-btn').disabled=current===0;
+  document.getElementById('next-btn').style.display=current===STATEMENTS.length-1?'none':'';
+  document.getElementById('question-area').innerHTML=`
+    <div class="question-card" style="text-align:center">
+      <div class="question-number">Statement ${current+1} · <span style="color:${COLORS[s.dim]}">${s.dim}</span></div>
+      <p class="question-text" style="font-size:1.15rem;font-weight:600;margin:1.5rem 0;">"${s.text}"</p>
+      <div style="display:flex;gap:0.5rem;justify-content:center;flex-wrap:wrap;margin-top:1.5rem">
+        ${[1,2,3,4,5].map(v=>`
+          <button onclick="pick(${v})" style="display:flex;flex-direction:column;align-items:center;gap:0.4rem;padding:0.85rem 1rem;border:2px solid ${answers[current]===v?'var(--accent)':'var(--border)'};border-radius:var(--radius);background:${answers[current]===v?'rgba(77,159,255,0.15)':'var(--bg3)'};cursor:pointer;min-width:80px;transition:all 0.15s">
+            <span style="font-size:1.5rem;font-weight:800;color:${answers[current]===v?'var(--accent)':'var(--text-muted)'}">${v}</span>
+            <span style="font-size:0.65rem;color:var(--text-muted);text-align:center;line-height:1.2">${LABELS[v-1]}</span>
+          </button>`).join('')}
+      </div>
+    </div>`;}
+
+function pick(v){answers[current]=v;if(current<STATEMENTS.length-1){current++;showQ();}else{showQ();}}
+function navigate(dir){current+=dir;showQ();}
+
+function submitProfile(){
+  const scores={};
+  DIMS.forEach(d=>{
+    const items=STATEMENTS.map((s,i)=>s.dim===d?answers[i]||3:null).filter(x=>x!==null);
+    scores[d]=items.length?Math.round((items.reduce((a,b)=>a+b,0)/items.length)*20):60;
+  });
+  document.getElementById('game-area').classList.add('hidden');
+  document.getElementById('results-area').classList.remove('hidden');
+  const avg=Math.round(Object.values(scores).reduce((a,b)=>a+b,0)/DIMS.length);
+  document.getElementById('trait-bars-area').innerHTML=DIMS.map(d=>`
+    <div class="trait-bar-row">
+      <div class="trait-bar-label"><span>${d}</span><span style="font-weight:700;color:${COLORS[d]}">${scores[d]}%</span></div>
+      <div class="trait-bar-bg"><div class="trait-bar-fill" style="width:0%;background:${COLORS[d]}" data-target="${scores[d]}"></div></div>
+    </div>`).join('');
+  setTimeout(()=>document.querySelectorAll('.trait-bar-fill').forEach(el=>el.style.width=el.dataset.target+'%'),100);
+  fetch('/sim/save-score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:'personality',score:avg})}).catch(()=>{});
+}
+</script>
+{% endblock %}

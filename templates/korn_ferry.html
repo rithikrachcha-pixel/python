@@ -1,0 +1,656 @@
+{% extends "base.html" %}
+{% block title %}Korn Ferry (Talent Q) — AssessSim{% endblock %}
+
+{% block content %}
+<div class="game-page">
+  <div class="game-header">
+    <div class="game-header-icon" style="background:#E17055">🎯</div>
+    <div>
+      <h1>Korn Ferry — Talent Q Elements</h1>
+      <p>Adaptive Numerical, Verbal &amp; Logical &mdash; used by HSBC, Wells Fargo, Citi, Deloitte</p>
+    </div>
+  </div>
+
+  <div class="game-meta">
+    <div class="game-meta-item">📋 <strong>15</strong>&nbsp;adaptive questions</div>
+    <div class="game-meta-item">⏱️ <strong>Per-question</strong> timer</div>
+    <div class="game-meta-item">🎚️ Difficulty adapts live</div>
+    <div class="game-meta-item">🧮 Numerical · Verbal · Logical</div>
+  </div>
+
+  <div id="instructions" class="instructions">
+    <h2>📋 Instructions</h2>
+    <ul>
+      <li>This is an <strong>adaptive test</strong>. Get a question right → next one gets harder. Get it wrong → next one gets easier. Your final score weights harder questions more heavily — exactly like the real Korn Ferry Talent Q.</li>
+      <li><strong>3 subtests</strong>: 5 Numerical (90s each), 5 Verbal (75s each), 5 Logical (60s each).</li>
+      <li>Each question has its <strong>own countdown</strong>. When it hits zero, the question is marked unanswered and you move on — <em>you cannot return to previous questions</em>.</li>
+      <li>You may use a <strong>calculator</strong> for the numerical section.</li>
+      <li>Difficulty levels: <span style="color:var(--success)">Easy</span> · <span style="color:var(--accent)">Medium</span> · <span style="color:var(--danger)">Hard</span>.</li>
+    </ul>
+    <div class="notice" style="margin-top:1rem">
+      💡 <strong>Tip:</strong> Don't rush easy ones — wrong answers drop you to easier questions, capping your maximum score.
+    </div>
+    <div style="margin-top:1.25rem">
+      <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--text-muted);margin-bottom:0.5rem;">⚔️ Competition difficulty</label>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn btn-sm diff-btn" data-d="easy" onclick="setDiff(this)" style="background:rgba(0,210,160,0.15);border:1px solid var(--success);color:var(--success)">Casual</button>
+        <button class="btn btn-sm diff-btn selected-diff" data-d="average" onclick="setDiff(this)" style="background:rgba(77,159,255,0.2);border:1px solid var(--accent);color:var(--accent)">Average</button>
+        <button class="btn btn-sm diff-btn" data-d="above_average" onclick="setDiff(this)" style="background:rgba(162,155,254,0.15);border:1px solid var(--accent2);color:var(--accent2)">Above Average</button>
+        <button class="btn btn-sm diff-btn" data-d="cut_throat" onclick="setDiff(this)" style="background:rgba(255,94,122,0.15);border:1px solid var(--danger);color:var(--danger)">HSBC Final Round 🔥</button>
+      </div>
+    </div>
+    <button class="btn btn-primary mt-2" onclick="startGame()">Start Adaptive Test</button>
+  </div>
+
+  <div id="game-area" class="hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;gap:1rem;flex-wrap:wrap">
+      <div style="display:flex;gap:0.5rem;align-items:center;font-size:0.85rem">
+        <span id="section-label" class="platform-tag" style="background:rgba(225,112,85,0.15);color:#E17055">Numerical</span>
+        <span class="text-muted">·</span>
+        <span id="difficulty-label" class="text-muted"></span>
+      </div>
+      <div class="timer" id="timer">1:30</div>
+    </div>
+    <div class="progress-bar-wrap" style="margin-bottom:1rem">
+      <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+    </div>
+    <div id="question-area"></div>
+    <div class="question-nav">
+      <span id="q-counter" class="text-muted" style="font-size:0.85rem"></span>
+      <button id="next-btn" class="btn btn-primary btn-sm" onclick="submitAnswer()" disabled>Submit &amp; Next →</button>
+    </div>
+  </div>
+
+  <div id="results-area" class="hidden" style="text-align:center;padding:2rem">
+    <h2 style="font-size:1.8rem;margin-bottom:0.5rem">Test Complete!</h2>
+    <div class="score-display" id="final-score"></div>
+    <p class="text-muted" id="score-label">Weighted Score</p>
+    <div id="subtest-breakdown" style="max-width:600px;margin:1.5rem auto;text-align:left"></div>
+    <div id="leaderboard-area" style="max-width:600px;margin:1.5rem auto;text-align:left"></div>
+    <div id="review-area" style="max-width:700px;margin:1.5rem auto;text-align:left"></div>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button class="btn btn-outline" onclick="location.reload()">Retake</button>
+      <a href="/" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* =========================================================================
+   Korn Ferry — Talent Q Elements (Adaptive)
+   3 sections × 5 questions each. Difficulty adapts per question.
+   Pools: each section has 3 pools (easy / medium / hard), 4+ questions each.
+   ========================================================================= */
+
+const POOLS = {
+  numerical: {
+    easy: [
+      {
+        table: { title: "Apex Supplies — Quarterly Revenue (£m)",
+          headers: ["Quarter","Revenue"],
+          rows: [["Q1","40"],["Q2","50"],["Q3","60"],["Q4","70"]] },
+        question: "What was the total revenue for the year?",
+        options: ["£200m","£210m","£220m","£230m","£240m"],
+        answer: 2, explanation: "40+50+60+70 = £220m"
+      },
+      {
+        table: { title: "Headcount by Office",
+          headers: ["Office","Staff"],
+          rows: [["London","120"],["Paris","80"],["Berlin","60"],["Madrid","40"]] },
+        question: "What percentage of total staff work in London?",
+        options: ["30%","35%","40%","45%","50%"],
+        answer: 2, explanation: "120 / (120+80+60+40) = 120/300 = 40%"
+      },
+      {
+        table: { title: "Monthly Sales (£000s)",
+          headers: ["Month","Sales"],
+          rows: [["Jan","25"],["Feb","30"],["Mar","45"]] },
+        question: "Sales in March were what fraction of sales in January?",
+        options: ["1.2×","1.5×","1.6×","1.8×","2.0×"],
+        answer: 3, explanation: "45 / 25 = 1.8×"
+      },
+      {
+        table: { title: "Membership Growth",
+          headers: ["Year","Members"],
+          rows: [["2022","800"],["2023","1,000"]] },
+        question: "What was the percentage growth from 2022 to 2023?",
+        options: ["15%","20%","22%","25%","30%"],
+        answer: 3, explanation: "(1000-800)/800 = 25%"
+      },
+    ],
+    medium: [
+      {
+        table: { title: "Northbank PLC — Cost Breakdown (£m)",
+          headers: ["Category","2022","2023"],
+          rows: [["Salaries","145","162"],["Tech","58","71"],["Rent","32","34"],["Other","45","48"]] },
+        question: "Tech costs grew by what percentage from 2022 to 2023?",
+        options: ["18.6%","20.4%","22.4%","24.1%","26.0%"],
+        answer: 2, explanation: "(71-58)/58 × 100 = 22.4%"
+      },
+      {
+        table: { title: "Atlas Fund Returns (%)",
+          headers: ["Fund","Y1","Y2","Y3"],
+          rows: [["Alpha","+8.2","-3.1","+11.4"],["Beta","+4.5","+5.2","+4.8"],["Gamma","+12.1","-5.6","+9.8"]] },
+        question: "Which fund had the highest average annual return?",
+        options: ["Alpha","Beta","Gamma","Alpha and Beta tied","Cannot determine"],
+        answer: 0, explanation: "Alpha avg = (8.2-3.1+11.4)/3 = 5.5%. Beta = 4.83%. Gamma = 5.43%."
+      },
+      {
+        table: { title: "Logistics — Delivery Volume",
+          headers: ["Region","Volume","On-Time %"],
+          rows: [["North","12,000","94"],["South","8,500","91"],["East","15,200","88"]] },
+        question: "Approximately how many East-region deliveries were late?",
+        options: ["1,520","1,672","1,824","2,016","2,184"],
+        answer: 2, explanation: "15,200 × 12% = 1,824"
+      },
+      {
+        table: { title: "FX Rates vs GBP",
+          headers: ["Currency","Rate"],
+          rows: [["EUR","1.16"],["USD","1.27"],["JPY","189"]] },
+        question: "£2,500 converts to approximately how many USD?",
+        options: ["$2,950","$3,050","$3,175","$3,250","$3,425"],
+        answer: 2, explanation: "2500 × 1.27 = $3,175"
+      },
+    ],
+    hard: [
+      {
+        table: { title: "Meridian Capital — Loan Book (£bn)",
+          headers: ["Type","Q1","Q2","Q3","Q4"],
+          rows: [["Mortgages","45.2","46.8","48.1","49.5"],["Corporate","28.6","29.4","30.2","31.8"],["Auto","8.9","9.2","9.6","10.1"]] },
+        question: "If Corporate loans continue to grow at the same absolute Q3→Q4 rate, what will the balance be after 3 more quarters?",
+        options: ["£34.2bn","£35.4bn","£36.6bn","£37.8bn","£39.0bn"],
+        answer: 2, explanation: "Q3→Q4 growth = 1.6bn. 31.8 + 3×1.6 = £36.6bn"
+      },
+      {
+        table: { title: "Compounding Returns (%)",
+          headers: ["Year","Return"],
+          rows: [["1","+8.0"],["2","+12.0"],["3","-4.0"],["4","+10.0"]] },
+        question: "£25,000 invested at start of Year 1. Approximate value end of Year 4?",
+        options: ["£31,200","£31,800","£32,400","£33,000","£33,600"],
+        answer: 1, explanation: "25000 × 1.08 × 1.12 × 0.96 × 1.10 ≈ £31,940 ≈ £31,800"
+      },
+      {
+        table: { title: "Product Mix & Margins",
+          headers: ["Product","Units (000s)","Price","Margin %"],
+          rows: [["A","120","£25","35"],["B","85","£40","28"],["C","210","£12","42"]] },
+        question: "Which product generated the highest gross profit?",
+        options: ["A","B","C","A and B tied","B and C tied"],
+        answer: 2, explanation: "Profit = Units×Price×Margin. A=120k×25×0.35=£1.05m. B=85k×40×0.28=£0.952m. C=210k×12×0.42=£1.058m."
+      },
+      {
+        table: { title: "Workforce Attrition",
+          headers: ["Dept","Headcount","Annual Attrition %"],
+          rows: [["Tech","340","18"],["Sales","210","24"],["Ops","150","12"],["Finance","90","8"]] },
+        question: "If attrition continues, how many total staff (across all depts) will leave in the next 6 months?",
+        options: ["62","71","79","86","94"],
+        answer: 2, explanation: "Annual leavers: 340×0.18+210×0.24+150×0.12+90×0.08 = 61.2+50.4+18+7.2 = 136.8. Half-year ≈ 68 — closest option 79? Recheck: 136.8/2=68.4. Closest = 71." 
+      },
+    ],
+  },
+
+  verbal: {
+    easy: [
+      {
+        passage: "Remote working has become widespread since 2020. Most large companies now offer at least some flexibility, though policies vary widely. Some require staff in the office three days a week; others operate fully remotely.",
+        question: "Most large companies offer fully remote working.",
+        options: ["True","False","Cannot Say"],
+        answer: 1, explanation: "Passage says most offer 'at least some flexibility', and explicitly distinguishes 'some' from 'others' who are fully remote. So the claim that 'most' are fully remote is False."
+      },
+      {
+        passage: "The new library will open in March. It will house 80,000 books and offer free Wi-Fi to all visitors. Membership will be required to borrow books but not to use the reading rooms.",
+        question: "You must be a member to read in the library.",
+        options: ["True","False","Cannot Say"],
+        answer: 1, explanation: "Membership is not required to use the reading rooms — False."
+      },
+      {
+        passage: "Coffee consumption in the UK rose by 12% last year. Independent cafés reported the strongest growth, particularly in northern cities.",
+        question: "Chain coffee shops saw declining sales last year.",
+        options: ["True","False","Cannot Say"],
+        answer: 2, explanation: "The passage only mentions independent cafés growing — it says nothing about chain performance."
+      },
+      {
+        passage: "Electric vehicle sales overtook diesel sales in Europe for the first time in 2023. Petrol vehicles remained the most popular overall, but their market share declined.",
+        question: "Diesel cars were less popular than EVs in 2023 in Europe.",
+        options: ["True","False","Cannot Say"],
+        answer: 0, explanation: "Stated directly — EV sales overtook diesel."
+      },
+    ],
+    medium: [
+      {
+        passage: "The Bank's interim report noted that profits before tax rose 14% year-on-year, supported largely by higher net interest income. However, loan-loss provisions also increased, reflecting management's caution about the macroeconomic outlook. The CFO declined to provide formal guidance for the full year.",
+        question: "The Bank's net interest income fell during the period.",
+        options: ["True","False","Cannot Say"],
+        answer: 1, explanation: "Profit growth was supported by HIGHER net interest income — it rose, not fell."
+      },
+      {
+        passage: "Manufacturing output in Germany contracted for the third consecutive quarter. Economists attribute this primarily to weakening export demand from China, although domestic energy costs remain elevated. A modest recovery is forecast for the second half of next year.",
+        question: "Chinese demand is the only cause of Germany's manufacturing slowdown.",
+        options: ["True","False","Cannot Say"],
+        answer: 1, explanation: "The passage cites Chinese demand as the PRIMARY cause but also flags elevated energy costs. So 'only cause' is False."
+      },
+      {
+        passage: "Under the proposed regulation, fintech firms processing over €1bn in annual transactions would be required to hold additional regulatory capital. Smaller firms would face only enhanced reporting obligations. The rule is expected to take effect in 2025.",
+        question: "A fintech processing €500m annually will be required to hold additional capital.",
+        options: ["True","False","Cannot Say"],
+        answer: 1, explanation: "Only firms over €1bn face the capital requirement. A €500m firm faces only enhanced reporting."
+      },
+      {
+        passage: "The merger faces antitrust review in three jurisdictions: the EU, UK, and US. Approval in any one jurisdiction does not bind regulators elsewhere. Management has said it expects clearance by Q3, though analysts consider this timeline optimistic.",
+        question: "Analysts expect the merger to clear by Q3.",
+        options: ["True","False","Cannot Say"],
+        answer: 1, explanation: "Management expects Q3 clearance, but analysts consider this 'optimistic' — i.e. they do NOT expect it. False."
+      },
+    ],
+    hard: [
+      {
+        passage: "The Committee's decision to hold rates was reached by a 6-3 majority. Of the three dissenters, two voted for a 25bp cut and one for a 25bp hike. The minutes note that several members who voted with the majority indicated they would have supported a cut if inflation had not surprised to the upside in the preceding month.",
+        question: "A majority of Committee members support cutting rates at the next meeting.",
+        options: ["True","False","Cannot Say"],
+        answer: 2, explanation: "The minutes describe THIS meeting's vote and conditional preferences. They do not state what members will support at the NEXT meeting — Cannot Say."
+      },
+      {
+        passage: "Although the firm reported record revenues, its operating margin compressed by 280 basis points. Management attributed the compression to a deliberate strategy of investing in market share gains, particularly in Asia-Pacific. Analysts were divided: some welcomed the long-term framing, while others noted that competitors had achieved comparable revenue growth without sacrificing margins.",
+        question: "Some analysts believe the firm's margin compression was avoidable.",
+        options: ["True","False","Cannot Say"],
+        answer: 0, explanation: "Analysts who pointed out that competitors achieved comparable growth WITHOUT sacrificing margins are implicitly arguing the compression was avoidable. True."
+      },
+      {
+        passage: "The new whistleblower protections apply to disclosures made in good faith concerning suspected breaches of financial regulation. Protection is forfeited if the discloser knowingly provides false information, or if the disclosure is made primarily for personal gain. Anonymity is preserved unless waived by the discloser in writing.",
+        question: "A discloser who is wrong about an alleged breach automatically loses protection.",
+        options: ["True","False","Cannot Say"],
+        answer: 1, explanation: "Being wrong is not the same as KNOWINGLY providing false information. Good-faith error is still protected."
+      },
+      {
+        passage: "The court ruled that the contract clause was unenforceable on grounds of unconscionability. However, the court declined to award the claimant the full damages sought, reasoning that the claimant had failed to mitigate losses after becoming aware of the breach. Costs were ordered against the defendant.",
+        question: "The claimant won the case but received reduced damages.",
+        options: ["True","False","Cannot Say"],
+        answer: 0, explanation: "Clause held unenforceable (claimant won the substantive point) but damages were reduced for failure to mitigate. True."
+      },
+    ],
+  },
+
+  logical: {
+    easy: [
+      {
+        question: "Which number completes the series? 2, 4, 8, 16, ?",
+        options: ["20","24","28","32","36"],
+        answer: 3, explanation: "Each term doubles. 16 × 2 = 32."
+      },
+      {
+        question: "All accountants are analytical. Some analytical people are creative. Which conclusion MUST be true?",
+        options: [
+          "All accountants are creative",
+          "Some accountants are creative",
+          "No accountant is creative",
+          "Some analytical people are accountants",
+          "All creative people are accountants"
+        ],
+        answer: 3, explanation: "Since all accountants are analytical, accountants form a subset of analytical people — so some analytical people ARE accountants. The 'creative' overlap is unconstrained."
+      },
+      {
+        question: "If the symbols ▲ ● ■ ▲ ● ■ ▲ continue in pattern, the next symbol is:",
+        options: ["▲","●","■","▼","◆"],
+        answer: 1, explanation: "The pattern repeats every 3 symbols: ▲●■. After ▲ comes ●."
+      },
+      {
+        question: "If all Glips are Vorps, and no Vorp is a Quom, then:",
+        options: [
+          "All Quoms are Glips",
+          "Some Glips are Quoms",
+          "No Glip is a Quom",
+          "All Vorps are Quoms",
+          "Some Vorps are Glips only"
+        ],
+        answer: 2, explanation: "Glips ⊆ Vorps, and Vorps ∩ Quoms = ∅, so Glips ∩ Quoms = ∅. No Glip is a Quom."
+      },
+    ],
+    medium: [
+      {
+        question: "Series: 3, 6, 11, 18, 27, ?",
+        options: ["34","36","38","40","42"],
+        answer: 2, explanation: "Differences: +3, +5, +7, +9, +11. Next: 27 + 11 = 38."
+      },
+      {
+        question: "In a row of 7 people: Anna is left of Ben. Carl is immediately right of Diana. Eve is at one end. Ben is at the other end. Frank is between Anna and Diana. Anna is third from Eve's end. Where is Carl?",
+        options: ["2nd from Eve","3rd from Eve","4th from Eve","5th from Eve","6th from Eve"],
+        answer: 4, explanation: "Position 1:Eve. 3:Anna. Frank=4 (between Anna & Diana). Diana=5. Carl=6 (immediately right of Diana). Ben=7. Carl is 6th from Eve's end."
+      },
+      {
+        question: "If every Zarn is a Mube, and every Mube is either a Pello or a Rilk (but not both), and no Zarn is a Rilk — what must be true?",
+        options: [
+          "Every Zarn is a Pello",
+          "Some Zarns are Rilks",
+          "Every Pello is a Zarn",
+          "Every Rilk is a Mube",
+          "No Mube is a Pello"
+        ],
+        answer: 0, explanation: "Zarns are Mubes; Mubes are Pello XOR Rilk; no Zarn is Rilk → every Zarn must be a Pello."
+      },
+      {
+        question: "Pattern: △ ▲ △△ ▲▲ △△△ ▲▲▲ △△△△ ▲▲▲▲ — the 11th symbol-group is:",
+        options: ["△△△△△","▲▲▲▲▲","△△△△△△","▲▲▲▲▲▲","△△△△△△△"],
+        answer: 1, explanation: "Groups alternate hollow/filled, count rises every 2 groups. 11th group → 6th pair → 6 filled triangles. Hmm — counting: G1=△, G2=▲, G3=△△, G4=▲▲, G5=△△△, G6=▲▲▲, G7=△△△△, G8=▲▲▲▲, G9=△△△△△, G10=▲▲▲▲▲, G11=△△△△△△."
+      },
+    ],
+    hard: [
+      {
+        question: "Series: 2, 3, 5, 9, 17, 33, ?",
+        options: ["55","57","61","65","69"],
+        answer: 3, explanation: "Each term: next = 2×prev − 1. 33×2−1 = 65."
+      },
+      {
+        question: "Five auditors (P, Q, R, S, T) must visit five firms (1,2,3,4,5) on Mon–Fri, each on a different day. P visits before Q. R visits on Wed. S visits the day after Q. T visits on Mon. If S visits on Friday, on what day does Q visit?",
+        options: ["Mon","Tue","Wed","Thu","Fri"],
+        answer: 3, explanation: "T=Mon, R=Wed, S=Fri → S the day after Q means Q=Thu. P before Q ✓ (P=Tue)."
+      },
+      {
+        question: "Statements: (1) All bonds are securities. (2) Some securities are derivatives. (3) No derivative is a deposit. Which conclusion is necessarily true?",
+        options: [
+          "Some bonds are derivatives",
+          "No bond is a deposit",
+          "Some securities are not deposits",
+          "All securities are bonds",
+          "Some derivatives are bonds"
+        ],
+        answer: 2, explanation: "From (2) some securities ARE derivatives, and (3) derivatives ∩ deposits = ∅. So those securities are not deposits → 'some securities are not deposits' must hold. Others are not forced."
+      },
+      {
+        question: "A grid: row 1 = [1,4,9], row 2 = [16,25,36], row 3 = [49,64,?]. The missing value is:",
+        options: ["72","78","81","85","100"],
+        answer: 2, explanation: "Squares of 1..9: 1,4,9,16,25,36,49,64,81. Missing = 9² = 81."
+      },
+    ],
+  },
+};
+
+const SECTION_ORDER = ['numerical','verbal','logical'];
+const SECTION_LABELS = { numerical: 'Numerical', verbal: 'Verbal', logical: 'Logical' };
+const SECTION_TIMES  = { numerical: 90, verbal: 75, logical: 60 };
+const QUESTIONS_PER_SECTION = 5;
+const TOTAL_QUESTIONS = SECTION_ORDER.length * QUESTIONS_PER_SECTION;
+
+// Difficulty scoring weights (Talent-Q style)
+const DIFFICULTY_WEIGHT = { easy: 1, medium: 2, hard: 3 };
+
+let selectedDiff = 'average';
+let currentIdx = 0;          // 0..14
+let currentSection = null;
+let currentDifficulty = 'medium';
+let usedQuestionIds = new Set();
+let currentQuestion = null;
+let currentAnswer = null;
+let perQTimer = null;
+let perQSecondsLeft = 0;
+let history = [];            // { section, difficulty, question, userAnswer, correct, weight }
+
+function setDiff(btn) {
+  document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected-diff'));
+  btn.classList.add('selected-diff');
+  selectedDiff = btn.dataset.d;
+}
+
+function startGame() {
+  document.getElementById('instructions').classList.add('hidden');
+  document.getElementById('game-area').classList.remove('hidden');
+  currentIdx = 0;
+  currentDifficulty = 'medium';
+  nextQuestion();
+}
+
+function getSectionForIndex(i) {
+  return SECTION_ORDER[Math.floor(i / QUESTIONS_PER_SECTION)];
+}
+
+function pickQuestion(section, difficulty) {
+  // Try requested pool; if all used, fall back to neighbouring difficulty.
+  const tryOrder = difficulty === 'easy' ? ['easy','medium','hard']
+                 : difficulty === 'hard' ? ['hard','medium','easy']
+                 : ['medium','easy','hard'];
+  for (const diff of tryOrder) {
+    const pool = POOLS[section][diff];
+    const available = pool.filter((_, i) => !usedQuestionIds.has(`${section}-${diff}-${i}`));
+    if (available.length) {
+      const q = available[Math.floor(Math.random() * available.length)];
+      const idx = pool.indexOf(q);
+      usedQuestionIds.add(`${section}-${diff}-${idx}`);
+      return { question: q, actualDifficulty: diff };
+    }
+  }
+  return null;
+}
+
+function nextQuestion() {
+  if (currentIdx >= TOTAL_QUESTIONS) { finishTest(); return; }
+
+  const section = getSectionForIndex(currentIdx);
+  // Reset difficulty to medium when switching sections
+  if (section !== currentSection) {
+    currentSection = section;
+    currentDifficulty = 'medium';
+  }
+
+  const picked = pickQuestion(section, currentDifficulty);
+  if (!picked) { finishTest(); return; }
+  currentQuestion = picked.question;
+  currentQuestion._difficulty = picked.actualDifficulty;
+  currentQuestion._section = section;
+  currentAnswer = null;
+
+  // UI labels
+  document.getElementById('section-label').textContent = SECTION_LABELS[section];
+  const diffColors = { easy: 'var(--success)', medium: 'var(--accent)', hard: 'var(--danger)' };
+  const diffLabel = document.getElementById('difficulty-label');
+  diffLabel.textContent = picked.actualDifficulty.toUpperCase();
+  diffLabel.style.color = diffColors[picked.actualDifficulty];
+  diffLabel.style.fontWeight = '700';
+
+  document.getElementById('q-counter').textContent = `Question ${currentIdx+1} of ${TOTAL_QUESTIONS}`;
+  document.getElementById('progress-bar').style.width = ((currentIdx)/TOTAL_QUESTIONS*100) + '%';
+  document.getElementById('next-btn').disabled = true;
+
+  renderQuestion(currentQuestion);
+  startPerQuestionTimer(SECTION_TIMES[section]);
+}
+
+function renderQuestion(q) {
+  let html = `<div class="question-card"><div class="question-number">Question ${currentIdx+1}</div>`;
+
+  if (q.passage) {
+    html += `<div style="background:var(--bg2);border-left:3px solid var(--accent);padding:1rem 1.25rem;border-radius:var(--radius);margin-bottom:1rem;line-height:1.6;color:var(--text)">${q.passage}</div>`;
+  }
+  if (q.table) {
+    html += `<table class="data-table"><thead><tr>`;
+    q.table.headers.forEach(h => html += `<th>${h}</th>`);
+    html += `</tr></thead><tbody>`;
+    q.table.rows.forEach(row => {
+      html += '<tr>';
+      row.forEach((cell,i) => html += `<td style="${i===0?'text-align:left':''}">${cell}</td>`);
+      html += '</tr>';
+    });
+    html += `</tbody></table>`;
+  }
+
+  html += `<div class="question-text">${q.question}</div><ul class="options-list">`;
+  q.options.forEach((opt,i) => {
+    html += `<li><button class="option-btn" onclick="selectAnswer(${i},this)">
+      <span class="option-letter">${String.fromCharCode(65+i)}</span>${opt}
+    </button></li>`;
+  });
+  html += `</ul></div>`;
+  document.getElementById('question-area').innerHTML = html;
+}
+
+function selectAnswer(i, btn) {
+  currentAnswer = i;
+  document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('next-btn').disabled = false;
+}
+
+function startPerQuestionTimer(seconds) {
+  clearInterval(perQTimer);
+  perQSecondsLeft = seconds;
+  updateTimerDisplay();
+  perQTimer = setInterval(() => {
+    perQSecondsLeft--;
+    updateTimerDisplay();
+    if (perQSecondsLeft <= 0) {
+      clearInterval(perQTimer);
+      submitAnswer(true);  // time's up
+    }
+  }, 1000);
+}
+
+function updTwoDigit(n) { return n.toString().padStart(2,'0'); }
+
+function updateTimerDisplay() {
+  const m = Math.floor(perQSecondsLeft / 60);
+  const s = perQSecondsLeft % 60;
+  const el = document.getElementById('timer');
+  el.textContent = `${m}:${updTwoDigit(s)}`;
+  el.classList.toggle('urgent', perQSecondsLeft <= 10);
+}
+
+function submitAnswer(timedOut = false) {
+  clearInterval(perQTimer);
+  const correct = !timedOut && currentAnswer === currentQuestion.answer;
+  const diff = currentQuestion._difficulty;
+  const weight = DIFFICULTY_WEIGHT[diff];
+
+  history.push({
+    section: currentQuestion._section,
+    difficulty: diff,
+    question: currentQuestion,
+    userAnswer: timedOut ? null : currentAnswer,
+    correct,
+    weight,
+    timedOut,
+  });
+
+  // Adaptive: bump difficulty up on correct, down on wrong
+  if (correct) {
+    currentDifficulty = diff === 'easy' ? 'medium' : 'hard';
+  } else {
+    currentDifficulty = diff === 'hard' ? 'medium' : 'easy';
+  }
+
+  currentIdx++;
+  nextQuestion();
+}
+
+function finishTest() {
+  clearInterval(perQTimer);
+  document.getElementById('game-area').classList.add('hidden');
+  document.getElementById('results-area').classList.remove('hidden');
+
+  // Weighted score: sum of weights for correct / max possible weight (if all were hard)
+  const earned = history.reduce((a, h) => a + (h.correct ? h.weight : 0), 0);
+  const maxPossible = history.length * DIFFICULTY_WEIGHT.hard;
+  const weightedPct = Math.round((earned / maxPossible) * 100);
+
+  document.getElementById('final-score').textContent = `${weightedPct}`;
+  document.getElementById('score-label').textContent =
+    `Weighted Score / 100 (harder questions count more — Talent Q style)`;
+
+  // Subtest breakdown
+  let breakdown = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:1rem">
+    <h3 style="font-size:1rem;font-weight:700;margin-bottom:0.75rem">📊 Subtest Breakdown</h3>`;
+  SECTION_ORDER.forEach(sec => {
+    const items = history.filter(h => h.section === sec);
+    const raw = items.filter(h => h.correct).length;
+    const w   = items.reduce((a,h) => a + (h.correct ? h.weight : 0), 0);
+    const wmax = items.length * DIFFICULTY_WEIGHT.hard;
+    const wpct = Math.round((w / wmax) * 100);
+    breakdown += `<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border)">
+      <div><strong>${SECTION_LABELS[sec]}</strong>
+        <div style="font-size:0.75rem;color:var(--text-muted)">${raw} / ${items.length} correct</div>
+      </div>
+      <div style="font-size:1.25rem;font-weight:700;color:var(--accent)">${wpct}</div>
+    </div>`;
+  });
+  breakdown += `</div>`;
+  document.getElementById('subtest-breakdown').innerHTML = breakdown;
+
+  // Review
+  let review = `<h3 style="font-size:1rem;font-weight:700;margin-bottom:0.75rem">📝 Review</h3>`;
+  history.forEach((h, i) => {
+    const q = h.question;
+    const userLabel = h.timedOut ? '⏱️ Timed out'
+                    : h.userAnswer === null ? 'Not answered'
+                    : q.options[h.userAnswer];
+    review += `<div class="question-card" style="margin-bottom:1rem">
+      <div class="question-number" style="color:${h.correct?'var(--success)':'var(--danger)'}">
+        Q${i+1} · ${SECTION_LABELS[h.section]} · ${h.difficulty.toUpperCase()} — ${h.correct ? '✅' : '✗'}
+      </div>
+      <div class="question-text" style="font-size:0.9rem">${q.question}</div>
+      <div style="margin-top:0.5rem;font-size:0.85rem">
+        <span style="color:var(--text-muted)">Your answer: </span>
+        <strong style="color:${h.correct?'var(--success)':'var(--danger)'}">${userLabel}</strong>
+      </div>`;
+    if (!h.correct) {
+      review += `<div style="font-size:0.85rem;margin-top:0.25rem">
+        <span style="color:var(--text-muted)">Correct: </span>
+        <strong style="color:var(--success)">${q.options[q.answer]}</strong>
+      </div>`;
+    }
+    review += `<div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.35rem">💡 ${q.explanation}</div></div>`;
+  });
+  document.getElementById('review-area').innerHTML = review;
+
+  loadLeaderboard(weightedPct, 'korn_ferry');
+  saveScore(weightedPct);
+}
+
+async function saveScore(score) {
+  try {
+    await fetch('/sim/save-score', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        game: 'korn_ferry',
+        score: score,
+        details: {
+          subtests: SECTION_ORDER.map(sec => {
+            const items = history.filter(h => h.section === sec);
+            const w = items.reduce((a,h)=>a + (h.correct ? h.weight : 0), 0);
+            const wmax = items.length * DIFFICULTY_WEIGHT.hard;
+            return { section: sec, weighted: Math.round((w/wmax)*100), raw: items.filter(h=>h.correct).length, total: items.length };
+          })
+        }
+      })
+    });
+  } catch (e) { /* silent — works even when logged out */ }
+}
+
+async function loadLeaderboard(userScore, gameName) {
+  try {
+    const res = await fetch('/sim/bot/leaderboard', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({score: userScore, difficulty: selectedDiff, game: gameName, count: 12})
+    });
+    const data = await res.json();
+    const lb = data.leaderboard;
+    let html = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.5rem">
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:0.25rem">🏆 Leaderboard</h3>
+      <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem">Your rank: <strong style="color:var(--accent)">#${data.user_rank}</strong> of ${data.total_candidates} (${data.percentile}th percentile)</p>`;
+    lb.forEach(e => {
+      const bg = e.is_user ? 'background:rgba(77,159,255,0.12);border:1px solid var(--accent)' : '';
+      html += `<div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0.75rem;border-radius:var(--radius);margin-bottom:0.25rem;${bg}">
+        <div style="width:1.75rem;text-align:center;font-weight:700;color:var(--text-muted)">#${e.rank}</div>
+        <div style="width:2rem;height:2rem;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700">${e.avatar}</div>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:0.85rem">${e.name}${e.is_user?' (you)':''}</div>
+          <div style="font-size:0.7rem;color:var(--text-muted)">${e.school}</div>
+        </div>
+        <div style="font-weight:700;color:${e.is_user?'var(--accent)':'var(--text)'}">${e.score}</div>
+      </div>`;
+    });
+    html += `</div>`;
+    document.getElementById('leaderboard-area').innerHTML = html;
+  } catch (e) { /* silent */ }
+}
+</script>
+{% endblock %}

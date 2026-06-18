@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — AssessSim{% endblock %}
+
+{% block content %}
+<div class="dashboard-page">
+
+  <!-- Header -->
+  <div class="dashboard-header">
+    <div class="dashboard-greeting">
+      <h1 id="dashGreeting">Welcome back</h1>
+      <p id="dashDate"></p>
+    </div>
+    <a href="/#assessments" class="btn btn-primary btn-sm">+ Start a Session</a>
+  </div>
+
+  <!-- Stat cards -->
+  <div class="dashboard-stat-cards" id="dashStatCards">
+    <div class="stat-card">
+      <span class="stat-card-icon">📚</span>
+      <div class="stat-card-value" id="statSessions">—</div>
+      <div class="stat-card-label">Total Sessions</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-card-icon">🏆</span>
+      <div class="stat-card-value" id="statBest">—</div>
+      <div class="stat-card-label">Best Score</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-card-icon">🎯</span>
+      <div class="stat-card-value" id="statTried">—</div>
+      <div class="stat-card-label">Assessments Tried</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-card-icon">🔥</span>
+      <div class="stat-card-value" id="statStreak">—</div>
+      <div class="stat-card-label">Current Streak</div>
+    </div>
+  </div>
+
+  <!-- Progress grid -->
+  <div class="progress-section">
+    <div class="progress-section-title">📊 Your Progress</div>
+    <div class="progress-grid" id="progressGrid">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <!-- Recent sessions -->
+  <div class="progress-section">
+    <div class="progress-section-title">🕐 Recent Sessions</div>
+    <div class="sessions-table-wrap">
+      <table class="sessions-table">
+        <thead>
+          <tr>
+            <th>Assessment</th>
+            <th>Score</th>
+            <th>Date</th>
+            <th>Percentile</th>
+          </tr>
+        </thead>
+        <tbody id="sessionsTableBody">
+          <tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:2rem;">Loading sessions…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Recommended next -->
+  <div class="progress-section">
+    <div class="progress-section-title">💡 Recommended Next</div>
+    <div class="recommend-grid" id="recommendGrid">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // ── Metadata for all 19 assessments ──────────────────────────────────────
+  const ASSESSMENTS = [
+    { key: 'bart',                 name: 'Balloon Risk (BART)',       icon: '🎈', href: '/game/bart',                 platform: 'Pymetrics'  },
+    { key: 'gonogo',               name: 'Go / No-Go',                icon: '⚡', href: '/game/gonogo',               platform: 'Pymetrics'  },
+    { key: 'digit-span',           name: 'Digit Span',                icon: '🔢', href: '/game/digit-span',           platform: 'Pymetrics'  },
+    { key: 'nback',                name: 'N-Back Task',               icon: '🧠', href: '/game/nback',                platform: 'Pymetrics'  },
+    { key: 'attention',            name: 'Attention & Focus',         icon: '👁️', href: '/game/attention',            platform: 'Pymetrics'  },
+    { key: 'numerical',            name: 'SHL Numerical',             icon: '📊', href: '/game/numerical',            platform: 'SHL'        },
+    { key: 'verbal',               name: 'SHL Verbal',                icon: '📝', href: '/game/verbal',               platform: 'SHL'        },
+    { key: 'inductive',            name: 'SHL Inductive',             icon: '🔷', href: '/game/inductive',            platform: 'SHL'        },
+    { key: 'aon-scales',           name: 'Aon Logical (Scales)',      icon: '⚖️', href: '/game/aon-scales',           platform: 'Aon cut-e'  },
+    { key: 'aon-error',            name: 'Aon Error Checking',        icon: '🔍', href: '/game/aon-error',            platform: 'Aon cut-e'  },
+    { key: 'aon-verbal',           name: 'Aon Verbal',                icon: '📋', href: '/game/aon-verbal',           platform: 'Aon cut-e'  },
+    { key: 'sjt',                  name: 'Situational Judgment',      icon: '💼', href: '/game/sjt',                  platform: 'Cappfinity' },
+    { key: 'cappfinity-numerical', name: 'Cappfinity Numerical',      icon: '📈', href: '/game/cappfinity-numerical', platform: 'Cappfinity' },
+    { key: 'skim',                 name: 'SKIM Reading',              icon: '📖', href: '/game/skim',                 platform: 'Cappfinity' },
+    { key: 'personality',          name: 'Personality Profile',       icon: '🧭', href: '/game/personality',          platform: 'Cappfinity' },
+    { key: 'watson-glaser',        name: 'Watson Glaser',             icon: '🧩', href: '/game/watson-glaser',        platform: 'Watson G.'  },
+    { key: 'korn-ferry',           name: 'Korn Ferry Talent Q',       icon: '🎯', href: '/game/korn-ferry',           platform: 'Korn Ferry' },
+    { key: 'pst',                  name: 'PST (McKinsey/BCG)',        icon: '📐', href: '/game/pst',                  platform: 'McKinsey'   },
+    { key: 'coding',               name: 'Coding OA',                 icon: '💻', href: '/game/coding',               platform: 'Coding OA'  },
+  ];
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso.replace(' ', 'T') + 'Z');
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  function percentileClass(p) {
+    if (p >= 70) return 'high';
+    if (p >= 40) return 'mid';
+    return 'low';
+  }
+
+  function estimatePercentile(score) {
+    // Simple linear estimate: 50 = 50th, 100 = 99th
+    return Math.min(99, Math.round(50 + (score - 50) * 0.98));
+  }
+
+  function calcStreak(scores) {
+    if (!scores.length) return 0;
+    const days = new Set(scores.map(s => {
+      const d = new Date(s.played_at.replace(' ', 'T') + 'Z');
+      return d.toISOString().slice(0, 10);
+    }));
+    const sorted = Array.from(days).sort().reverse();
+    let streak = 0;
+    let cur = new Date();
+    cur.setHours(0, 0, 0, 0);
+    for (const d of sorted) {
+      const day = new Date(d);
+      day.setHours(0, 0, 0, 0);
+      const diff = Math.round((cur - day) / 86400000);
+      if (diff <= 1) { streak++; cur = day; }
+      else break;
+    }
+    return streak;
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────
+  async function loadDashboard() {
+    // Set date
+    document.getElementById('dashDate').textContent = new Date().toLocaleDateString('en-GB', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+    });
+
+    // Fetch user
+    const meRes = await fetch('/sim/me');
+    if (!meRes.ok) {
+      window.location.href = '/';
+      return;
+    }
+    const meData = await meRes.json();
+    document.getElementById('dashGreeting').textContent = `Welcome back, ${meData.user.username} 👋`;
+
+    // Fetch scores
+    const scoresRes = await fetch('/sim/scores');
+    const scoresData = scoresRes.ok ? await scoresRes.json() : { scores: [] };
+    const scores = scoresData.scores || [];
+
+    // Build per-game best score map
+    const bestByGame = {};
+    const lastByGame = {};
+    scores.forEach(s => {
+      if (bestByGame[s.game] === undefined || s.score > bestByGame[s.game]) {
+        bestByGame[s.game] = s.score;
+      }
+      if (!lastByGame[s.game]) lastByGame[s.game] = s.played_at;
+    });
+
+    // Stat cards
+    const tried = Object.keys(bestByGame).length;
+    const best = scores.length ? Math.max(...scores.map(s => s.score)) : 0;
+    const streak = calcStreak(scores);
+
+    document.getElementById('statSessions').textContent = scores.length;
+    document.getElementById('statBest').textContent = scores.length ? best.toFixed(0) + '%' : '—';
+    document.getElementById('statTried').textContent = tried + ' / ' + ASSESSMENTS.length;
+    document.getElementById('statStreak').textContent = streak + (streak === 1 ? ' day' : ' days');
+
+    // Progress grid
+    const grid = document.getElementById('progressGrid');
+    grid.innerHTML = ASSESSMENTS.map(a => {
+      const score = bestByGame[a.key];
+      const date  = lastByGame[a.key];
+      const hasTried = score !== undefined;
+      return `
+        <div class="progress-card">
+          <div class="progress-card-icon">${a.icon}</div>
+          <div class="progress-card-name">${a.name}</div>
+          <div class="progress-card-score ${hasTried ? '' : 'not-tried'}">
+            ${hasTried ? score.toFixed(0) + '%' : 'Not tried yet'}
+          </div>
+          <div class="progress-card-date">${hasTried ? fmtDate(date) : ''}</div>
+          <a href="${a.href}" class="btn btn-outline btn-sm">Practice</a>
+        </div>`;
+    }).join('');
+
+    // Recent sessions table (last 10)
+    const tbody = document.getElementById('sessionsTableBody');
+    if (!scores.length) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:2rem;">No sessions yet — <a href="/#assessments" style="color:var(--accent);">start practising</a>!</td></tr>`;
+    } else {
+      const recent = scores.slice(0, 10);
+      tbody.innerHTML = recent.map(s => {
+        const a = ASSESSMENTS.find(x => x.key === s.game) || { name: s.game, icon: '📋' };
+        const p = estimatePercentile(s.score);
+        const cls = percentileClass(p);
+        return `
+          <tr>
+            <td><span style="margin-right:0.5rem;">${a.icon}</span>${a.name}</td>
+            <td><strong>${s.score.toFixed(0)}%</strong></td>
+            <td>${fmtDate(s.played_at)}</td>
+            <td><span class="percentile-pill ${cls}">Top ${100 - p}%</span></td>
+          </tr>`;
+      }).join('');
+    }
+
+    // Recommended next — assessments not tried or lowest scores
+    const notTried = ASSESSMENTS.filter(a => bestByGame[a.key] === undefined);
+    const lowScored = ASSESSMENTS
+      .filter(a => bestByGame[a.key] !== undefined && bestByGame[a.key] < 65)
+      .sort((x, y) => bestByGame[x.key] - bestByGame[y.key]);
+
+    const recs = [...notTried.slice(0, 2), ...lowScored.slice(0, 2)].slice(0, 3);
+    const recGrid = document.getElementById('recommendGrid');
+
+    if (!recs.length) {
+      recGrid.innerHTML = `<div class="empty-state"><span class="empty-state-icon">🎉</span><p>You've tried everything and scored well! Keep up the streak.</p></div>`;
+    } else {
+      recGrid.innerHTML = recs.map(a => {
+        const score = bestByGame[a.key];
+        const reason = score === undefined
+          ? 'You haven\'t tried this yet — give it a go!'
+          : `Your best score is ${score.toFixed(0)}% — room to improve.`;
+        return `
+          <div class="recommend-card">
+            <div class="recommend-icon">${a.icon}</div>
+            <div class="recommend-info">
+              <h3>${a.name}</h3>
+              <p>${reason}</p>
+              <a href="${a.href}" class="btn btn-primary btn-sm">Practice Now</a>
+            </div>
+          </div>`;
+      }).join('');
+    }
+  }
+
+  loadDashboard();
+</script>
+{% endblock %}

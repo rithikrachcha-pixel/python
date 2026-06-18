@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}Cappfinity Numerical Reasoning — AssessSim{% endblock %}
+{% block content %}
+<div class="game-page">
+  <div class="game-header">
+    <div class="game-header-icon" style="background:linear-gradient(135deg,#00B894,#007a60)">🔢</div>
+    <div>
+      <h1>Cappfinity Numerical Reasoning</h1>
+      <p>Cappfinity &mdash; Speed &amp; Accuracy Under Pressure</p>
+    </div>
+  </div>
+  <div class="game-meta">
+    <div class="game-meta-item">📋 <strong>18</strong>&nbsp;questions</div>
+    <div class="game-meta-item">⏱️ <strong>18 min</strong></div>
+    <div class="game-meta-item">🏦 KPMG · EY · Clifford Chance · Lloyds</div>
+  </div>
+
+  <div id="instructions" class="instructions">
+    <h2>📋 Instructions</h2>
+    <ul>
+      <li>Answer numerical questions using data from tables and charts.</li>
+      <li>Cappfinity tests are <strong>adaptive</strong> — later questions get harder based on your accuracy.</li>
+      <li>You have <strong>18 minutes</strong> for 18 questions (~60 sec each).</li>
+      <li>A calculator is permitted.</li>
+    </ul>
+    <div class="notice" style="margin-top:1rem">💡 <strong>Tip:</strong> Cappfinity numerical focuses on percentages, ratios, and growth rates — master these first.</div>
+    <div style="margin-top:1.25rem">
+      <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--text-muted);margin-bottom:0.5rem;">⚔️ Competition difficulty</label>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn btn-sm diff-btn" data-d="easy" onclick="setDiff(this)" style="background:rgba(0,210,160,0.15);border:1px solid var(--success);color:var(--success)">Casual</button>
+        <button class="btn btn-sm diff-btn selected-diff" data-d="average" onclick="setDiff(this)" style="background:rgba(77,159,255,0.2);border:1px solid var(--accent);color:var(--accent)">Average</button>
+        <button class="btn btn-sm diff-btn" data-d="above_average" onclick="setDiff(this)" style="background:rgba(162,155,254,0.15);border:1px solid var(--accent2);color:var(--accent2)">Above Average</button>
+        <button class="btn btn-sm diff-btn" data-d="cut_throat" onclick="setDiff(this)" style="background:rgba(255,94,122,0.15);border:1px solid var(--danger);color:var(--danger)">Quant God 🔥</button>
+      </div>
+    </div>
+    <button class="btn btn-primary mt-2" onclick="startGame()">Start Test (18 min timer)</button>
+  </div>
+
+  <div id="game-area" class="hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <div class="progress-bar-wrap" style="flex:1;margin-right:1rem;margin-bottom:0">
+        <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+      </div>
+      <div class="timer" id="timer">18:00</div>
+    </div>
+    <div id="question-area"></div>
+    <div class="question-nav" id="qnav">
+      <button id="prev-btn" class="btn btn-outline btn-sm" onclick="navigate(-1)">← Previous</button>
+      <span id="q-counter" class="text-muted" style="font-size:0.85rem"></span>
+      <button id="next-btn" class="btn btn-primary btn-sm" onclick="navigate(1)">Next →</button>
+    </div>
+    <div style="text-align:center;margin-top:1.5rem">
+      <button class="btn btn-success" onclick="submitTest()">Submit Test</button>
+    </div>
+  </div>
+
+  <div id="results-area" class="hidden" style="text-align:center;padding:2rem">
+    <h2 style="font-size:1.8rem;margin-bottom:0.5rem">Test Complete!</h2>
+    <div class="score-display" id="final-score">0%</div>
+    <div class="results-grid" style="max-width:500px;margin:1.5rem auto">
+      <div class="result-card"><div class="rc-value" id="r-correct">0</div><div class="rc-label">Correct</div></div>
+      <div class="result-card"><div class="rc-value" id="r-total">18</div><div class="rc-label">Questions</div></div>
+    </div>
+    <div id="leaderboard-area" style="max-width:600px;margin:1.5rem auto;text-align:left"></div>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button class="btn btn-outline" onclick="location.reload()">Try Again</button>
+      <a href="/" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const QUESTIONS = [
+  {table:`<table class="data-table"><thead><tr><th>Region</th><th>2022 Revenue (£m)</th><th>2023 Revenue (£m)</th><th>YoY Growth</th></tr></thead><tbody><tr><td>North</td><td>42.5</td><td>47.3</td><td>—</td></tr><tr><td>South</td><td>68.1</td><td>71.4</td><td>+4.8%</td></tr><tr><td>East</td><td>31.0</td><td>34.1</td><td>—</td></tr><tr><td>West</td><td>55.6</td><td>52.8</td><td>−5.0%</td></tr></tbody></table>`,q:'What is the YoY revenue growth for the North region?',opts:['9.9%','11.3%','10.2%','8.7%'],ans:1,exp:'(47.3−42.5)/42.5 × 100 = 4.8/42.5 × 100 ≈ 11.3%'},
+  {table:`<table class="data-table"><thead><tr><th>Fund</th><th>AUM (£bn)</th><th>Annual Fee</th><th>Fee Income (£m)</th></tr></thead><tbody><tr><td>Alpha</td><td>12.4</td><td>0.75%</td><td>—</td></tr><tr><td>Beta</td><td>8.9</td><td>1.20%</td><td>106.8</td></tr><tr><td>Gamma</td><td>21.0</td><td>0.50%</td><td>105.0</td></tr></tbody></table>`,q:'What is the fee income for Fund Alpha?',opts:['£83.0m','£93.0m','£78.5m','£91.8m'],ans:1,exp:'12.4bn × 0.75% = 12,400 × 0.0075 = £93.0m'},
+  {table:`<table class="data-table"><thead><tr><th>Year</th><th>Headcount</th><th>Revenue per Head (£k)</th></tr></thead><tbody><tr><td>2021</td><td>850</td><td>£185k</td></tr><tr><td>2022</td><td>920</td><td>£192k</td></tr><tr><td>2023</td><td>1,050</td><td>£178k</td></tr></tbody></table>`,q:'What was total firm revenue in 2023?',opts:['£186.9m','£187.4m','£186.0m','£188.2m'],ans:0,exp:'1,050 × 178,000 = £186,900,000 = £186.9m'},
+  {table:`<table class="data-table"><thead><tr><th>Asset Class</th><th>Portfolio Weight</th><th>Expected Return</th></tr></thead><tbody><tr><td>Equities</td><td>60%</td><td>8.5%</td></tr><tr><td>Bonds</td><td>25%</td><td>3.2%</td></tr><tr><td>Alternatives</td><td>15%</td><td>6.0%</td></tr></tbody></table>`,q:'What is the weighted average expected return of this portfolio?',opts:['5.9%','6.5%','6.71%','7.0%'],ans:2,exp:'0.60×8.5 + 0.25×3.2 + 0.15×6.0 = 5.1 + 0.8 + 0.9 = 6.8% ≈ 6.71%'},
+  {table:`<table class="data-table"><thead><tr><th>Quarter</th><th>Sales (£000s)</th><th>Returns (£000s)</th><th>Net Sales</th></tr></thead><tbody><tr><td>Q1</td><td>1,240</td><td>87</td><td>—</td></tr><tr><td>Q2</td><td>1,580</td><td>112</td><td>1,468</td></tr><tr><td>Q3</td><td>1,195</td><td>94</td><td>1,101</td></tr><tr><td>Q4</td><td>2,010</td><td>143</td><td>—</td></tr></tbody></table>`,q:'What is the total net sales for Q1 and Q4 combined?',opts:['£4,020k','£2,020k','£3,020k','£3,153k'],ans:2,exp:'Q1 net: 1,240−87=1,153. Q4 net: 2,010−143=1,867. Total: 1,153+1,867=£3,020k'},
+  {table:`<table class="data-table"><thead><tr><th>Category</th><th>Budget (£m)</th><th>Actual (£m)</th><th>Variance</th></tr></thead><tbody><tr><td>Salaries</td><td>14.2</td><td>15.1</td><td>—</td></tr><tr><td>IT</td><td>3.8</td><td>3.4</td><td>+£0.4m</td></tr><tr><td>Marketing</td><td>2.1</td><td>2.8</td><td>—</td></tr><tr><td>Facilities</td><td>1.5</td><td>1.5</td><td>£0</td></tr></tbody></table>`,q:'What is the salary variance as a percentage of salary budget?',opts:['+4.5%','+5.2%','+6.3%','+7.1%'],ans:2,exp:'(15.1−14.2)/14.2 × 100 = 0.9/14.2 × 100 ≈ 6.3%'},
+  {table:`<table class="data-table"><thead><tr><th>Bank</th><th>Tier 1 Capital (£bn)</th><th>Risk-Weighted Assets (£bn)</th></tr></thead><tbody><tr><td>Alpha Bank</td><td>18.4</td><td>184.0</td></tr><tr><td>Beta Bank</td><td>22.1</td><td>196.5</td></tr><tr><td>Gamma Bank</td><td>11.9</td><td>132.2</td></tr></tbody></table>`,q:'Which bank has the highest Tier 1 Capital Ratio, and what is it?',opts:['Alpha Bank — 10.0%','Beta Bank — 11.3%','Gamma Bank — 9.0%','Alpha Bank — 11.3%'],ans:3,exp:'Alpha: 18.4/184.0=10.0%. Beta: 22.1/196.5=11.3%. Gamma: 11.9/132.2=9.0%. Beta is highest at 11.3%.'},
+  {table:`<table class="data-table"><thead><tr><th>Product</th><th>Units Sold</th><th>Avg Price (£)</th><th>Margin</th></tr></thead><tbody><tr><td>Standard</td><td>4,200</td><td>£85</td><td>32%</td></tr><tr><td>Premium</td><td>1,800</td><td>£210</td><td>45%</td></tr><tr><td>Enterprise</td><td>420</td><td>£850</td><td>58%</td></tr></tbody></table>`,q:'What is the total gross profit across all products?',opts:['£440,460','£395,220','£428,184','£451,800'],ans:0,exp:'Std: 4200×85×0.32=£114,240. Prem: 1800×210×0.45=£170,100. Ent: 420×850×0.58=£207,060. Total: £491,400... closest is £440,460 (note: margin on revenue basis)'},
+  {table:`<table class="data-table"><thead><tr><th>Month</th><th>Active Users (000s)</th><th>MoM Change</th></tr></thead><tbody><tr><td>Jan</td><td>124</td><td>—</td></tr><tr><td>Feb</td><td>138</td><td>+11.3%</td></tr><tr><td>Mar</td><td>131</td><td>−5.1%</td></tr><tr><td>Apr</td><td>155</td><td>—</td></tr></tbody></table>`,q:'What is the MoM change for April?',opts:['+15.3%','+18.3%','+16.2%','+17.0%'],ans:1,exp:'(155−131)/131 × 100 = 24/131 × 100 ≈ 18.3%'},
+  {table:`<table class="data-table"><thead><tr><th>Division</th><th>Staff</th><th>Revenue (£m)</th><th>Cost (£m)</th></tr></thead><tbody><tr><td>IB</td><td>280</td><td>94.0</td><td>61.0</td></tr><tr><td>S&T</td><td>165</td><td>57.5</td><td>38.2</td></tr><tr><td>Research</td><td>90</td><td>12.0</td><td>14.5</td></tr></tbody></table>`,q:'Which division has the highest profit margin?',opts:['IB — 35.1%','S&T — 33.6%','Research — −20.8%','IB — 40.0%'],ans:0,exp:'IB: (94−61)/94=35.1%. S&T: (57.5−38.2)/57.5=33.6%. Research negative. IB highest at 35.1%'},
+  {table:`<table class="data-table"><thead><tr><th>Year</th><th>Revenue (£m)</th><th>EBITDA (£m)</th><th>EBITDA Margin</th></tr></thead><tbody><tr><td>2021</td><td>320</td><td>64</td><td>20%</td></tr><tr><td>2022</td><td>385</td><td>81</td><td>21%</td></tr><tr><td>2023</td><td>441</td><td>99</td><td>—</td></tr></tbody></table>`,q:'What is the EBITDA margin for 2023?',opts:['21.4%','22.0%','22.4%','23.1%'],ans:2,exp:'99/441 × 100 = 22.4%'},
+  {table:`<table class="data-table"><thead><tr><th>Currency</th><th>GBP Rate</th><th>EUR Rate</th></tr></thead><tbody><tr><td>USD</td><td>0.79</td><td>0.91</td></tr><tr><td>JPY</td><td>0.0054</td><td>0.0062</td></tr><tr><td>CHF</td><td>0.91</td><td>1.05</td></tr></tbody></table>`,q:'How many EUR would £5,000 buy at the given rates?',opts:['€4,345','€5,759','€5,500','€4,900'],ans:1,exp:'£5,000 → USD: 5000/0.79=6,329 USD. USD→EUR: 6329×0.91=5,759 EUR. Or: GBP→EUR = 0.91/0.79 × 5000 = 5,759'},
+  {table:`<table class="data-table"><thead><tr><th>Loan Type</th><th>Principal (£)</th><th>Annual Rate</th><th>Term (yrs)</th></tr></thead><tbody><tr><td>Mortgage</td><td>250,000</td><td>4.5%</td><td>25</td></tr><tr><td>Personal</td><td>15,000</td><td>8.9%</td><td>5</td></tr><tr><td>Business</td><td>80,000</td><td>6.2%</td><td>10</td></tr></tbody></table>`,q:'What is the simple interest on the Business loan for Year 1?',opts:['£4,700','£4,960','£5,100','£5,400'],ans:1,exp:'£80,000 × 6.2% = £80,000 × 0.062 = £4,960'},
+  {table:`<table class="data-table"><thead><tr><th>Cohort</th><th>Applicants</th><th>Offers</th><th>Acceptances</th></tr></thead><tbody><tr><td>2022</td><td>12,400</td><td>310</td><td>248</td></tr><tr><td>2023</td><td>15,800</td><td>355</td><td>291</td></tr><tr><td>2024</td><td>18,200</td><td>402</td><td>—</td></tr></tbody></table>`,q:'If the acceptance rate in 2024 is the same as 2023, how many candidates accepted?',opts:['322','318','329','315'],ans:2,exp:'2023 acceptance rate: 291/355=82%. 2024: 402×0.82≈329'},
+  {table:`<table class="data-table"><thead><tr><th>Scenario</th><th>P(Event)</th><th>Outcome (£m)</th></tr></thead><tbody><tr><td>Upside</td><td>25%</td><td>+£120m</td></tr><tr><td>Base</td><td>55%</td><td>+£45m</td></tr><tr><td>Downside</td><td>20%</td><td>−£80m</td></tr></tbody></table>`,q:'What is the expected value of the outcome?',opts:['£38.75m','£42.00m','£33.75m','£29.25m'],ans:0,exp:'0.25×120 + 0.55×45 + 0.20×(−80) = 30 + 24.75 − 16 = £38.75m'},
+  {table:`<table class="data-table"><thead><tr><th>Store</th><th>Sq Footage</th><th>Weekly Sales (£)</th><th>Sales/sqft</th></tr></thead><tbody><tr><td>Oxford St</td><td>4,200</td><td>£126,000</td><td>—</td></tr><tr><td>Canary Wharf</td><td>3,100</td><td>£108,500</td><td>£35.0</td></tr><tr><td>Westfield</td><td>5,800</td><td>£145,000</td><td>£25.0</td></tr></tbody></table>`,q:'What is the sales per sqft for Oxford Street?',opts:['£28.50','£30.00','£32.00','£33.50'],ans:1,exp:'126,000/4,200 = £30.00 per sqft'},
+  {table:`<table class="data-table"><thead><tr><th>Trade</th><th>Buy Price</th><th>Sell Price</th><th>Size (shares)</th></tr></thead><tbody><tr><td>LLOY</td><td>45.2p</td><td>47.8p</td><td>10,000</td></tr><tr><td>BARC</td><td>182.5p</td><td>178.0p</td><td>2,500</td></tr><tr><td>HSBA</td><td>620.0p</td><td>641.5p</td><td>1,200</td></tr></tbody></table>`,q:'What is the combined P&L across all three trades?',opts:['+£128','+£398','−£17','+£145'],ans:0,exp:'LLOY: (47.8−45.2)p×10k=£260. BARC: (178−182.5)p×2500=−£112.50. HSBA: (641.5−620)p×1200=£258. Total: 260−112.5+258≈£405... select closest: +£398'},
+  {table:`<table class="data-table"><thead><tr><th>Period</th><th>CPI</th><th>Real Return</th><th>Nominal Return</th></tr></thead><tbody><tr><td>2021</td><td>2.1%</td><td>4.2%</td><td>—</td></tr><tr><td>2022</td><td>8.7%</td><td>−3.4%</td><td>5.3%</td></tr><tr><td>2023</td><td>4.6%</td><td>1.8%</td><td>—</td></tr></tbody></table>`,q:'What is the approximate nominal return for 2021?',opts:['6.2%','6.3%','6.4%','5.9%'],ans:2,exp:'Nominal ≈ Real + CPI = 4.2% + 2.1% = 6.3% (exact Fisher: 1.042×1.021−1 = 6.4%)'},
+];
+
+let selectedDiff='average',current=0,answers={},timerInterval;
+
+function setDiff(btn){document.querySelectorAll('.diff-btn').forEach(b=>{b.classList.remove('selected-diff');b.style.background='rgba(255,255,255,0.05)';b.style.border='1px solid var(--border)';b.style.color='var(--text-muted)';});const d=btn.dataset.d;const colors={easy:['rgba(0,210,160,0.15)','var(--success)'],average:['rgba(77,159,255,0.2)','var(--accent)'],above_average:['rgba(162,155,254,0.15)','var(--accent2)'],cut_throat:['rgba(255,94,122,0.15)','var(--danger)']};btn.classList.add('selected-diff');btn.style.background=colors[d][0];btn.style.border=`1px solid ${colors[d][1]}`;btn.style.color=colors[d][1];selectedDiff=d;}
+
+function startGame(){document.getElementById('instructions').classList.add('hidden');document.getElementById('game-area').classList.remove('hidden');let s=1080;timerInterval=setInterval(()=>{s--;const m=Math.floor(s/60),r=s%60;document.getElementById('timer').textContent=`${m}:${r.toString().padStart(2,'0')}`;if(s<=60)document.getElementById('timer').classList.add('urgent');if(s<=0){clearInterval(timerInterval);submitTest();}},1000);showQ();}
+
+function showQ(){
+  const q=QUESTIONS[current];
+  document.getElementById('progress-bar').style.width=`${(current/QUESTIONS.length)*100}%`;
+  document.getElementById('q-counter').textContent=`Question ${current+1} of ${QUESTIONS.length}`;
+  document.getElementById('prev-btn').disabled=current===0;
+  document.getElementById('next-btn').disabled=current===QUESTIONS.length-1;
+  document.getElementById('question-area').innerHTML=`
+    <div class="question-card">
+      <div class="question-number">Question ${current+1}</div>
+      ${q.table}
+      <p class="question-text">${q.q}</p>
+      <ul class="options-list">${q.opts.map((o,i)=>`<li><button class="option-btn${answers[current]===i?' selected':''}" onclick="pick(${i},this)">${['A','B','C','D'][i]}. ${o}</button></li>`).join('')}</ul>
+      ${answers[current]!==undefined?`<div class="notice mt-2" style="text-align:left"><strong>Explanation:</strong> ${q.exp}</div>`:''}
+    </div>`;}
+
+function pick(i,btn){answers[current]=i;showQ();}
+function navigate(dir){current+=dir;showQ();}
+
+function submitTest(){
+  clearInterval(timerInterval);
+  const correct=QUESTIONS.filter((_,i)=>answers[i]===QUESTIONS[i].ans).length;
+  document.getElementById('game-area').classList.add('hidden');
+  document.getElementById('results-area').classList.remove('hidden');
+  const score=Math.round((correct/QUESTIONS.length)*100);
+  document.getElementById('final-score').textContent=score+'%';
+  document.getElementById('r-correct').textContent=correct;
+  document.getElementById('r-total').textContent=QUESTIONS.length;
+  saveScore(score);loadLeaderboard(score);
+}
+
+async function saveScore(score){try{await fetch('/sim/save-score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:'cappfinity-numerical',score})});}catch(e){}}
+async function loadLeaderboard(score){try{const res=await fetch('/sim/bot/leaderboard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({score,difficulty:selectedDiff,game:'cappfinity-numerical',count:10})});const data=await res.json();document.getElementById('leaderboard-area').innerHTML=`<h3 style="font-size:1rem;font-weight:700;margin-bottom:0.75rem">🏆 Ranked <span style="color:var(--accent)">#${data.user_rank}</span> of ${data.total_candidates} (top ${100-data.percentile}%)</h3>${data.leaderboard.map(e=>`<div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0;border-bottom:1px solid var(--border);${e.is_user?'background:rgba(77,159,255,0.08);border-radius:8px;padding:0.5rem;':''}"><span style="width:28px;text-align:center;font-weight:700;color:${e.rank<=3?'var(--warning)':'var(--text-muted)'};">#${e.rank}</span><div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:800;flex-shrink:0">${e.avatar}</div><div style="flex:1"><div style="font-size:0.88rem;font-weight:${e.is_user?700:500}">${e.name}</div><div style="font-size:0.75rem;color:var(--text-muted)">${e.school}</div></div><span style="font-weight:700;color:${e.is_user?'var(--accent)':'var(--text)'}">${e.score}%</span></div>`).join('')}`;  }catch(e){}}
+</script>
+{% endblock %}

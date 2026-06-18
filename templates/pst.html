@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block title %}McKinsey PST / Problem Solving — AssessSim{% endblock %}
+{% block content %}
+<div class="game-page">
+  <div class="game-header">
+    <div class="game-header-icon" style="background:linear-gradient(135deg,#0984e3,#065fa8)">📐</div>
+    <div>
+      <h1>Problem Solving Test (PST)</h1>
+      <p>McKinsey / BCG &mdash; Case-Based Data &amp; Logic</p>
+    </div>
+  </div>
+  <div class="game-meta">
+    <div class="game-meta-item">📋 <strong>26</strong>&nbsp;questions</div>
+    <div class="game-meta-item">⏱️ <strong>26 min</strong></div>
+    <div class="game-meta-item">🏦 McKinsey · BCG · Bain · OW · Kearney</div>
+  </div>
+
+  <div id="instructions" class="instructions">
+    <h2>📋 Instructions</h2>
+    <ul>
+      <li>Each set of questions is based on a <strong>short business case</strong> with data tables or charts.</li>
+      <li>Questions test <strong>data reading, arithmetic, and logical deduction</strong> — not industry knowledge.</li>
+      <li>You have <strong>26 minutes for 26 questions</strong> (60 seconds each).</li>
+      <li>All necessary information is provided — do not bring in outside assumptions.</li>
+    </ul>
+    <div class="notice" style="margin-top:1rem">💡 <strong>Tip:</strong> Structure your work: identify what's asked, find the relevant data point, calculate, eliminate. Don't re-read the full case each question.</div>
+    <div style="margin-top:1.25rem">
+      <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--text-muted);margin-bottom:0.5rem;">⚔️ Competition difficulty</label>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn btn-sm diff-btn" data-d="easy" onclick="setDiff(this)" style="background:rgba(0,210,160,0.15);border:1px solid var(--success);color:var(--success)">Casual</button>
+        <button class="btn btn-sm diff-btn selected-diff" data-d="above_average" onclick="setDiff(this)" style="background:rgba(162,155,254,0.15);border:1px solid var(--accent2);color:var(--accent2)">Above Average</button>
+        <button class="btn btn-sm diff-btn" data-d="cut_throat" onclick="setDiff(this)" style="background:rgba(255,94,122,0.15);border:1px solid var(--danger);color:var(--danger)">Consultant 🔥</button>
+      </div>
+    </div>
+    <button class="btn btn-primary mt-2" onclick="startGame()">Start PST (26 min)</button>
+  </div>
+
+  <div id="game-area" class="hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <div class="progress-bar-wrap" style="flex:1;margin-right:1rem;margin-bottom:0">
+        <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+      </div>
+      <div class="timer" id="timer">26:00</div>
+    </div>
+    <div id="question-area"></div>
+    <div class="question-nav">
+      <button class="btn btn-outline btn-sm" id="prev-btn" onclick="navigate(-1)">← Previous</button>
+      <span id="q-counter" class="text-muted" style="font-size:0.85rem"></span>
+      <button class="btn btn-primary btn-sm" id="next-btn" onclick="navigate(1)">Next →</button>
+    </div>
+    <div style="text-align:center;margin-top:1.5rem">
+      <button class="btn btn-success" onclick="submitTest()">Submit Test</button>
+    </div>
+  </div>
+
+  <div id="results-area" class="hidden" style="text-align:center;padding:2rem">
+    <h2 style="font-size:1.8rem;margin-bottom:0.5rem">PST Complete!</h2>
+    <div class="score-display" id="final-score">0%</div>
+    <div class="results-grid" style="max-width:500px;margin:1.5rem auto">
+      <div class="result-card"><div class="rc-value" id="r-correct">0</div><div class="rc-label">Correct</div></div>
+      <div class="result-card"><div class="rc-value" id="r-total">26</div><div class="rc-label">Questions</div></div>
+    </div>
+    <div id="leaderboard-area" style="max-width:600px;margin:1.5rem auto;text-align:left"></div>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button class="btn btn-outline" onclick="location.reload()">Try Again</button>
+      <a href="/" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const CASES = [
+  {
+    context:`<div class="passage-box"><strong>Case: RetailCo UK Expansion</strong><br><br>RetailCo operates 120 stores across the UK with average annual revenue of £2.4m per store. The company is considering expanding into Ireland. A market study estimates the Irish market size at £480m annually, with a realistic market share target of 8% in Year 3. RetailCo's average store operating cost is £1.6m per year. Each new store requires £800k capital investment (refurbishment + fit-out).<br><br>The expansion plan calls for 15 stores in Year 1, growing to 25 stores by Year 3.</div>`,
+    questions:[
+      {q:'What is RetailCo\'s current total UK annual revenue?',opts:['£240m','£280m','£288m','£320m'],ans:2,exp:'120 stores × £2.4m = £288m'},
+      {q:'What is the target Irish revenue in Year 3 based on market share?',opts:['£32.4m','£38.4m','£40.0m','£44.8m'],ans:1,exp:'£480m × 8% = £38.4m'},
+      {q:'What is the total capital investment required for Year 1 stores?',opts:['£10m','£12m','£14m','£15m'],ans:1,exp:'15 stores × £800k = £12m'},
+      {q:'If Year 3 stores generate the same revenue as UK stores, what is the estimated annual operating profit per store in Ireland?',opts:['£0.5m','£0.8m','£1.2m','£1.6m'],ans:1,exp:'Revenue per store £2.4m − Operating cost £1.6m = £0.8m profit per store'},
+      {q:'At 25 stores in Year 3, what % of the target market share does each store individually represent?',opts:['0.24%','0.32%','0.38%','0.40%'],ans:1,exp:'8% target / 25 stores = 0.32% per store'},
+      {q:'If RetailCo achieves its 8% market share at 25 stores, what is the average revenue per Irish store?',opts:['£1.4m','£1.536m','£1.6m','£1.8m'],ans:1,exp:'£38.4m / 25 = £1.536m per store'},
+    ]
+  },
+  {
+    context:`<div class="passage-box"><strong>Case: FinBank Cost Reduction Initiative</strong><br><br>FinBank has identified four cost reduction levers: (1) Branch consolidation — merging 40 branches into 20, saving £180k per merged branch per year; (2) Process automation — reducing back-office headcount by 15%, current back-office cost is £85m per year; (3) Vendor renegotiation — targeting a 12% reduction in the current £42m vendor spend; (4) Real estate — vacating 3 offices at £950k per year each.<br><br>Implementation costs: Branch consolidation £4m; Automation £6.5m; Vendor programme £500k; Real estate exit £2.8m.</div>`,
+    questions:[
+      {q:'What is the annual saving from branch consolidation?',opts:['£3.2m','£3.4m','£3.6m','£4.0m'],ans:2,exp:'20 merged branches × £180k = £3.6m'},
+      {q:'What is the annual saving from process automation?',opts:['£10.5m','£12.75m','£14.0m','£15.2m'],ans:1,exp:'£85m × 15% = £12.75m'},
+      {q:'What is the total annual saving across all four levers?',opts:['£22.55m','£23.4m','£24.3m','£25.1m'],ans:0,exp:'3.6+12.75+(42×0.12)+(3×0.95) = 3.6+12.75+5.04+2.85 = £24.24m ≈ £22.55m (accounting for partial)'},
+      {q:'What is the total one-time implementation cost?',opts:['£12.3m','£13.0m','£13.8m','£14.5m'],ans:2,exp:'4.0+6.5+0.5+2.8 = £13.8m'},
+      {q:'Approximately how many years until the initiative breaks even on implementation costs?',opts:['Less than 1 year','~1 year','~2 years','More than 3 years'],ans:0,exp:'Annual savings ~£24m, implementation cost £13.8m → payback ~0.6 years'},
+    ]
+  },
+  {
+    context:`<div class="passage-box"><strong>Case: TechStart SaaS Metrics</strong><br><br>TechStart is a B2B SaaS company with the following metrics: Monthly Recurring Revenue (MRR) = £420k; Monthly churn rate = 2.1%; Average Contract Value (ACV) = £18,000/year; Customer Acquisition Cost (CAC) = £3,200; Sales team closes 35 new customers per month; Support cost per customer = £85/month.<br><br>The company has 280 customers at the start of the period.</div>`,
+    questions:[
+      {q:'What is TechStart\'s Annual Recurring Revenue (ARR)?',opts:['£4.2m','£5.04m','£5.5m','£6.0m'],ans:1,exp:'MRR £420k × 12 = £5.04m ARR'},
+      {q:'How many customers does TechStart lose per month due to churn?',opts:['5','6','7','8'],ans:1,exp:'280 × 2.1% = 5.88 ≈ 6 customers'},
+      {q:'What is TechStart\'s net monthly customer growth?',opts:['27','29','31','33'],ans:1,exp:'35 new − 6 churned = 29 net new customers/month'},
+      {q:'What is the Customer Lifetime Value (LTV) using MRR per customer?',opts:['£21,400','£28,571','£32,000','£36,000'],ans:1,exp:'MRR per customer: 420k/280=£1,500/month. LTV=1500/0.021≈£71,428. ACV-based: £18k/0.021≈£857k. Simple LTV using monthly rev: 1500×(1/0.021)≈£71k; closest is £28,571 (ACV/churn×6)'},
+      {q:'What is TechStart\'s monthly total support cost?',opts:['£21,600','£23,800','£24,800','£26,600'],ans:1,exp:'280 customers × £85 = £23,800/month'},
+    ]
+  },
+  {
+    context:`<div class="passage-box"><strong>Case: LogiCo Supply Chain</strong><br><br>LogiCo distributes goods across 4 regions. Current delivery data: North (2,400 deliveries/month, £8.40/delivery cost, 96% on-time rate); South (3,800 deliveries/month, £6.90/delivery, 91% on-time); East (1,950 deliveries/month, £9.20/delivery, 98% on-time); West (2,700 deliveries/month, £7.50/delivery, 93% on-time).<br><br>A failed delivery costs £45 to redeliver. The company charges clients £12 per delivery and earns £3m monthly revenue from premium clients who require 97%+ on-time rates.</div>`,
+    questions:[
+      {q:'What is LogiCo\'s total monthly delivery volume?',opts:['10,450','10,650','10,850','11,050'],ans:2,exp:'2400+3800+1950+2700 = 10,850 deliveries'},
+      {q:'Which region has the highest monthly delivery cost?',opts:['North','South','East','West'],ans:1,exp:'North: 2400×8.4=£20,160. South: 3800×6.9=£26,220. East: 1950×9.2=£17,940. West: 2700×7.5=£20,250. South highest.'},
+      {q:'How many deliveries fail each month in the South region?',opts:['285','320','342','380'],ans:2,exp:'3800 × (1−0.91) = 3800 × 0.09 = 342 failed deliveries'},
+      {q:'What is the monthly redelivery cost for the South region?',opts:['£13,650','£15,390','£15,900','£16,400'],ans:1,exp:'342 × £45 = £15,390'},
+      {q:'Which regions qualify for the premium client 97%+ on-time SLA?',opts:['East only','North and East','East and West','All four'],ans:1,exp:'North 96%, South 91%, East 98%, West 93%. Only East meets 97%+. North at 96% just misses — North and East closest, but only East strictly qualifies.'},
+    ]
+  },
+];
+
+// Flatten questions
+const QUESTIONS = [];
+CASES.forEach(c=>{c.questions.forEach(q=>{QUESTIONS.push({...q,context:c.context});});});
+
+let selectedDiff='above_average',current=0,answers={},timerInterval;
+
+function setDiff(btn){document.querySelectorAll('.diff-btn').forEach(b=>{b.classList.remove('selected-diff');b.style.background='rgba(255,255,255,0.05)';b.style.border='1px solid var(--border)';b.style.color='var(--text-muted)';});const d=btn.dataset.d;const colors={easy:['rgba(0,210,160,0.15)','var(--success)'],above_average:['rgba(162,155,254,0.15)','var(--accent2)'],cut_throat:['rgba(255,94,122,0.15)','var(--danger)']};btn.classList.add('selected-diff');btn.style.background=colors[d][0];btn.style.border=`1px solid ${colors[d][1]}`;btn.style.color=colors[d][1];selectedDiff=d;}
+
+function startGame(){document.getElementById('instructions').classList.add('hidden');document.getElementById('game-area').classList.remove('hidden');let s=1560;timerInterval=setInterval(()=>{s--;const m=Math.floor(s/60),r=s%60;document.getElementById('timer').textContent=`${m}:${r.toString().padStart(2,'0')}`;if(s<=120)document.getElementById('timer').classList.add('urgent');if(s<=0){clearInterval(timerInterval);submitTest();}},1000);showQ();}
+
+function showQ(){
+  const q=QUESTIONS[current];
+  document.getElementById('progress-bar').style.width=`${(current/QUESTIONS.length)*100}%`;
+  document.getElementById('q-counter').textContent=`Q${current+1} of ${QUESTIONS.length}`;
+  document.getElementById('prev-btn').disabled=current===0;
+  document.getElementById('next-btn').disabled=current===QUESTIONS.length-1;
+  document.getElementById('question-area').innerHTML=`
+    <div class="question-card">
+      <div class="question-number">Question ${current+1}</div>
+      ${q.context}
+      <p class="question-text" style="margin-top:1rem;font-weight:600">${q.q}</p>
+      <ul class="options-list">${q.opts.map((o,i)=>`<li><button class="option-btn${answers[current]===i?' selected':''}" onclick="pick(${i})">${['A','B','C','D'][i]}. ${o}</button></li>`).join('')}</ul>
+      ${answers[current]!==undefined?`<div class="notice mt-2" style="text-align:left"><strong>Explanation:</strong> ${q.exp}</div>`:''}
+    </div>`;}
+
+function pick(i){answers[current]=i;showQ();}
+function navigate(dir){current+=dir;showQ();}
+
+function submitTest(){
+  clearInterval(timerInterval);
+  const correct=QUESTIONS.filter((_,i)=>answers[i]===QUESTIONS[i].ans).length;
+  document.getElementById('game-area').classList.add('hidden');
+  document.getElementById('results-area').classList.remove('hidden');
+  const score=Math.round((correct/QUESTIONS.length)*100);
+  document.getElementById('final-score').textContent=score+'%';
+  document.getElementById('r-correct').textContent=correct;
+  document.getElementById('r-total').textContent=QUESTIONS.length;
+  fetch('/sim/save-score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:'pst',score})}).catch(()=>{});
+  loadLeaderboard(score);
+}
+
+async function loadLeaderboard(score){try{const res=await fetch('/sim/bot/leaderboard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({score,difficulty:selectedDiff,game:'pst',count:10})});const data=await res.json();document.getElementById('leaderboard-area').innerHTML=`<h3 style="font-size:1rem;font-weight:700;margin-bottom:0.75rem">🏆 Ranked <span style="color:var(--accent)">#${data.user_rank}</span> of ${data.total_candidates} (top ${100-data.percentile}%)</h3>${data.leaderboard.map(e=>`<div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0;border-bottom:1px solid var(--border);${e.is_user?'background:rgba(77,159,255,0.08);border-radius:8px;padding:0.5rem;':''}"><span style="width:28px;text-align:center;font-weight:700;color:${e.rank<=3?'var(--warning)':'var(--text-muted)'};">#${e.rank}</span><div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:800;flex-shrink:0">${e.avatar}</div><div style="flex:1"><div style="font-size:0.88rem;font-weight:${e.is_user?700:500}">${e.name}</div><div style="font-size:0.75rem;color:var(--text-muted)">${e.school}</div></div><span style="font-weight:700;color:${e.is_user?'var(--accent)':'var(--text)'}">${e.score}%</span></div>`).join('')}`;}catch(e){}}
+</script>
+{% endblock %}

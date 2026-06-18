@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}Aon cut-e Error Checking — AssessSim{% endblock %}
+{% block content %}
+<div class="game-page">
+  <div class="game-header">
+    <div class="game-header-icon" style="background:linear-gradient(135deg,#fdcb6e,#e17055)">🔍</div>
+    <div>
+      <h1>Aon cut-e Error Checking</h1>
+      <p>Aon cut-e &mdash; Spot Mismatches Under Time Pressure</p>
+    </div>
+  </div>
+  <div class="game-meta">
+    <div class="game-meta-item">🔍 <strong>30</strong>&nbsp;items</div>
+    <div class="game-meta-item">⏱️ <strong>7 min</strong></div>
+    <div class="game-meta-item">🏦 Deutsche Bank · UBS · Wells Fargo</div>
+  </div>
+
+  <div id="instructions" class="instructions">
+    <h2>📋 Instructions</h2>
+    <ul>
+      <li>Each item shows a <strong>Source row</strong> (left) and a <strong>Copied row</strong> (right).</li>
+      <li>Click <strong>✓ Correct</strong> if both rows match exactly, or <strong>✗ Error</strong> if there is any difference.</li>
+      <li>Errors may be in numbers, letters, spacing, or order — check everything carefully.</li>
+      <li>You have <strong>7 minutes</strong> for 30 items — roughly 14 seconds per item.</li>
+    </ul>
+    <div class="notice" style="margin-top:1rem">💡 <strong>Tip:</strong> Scan field-by-field left to right. Don't re-read the whole row — compare column by column.</div>
+    <div style="margin-top:1.25rem">
+      <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--text-muted);margin-bottom:0.5rem;">⚔️ Competition difficulty</label>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn btn-sm diff-btn" data-d="easy" onclick="setDiff(this)" style="background:rgba(0,210,160,0.15);border:1px solid var(--success);color:var(--success)">Casual</button>
+        <button class="btn btn-sm diff-btn selected-diff" data-d="average" onclick="setDiff(this)" style="background:rgba(77,159,255,0.2);border:1px solid var(--accent);color:var(--accent)">Average</button>
+        <button class="btn btn-sm diff-btn" data-d="above_average" onclick="setDiff(this)" style="background:rgba(162,155,254,0.15);border:1px solid var(--accent2);color:var(--accent2)">Above Average</button>
+        <button class="btn btn-sm diff-btn" data-d="cut_throat" onclick="setDiff(this)" style="background:rgba(255,94,122,0.15);border:1px solid var(--danger);color:var(--danger)">Quant God 🔥</button>
+      </div>
+    </div>
+    <button class="btn btn-primary mt-2" onclick="startGame()">Start Test (7 min timer)</button>
+  </div>
+
+  <div id="game-area" class="hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <div class="progress-bar-wrap" style="flex:1;margin-right:1rem;margin-bottom:0">
+        <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+      </div>
+      <div class="timer" id="timer">7:00</div>
+    </div>
+    <div id="question-area"></div>
+  </div>
+
+  <div id="results-area" class="hidden" style="text-align:center;padding:2rem">
+    <h2 style="font-size:1.8rem;margin-bottom:0.5rem">Test Complete!</h2>
+    <p class="text-muted mb-2">Aon cut-e Error Checking results</p>
+    <div class="score-display" id="final-score">0%</div>
+    <div class="results-grid" style="max-width:500px;margin:1.5rem auto">
+      <div class="result-card"><div class="rc-value" id="r-correct">0</div><div class="rc-label">Correct</div></div>
+      <div class="result-card"><div class="rc-value" id="r-wrong">0</div><div class="rc-label">Errors Missed</div></div>
+      <div class="result-card"><div class="rc-value" id="r-total">30</div><div class="rc-label">Items</div></div>
+    </div>
+    <div id="leaderboard-area" style="max-width:600px;margin:1.5rem auto;text-align:left"></div>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button class="btn btn-outline" onclick="location.reload()">Try Again</button>
+      <a href="/" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Each item: source, copy, hasError
+const ITEMS = [
+  {src:['Henderson, J.','A1-2847','£84,500','2024-03-15'],cpy:['Henderson, J.','A1-2847','£84,500','2024-03-15'],err:false},
+  {src:['Okafor, M.','B9-3312','£127,000','2024-01-08'],cpy:['Okafor, M.','B9-3312','£172,000','2024-01-08'],err:true},
+  {src:['Bernstein, A.','C4-6601','£56,250','2024-07-22'],cpy:['Bernstein, A.','C4-6601','£56,250','2024-07-22'],err:false},
+  {src:['Yamamoto, K.','D2-9945','£210,750','2024-02-29'],cpy:['Yamamoto, K.','D2-9954','£210,750','2024-02-29'],err:true},
+  {src:['Patel, R.','E7-1123','£93,000','2024-06-01'],cpy:['Patel, R.','E7-1123','£93,000','2024-06-01'],err:false},
+  {src:['Müller, H.','F5-7782','£145,000','2024-11-14'],cpy:['Müller, H.','F5-7782','£145,000','2024-11-14'],err:false},
+  {src:['Santos, L.','G8-4430','£78,500','2024-04-03'],cpy:['Santos, L.','G8-4430','£78,500','2024-04-30'],err:true},
+  {src:['Kim, J.','H1-8876','£302,000','2024-09-17'],cpy:['Kim, J.','H1-8876','£302,000','2024-09-17'],err:false},
+  {src:['Adeyemi, F.','I3-5519','£61,800','2024-05-25'],cpy:['Adeyemi, F.','I3-5519','£618,00','2024-05-25'],err:true},
+  {src:['Rosenberg, D.','J6-2234','£185,500','2024-08-10'],cpy:['Rosenberg, D.','J6-2234','£185,500','2024-08-10'],err:false},
+  {src:['Clarke, T.','K0-7715','£44,200','2024-12-01'],cpy:['Clarke, T.','K0-7715','£44,200','2024-12-01'],err:false},
+  {src:['Nguyen, V.','L9-3381','£99,750','2024-03-28'],cpy:['Nguyen, V.','L9-3318','£99,750','2024-03-28'],err:true},
+  {src:['Ferreira, C.','M2-6647','£157,000','2024-07-05'],cpy:['Ferreira, C.','M2-6647','£157,000','2024-07-05'],err:false},
+  {src:['O\'Brien, S.','N4-9902','£88,000','2024-10-22'],cpy:['O\'Brien, S.','N4-9902','£88,000','2024-01-22'],err:true},
+  {src:['Goldstein, P.','O7-1158','£234,500','2024-02-14'],cpy:['Goldstein, P.','O7-1158','£234,500','2024-02-14'],err:false},
+  {src:['Abramova, N.','P1-4423','£115,000','2024-06-30'],cpy:['Abramova, N.','P1-4423','£115,000','2024-06-30'],err:false},
+  {src:['Tran, M.','Q5-7789','£72,500','2024-09-08'],cpy:['Tran, M.','Q5-7789','£725,00','2024-09-08'],err:true},
+  {src:['Johansson, E.','R3-8815','£196,000','2024-01-31'],cpy:['Johansson, E.','R3-8815','£196,000','2024-01-31'],err:false},
+  {src:['Ivanova, A.','S6-2270','£51,900','2024-04-16'],cpy:['Ivanova, A.','S6-2270','£51,900','2024-04-16'],err:false},
+  {src:['Mensah, K.','T8-5536','£128,750','2024-08-23'],cpy:['Mensah, K.','T8-5536','£128,750','2024-08-23'],err:false},
+  {src:['Weber, F.','U0-9901','£267,000','2024-03-07'],cpy:['Weber, F.','U0-9901','£276,000','2024-03-07'],err:true},
+  {src:['Sharma, P.','V2-3367','£83,500','2024-11-19'],cpy:['Sharma, P.','V2-3367','£83,500','2024-11-19'],err:false},
+  {src:['MacDonald, R.','W4-6612','£141,000','2024-05-02'],cpy:['MacDonald, R.','W4-6612','£141,000','2024-05-02'],err:false},
+  {src:['Kowalski, M.','X7-0078','£59,250','2024-07-14'],cpy:['Kowalski, M.','X7-0078','£59,250','2024-17-14'],err:true},
+  {src:['Diallo, A.','Y1-4443','£173,000','2024-02-09'],cpy:['Diallo, A.','Y1-4443','£173,000','2024-02-09'],err:false},
+  {src:['Petrov, I.','Z9-7798','£92,800','2024-10-05'],cpy:['Petrov, I.','Z9-7798','£92,800','2024-10-05'],err:false},
+  {src:['Williams, G.','AA-1134','£315,500','2024-06-18'],cpy:['Williams, G.','AA-1134','£315,500','2024-06-18'],err:false},
+  {src:['Okonkwo, C.','BB-5500','£67,000','2024-12-25'],cpy:['Okonkwo, C.','BB-5500','£67,000','2024-12-25'],err:false},
+  {src:['Hernandez, J.','CC-8865','£105,500','2024-04-11'],cpy:['Hernandez, J.','CC-8865','£105,500','2024-04-11'],err:false},
+  {src:['Tanaka, Y.','DD-2231','£248,000','2024-09-29'],cpy:['Tanaka, Y.','DD-2231','£248,000','2024-09-29'],err:false},
+];
+
+const HEADERS=['Name','Reference','Amount','Date'];
+let selectedDiff='average',current=0,correct=0,wrong=0,timerInterval;
+
+function setDiff(btn){
+  document.querySelectorAll('.diff-btn').forEach(b=>{b.classList.remove('selected-diff');b.style.background='rgba(255,255,255,0.05)';b.style.border='1px solid var(--border)';b.style.color='var(--text-muted)';});
+  const d=btn.dataset.d;
+  const colors={easy:['rgba(0,210,160,0.15)','var(--success)'],average:['rgba(77,159,255,0.2)','var(--accent)'],above_average:['rgba(162,155,254,0.15)','var(--accent2)'],cut_throat:['rgba(255,94,122,0.15)','var(--danger)']};
+  btn.classList.add('selected-diff');btn.style.background=colors[d][0];btn.style.border=`1px solid ${colors[d][1]}`;btn.style.color=colors[d][1];selectedDiff=d;
+}
+
+function startGame(){
+  document.getElementById('instructions').classList.add('hidden');
+  document.getElementById('game-area').classList.remove('hidden');
+  let s=420;
+  timerInterval=setInterval(()=>{s--;const m=Math.floor(s/60),r=s%60;document.getElementById('timer').textContent=`${m}:${r.toString().padStart(2,'0')}`;if(s<=30)document.getElementById('timer').classList.add('urgent');if(s<=0){clearInterval(timerInterval);endGame();}},1000);
+  showItem();
+}
+
+function showItem(){
+  if(current>=ITEMS.length){endGame();return;}
+  const item=ITEMS[current];
+  document.getElementById('progress-bar').style.width=`${(current/ITEMS.length)*100}%`;
+  document.getElementById('question-area').innerHTML=`
+    <div class="question-card">
+      <div class="question-number">Item ${current+1} of ${ITEMS.length} — Does the copy match the source?</div>
+      <div style="overflow-x:auto;margin:1rem 0">
+        <table class="data-table" style="margin:0">
+          <thead><tr><th></th>${HEADERS.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+          <tbody>
+            <tr style="background:rgba(0,210,160,0.04)"><td style="font-weight:700;color:var(--success);font-size:0.78rem;text-transform:uppercase">SOURCE</td>${item.src.map(v=>`<td>${v}</td>`).join('')}</tr>
+            <tr style="background:rgba(77,159,255,0.04)"><td style="font-weight:700;color:var(--accent);font-size:0.78rem;text-transform:uppercase">COPY</td>${item.cpy.map((v,i)=>`<td style="${v!==item.src[i]?'color:var(--danger)':''}">${v}</td>`).join('')}</tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+        <button class="btn btn-success btn-lg" onclick="answer(false)">✓ Correct — rows match</button>
+        <button class="btn btn-danger btn-lg" onclick="answer(true)">✗ Error — rows differ</button>
+      </div>
+    </div>`;
+}
+
+function answer(userSaysError){
+  const item=ITEMS[current];
+  if(userSaysError===item.err)correct++;else wrong++;
+  current++;showItem();
+}
+
+function endGame(){
+  clearInterval(timerInterval);
+  document.getElementById('game-area').classList.add('hidden');
+  document.getElementById('results-area').classList.remove('hidden');
+  const score=Math.round((correct/ITEMS.length)*100);
+  document.getElementById('final-score').textContent=score+'%';
+  document.getElementById('r-correct').textContent=correct;
+  document.getElementById('r-wrong').textContent=wrong;
+  document.getElementById('r-total').textContent=ITEMS.length;
+  saveScore(score);loadLeaderboard(score);
+}
+
+async function saveScore(score){try{await fetch('/sim/save-score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:'aon-error',score})});}catch(e){}}
+async function loadLeaderboard(score){
+  try{
+    const res=await fetch('/sim/bot/leaderboard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({score,difficulty:selectedDiff,game:'aon-error',count:10})});
+    const data=await res.json();
+    document.getElementById('leaderboard-area').innerHTML=`<h3 style="font-size:1rem;font-weight:700;margin-bottom:0.75rem">🏆 You ranked <span style="color:var(--accent)">#${data.user_rank}</span> out of ${data.total_candidates} (top ${100-data.percentile}%)</h3>${data.leaderboard.map(e=>`<div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0;border-bottom:1px solid var(--border);${e.is_user?'background:rgba(77,159,255,0.08);border-radius:8px;padding:0.5rem;':''}"><span style="width:28px;text-align:center;font-weight:700;color:${e.rank<=3?'var(--warning)':'var(--text-muted)'};">#${e.rank}</span><div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:800;flex-shrink:0">${e.avatar}</div><div style="flex:1;min-width:0"><div style="font-size:0.88rem;font-weight:${e.is_user?700:500}">${e.name}</div><div style="font-size:0.75rem;color:var(--text-muted)">${e.school}</div></div><span style="font-weight:700;color:${e.is_user?'var(--accent)':'var(--text)'}">${e.score}%</span></div>`).join('')}`;
+  }catch(e){}
+}
+</script>
+{% endblock %}

@@ -1,157 +1,491 @@
 {% extends "base.html" %}
-{% block title %}AssessSim — Internship Assessment Game Simulator{% endblock %}
+{% block title %}AssessSim — Banking Summer Internship Test Prep{% endblock %}
+
+{% block head %}
+<style>
+.hero-premium { background: radial-gradient(ellipse at 60% 0%, rgba(77,159,255,0.10) 0%, transparent 65%), var(--bg); border-bottom:1px solid var(--border); }
+
+.assess-card {
+  display:flex;flex-direction:column;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;transition:all 0.25s;cursor:pointer;text-decoration:none;color:inherit;
+}
+.assess-card:hover { border-color:rgba(77,159,255,0.35);background:var(--bg3);transform:translateY(-3px);box-shadow:0 8px 32px rgba(0,0,0,0.35); }
+
+.ac-icon { width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;margin-bottom:0.85rem; }
+.ac-body h3 { font-size:0.95rem;font-weight:700;margin-bottom:0.3rem; }
+.ac-body p { color:var(--text-muted);font-size:0.82rem;line-height:1.5;margin-bottom:0.6rem; }
+
+.ac-provider { display:inline-block;font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;padding:0.2rem 0.6rem;border-radius:50px;margin-bottom:0.5rem; }
+.ac-provider.shl       { background:rgba(108,92,231,0.15);color:#A29BFE; }
+.ac-provider.aon       { background:rgba(225,112,85,0.15);color:#E17055; }
+.ac-provider.pymetrics { background:rgba(255,107,107,0.15);color:#FF6B6B; }
+.ac-provider.cappfinity{ background:rgba(0,184,148,0.15);color:#00B894; }
+.ac-provider.watson    { background:rgba(9,132,227,0.15);color:#0984e3; }
+.ac-provider.kornferry { background:rgba(225,112,85,0.12);color:#E17055; }
+.ac-provider.mckinsey  { background:rgba(9,132,227,0.12);color:#0984e3; }
+.ac-provider.coding    { background:rgba(255,255,255,0.07);color:#b2bec3; }
+
+.ac-banks { font-size:0.73rem;color:var(--text-muted);margin-bottom:0.65rem; }
+.ac-cta { font-size:0.8rem;font-weight:700;color:var(--accent); }
+.assess-card:hover .ac-cta { color:#74b9ff; }
+
+.bank-pill { display:flex;align-items:center;gap:0.5rem;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:0.45rem 0.75rem;font-size:0.8rem;font-weight:600;color:var(--text-muted); }
+.bank-dot { width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0; }
+
+.provider-card { background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem; }
+.provider-label { font-size:0.68rem;font-weight:800;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:0.5rem; }
+.provider-card h3 { font-weight:700;font-size:1rem;margin-bottom:0.4rem; }
+.provider-card p { font-size:0.82rem;color:var(--text-muted);line-height:1.5; }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="hero">
-  <div class="hero-content">
-    <h1>Internship Assessment<br><span class="highlight">Game Simulator</span></h1>
-    <p class="hero-sub">Practice the cognitive and behavioral games used by top firms in their summer internship applications. Train for Pymetrics, SHL, and Cappfinity assessments.</p>
-    <a href="#pymetrics" class="btn btn-primary">Start Practicing</a>
-  </div>
-  <div class="hero-badges">
-    <span class="badge badge-pymetrics">Pymetrics</span>
-    <span class="badge badge-shl">SHL</span>
-    <span class="badge badge-cappfinity">Cappfinity</span>
-  </div>
-</div>
 
-<!-- Pymetrics Section -->
-<section id="pymetrics" class="section">
-  <div class="section-header">
-    <span class="platform-tag tag-pymetrics">Pymetrics</span>
-    <h2>Pymetrics Games</h2>
-    <p>Neuroscience-based games measuring cognitive and emotional traits. Used by Goldman Sachs, JPMorgan, Unilever, and many more.</p>
-  </div>
-  <div class="game-grid">
-    <a href="/game/bart" class="game-card">
-      <div class="game-icon" style="background:#FF6B6B">🎈</div>
-      <div class="game-info">
-        <h3>Balloon Risk (BART)</h3>
-        <p>Pump balloons to earn money — but pop one and you lose it all. Measures risk tolerance and decision-making.</p>
-        <span class="game-tag">Risk</span>
-        <span class="game-tag">Decision Making</span>
+<!-- ═══════ HERO ═══════ -->
+<section class="hero-premium">
+  <div style="max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 330px;gap:3rem;align-items:start;padding:4rem 2rem 3.5rem;">
+    <div style="text-align:left">
+      <div style="margin-bottom:0.65rem;font-size:0.78rem;color:var(--text-muted)">
+        <a href="/" style="color:var(--text-muted);text-decoration:none">Homepage</a>
+        <span style="margin:0 0.35rem">›</span>
+        <span>Banking Tests</span>
+        <span style="margin:0 0.35rem">›</span>
+        <span>Summer Internship Preparation</span>
       </div>
-    </a>
-    <a href="/game/gonogo" class="game-card">
-      <div class="game-icon" style="background:#4ECDC4">⚡</div>
-      <div class="game-info">
-        <h3>Go / No-Go</h3>
-        <p>Respond to target stimuli as fast as possible while ignoring distractors. Measures impulse control and attention.</p>
-        <span class="game-tag">Impulse Control</span>
-        <span class="game-tag">Attention</span>
+      <h1 style="font-size:clamp(1.7rem,3vw,2.5rem);font-weight:900;line-height:1.15;margin-bottom:0.5rem">
+        Banking Summer Internship<br><span class="highlight">Test Prep for Multiple Banks</span>
+      </h1>
+      <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem">Summer 2027 cohort</div>
+      <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem">
+        <span style="color:#FFB347;font-size:1rem;letter-spacing:0.05em">★★★★★</span>
+        <span style="font-weight:700">4.8</span>
+        <span style="color:var(--text-muted);font-size:0.82rem">· accurate test simulators</span>
       </div>
-    </a>
-    <a href="/game/digit-span" class="game-card">
-      <div class="game-icon" style="background:#45B7D1">🔢</div>
-      <div class="game-info">
-        <h3>Digit Span</h3>
-        <p>Memorize and recall sequences of numbers, forwards and backwards. Measures working memory capacity.</p>
-        <span class="game-tag">Working Memory</span>
-        <span class="game-tag">Recall</span>
-      </div>
-    </a>
-    <a href="/game/nback" class="game-card">
-      <div class="game-icon" style="background:#96CEB4">🧠</div>
-      <div class="game-info">
-        <h3>N-Back Task</h3>
-        <p>Identify when a stimulus matches one from N steps earlier. Measures fluid intelligence and working memory.</p>
-        <span class="game-tag">Fluid Intelligence</span>
-        <span class="game-tag">Memory</span>
-      </div>
-    </a>
-    <a href="/game/attention" class="game-card">
-      <div class="game-icon" style="background:#FFEAA7">👁️</div>
-      <div class="game-info">
-        <h3>Attention &amp; Focus</h3>
-        <p>React to targets appearing on screen as quickly as possible. Measures reaction time and sustained attention.</p>
-        <span class="game-tag">Reaction Time</span>
-        <span class="game-tag">Focus</span>
-      </div>
-    </a>
-  </div>
-</section>
-
-<!-- SHL Section -->
-<section id="shl" class="section section-alt">
-  <div class="section-header">
-    <span class="platform-tag tag-shl">SHL</span>
-    <h2>SHL Assessments</h2>
-    <p>Industry-standard aptitude tests used globally by thousands of employers for graduate and intern recruitment.</p>
-  </div>
-  <div class="game-grid">
-    <a href="/game/numerical" class="game-card">
-      <div class="game-icon" style="background:#6C5CE7">📊</div>
-      <div class="game-info">
-        <h3>Numerical Reasoning</h3>
-        <p>Interpret tables and graphs to answer numerical questions. Timed multiple-choice format.</p>
-        <span class="game-tag">Maths</span>
-        <span class="game-tag">Data Interpretation</span>
-      </div>
-    </a>
-    <a href="/game/verbal" class="game-card">
-      <div class="game-icon" style="background:#A29BFE">📝</div>
-      <div class="game-info">
-        <h3>Verbal Reasoning</h3>
-        <p>Read passages and determine whether statements are True, False, or Cannot Say based on the text.</p>
-        <span class="game-tag">Comprehension</span>
-        <span class="game-tag">Critical Reading</span>
-      </div>
-    </a>
-    <a href="/game/inductive" class="game-card">
-      <div class="game-icon" style="background:#FD79A8">🔷</div>
-      <div class="game-info">
-        <h3>Inductive Reasoning</h3>
-        <p>Identify the rule behind sequences of shapes and patterns. Measures abstract thinking and logic.</p>
-        <span class="game-tag">Pattern Recognition</span>
-        <span class="game-tag">Abstract Logic</span>
-      </div>
-    </a>
-  </div>
-</section>
-
-<!-- Cappfinity Section -->
-<section id="cappfinity" class="section">
-  <div class="section-header">
-    <span class="platform-tag tag-cappfinity">Cappfinity</span>
-    <h2>Cappfinity Assessments</h2>
-    <p>Strength-based and situational assessments used by firms like KPMG, EY, and Clifford Chance.</p>
-  </div>
-  <div class="game-grid">
-    <a href="/game/sjt" class="game-card">
-      <div class="game-icon" style="background:#00B894">💼</div>
-      <div class="game-info">
-        <h3>Situational Judgment Test</h3>
-        <p>Rate responses to realistic workplace scenarios. Measures professional judgment and values alignment.</p>
-        <span class="game-tag">Judgment</span>
-        <span class="game-tag">Workplace Skills</span>
-      </div>
-    </a>
-  </div>
-</section>
-
-<section class="tips-section">
-  <h2>Tips for Assessment Games</h2>
-  <div class="tips-grid">
-    <div class="tip-card">
-      <span class="tip-icon">🎯</span>
-      <h3>Be Authentic</h3>
-      <p>Pymetrics games measure your natural traits — trying to "game" them often backfires. Answer instinctively.</p>
+      <p style="color:var(--text-muted);line-height:1.75;max-width:520px;margin-bottom:1rem;font-size:0.95rem">
+        Each year, leading banks and investment firms offer internship opportunities to penultimate-year students — a life-changing chance to bolster your CV and launch your finance career.
+      </p>
+      <p style="color:var(--text-muted);line-height:1.75;max-width:520px;margin-bottom:1.25rem;font-size:0.95rem">
+        Since you'll apply to multiple firms, it's vital to know the exact assessments you'll face and be well-prepared for the test providers each uses. AssessSim covers every major test type — calibrated to the leading banks and their assessment partners.
+      </p>
+      <p style="font-size:0.9rem;line-height:1.7;max-width:520px;font-weight:500">
+        <strong>Includes preparation for</strong> Aon (cut-e), SHL, Korn Ferry (Talent-Q), Cappfinity, Pymetrics (Harver), Watson Glaser and bank-specific simulators.
+      </p>
     </div>
-    <div class="tip-card">
-      <span class="tip-icon">⏱️</span>
-      <h3>Practice Speed</h3>
-      <p>SHL tests are timed. Practice until answering quickly feels natural — don't sacrifice accuracy for pace.</p>
-    </div>
-    <div class="tip-card">
-      <span class="tip-icon">🧘</span>
-      <h3>Stay Calm</h3>
-      <p>Anxiety hurts reaction time and working memory. Take a breath before each game.</p>
-    </div>
-    <div class="tip-card">
-      <span class="tip-icon">🔁</span>
-      <h3>Repeat Often</h3>
-      <p>Cognitive assessments improve with practice. Run through each game multiple times over several days.</p>
+
+    <!-- Pricing card -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.75rem;position:sticky;top:90px">
+      <div style="font-size:0.92rem;font-weight:700;margin-bottom:0.3rem">Summer Internship Preparation</div>
+      <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:1.5rem">Full access to every banking practice test</div>
+
+      <div style="display:flex;flex-direction:column;gap:0.65rem;margin-bottom:1.5rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;border:1.5px solid var(--border);border-radius:var(--radius);padding:0.75rem 1rem;">
+          <span style="font-size:0.9rem;font-weight:600">1 Month</span>
+          <span style="font-weight:800;font-size:1.05rem">£59</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;border:2px solid var(--accent);border-radius:var(--radius);padding:0.75rem 1rem;background:rgba(77,159,255,0.07);position:relative;">
+          <span style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:0.65rem;font-weight:800;padding:0.2rem 0.75rem;border-radius:50px;text-transform:uppercase;letter-spacing:0.08em;white-space:nowrap">Most Popular</span>
+          <span style="font-size:0.9rem;font-weight:600">3 Months</span>
+          <span style="font-weight:800;font-size:1.05rem;color:var(--accent)">£115</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;border:1.5px solid var(--border);border-radius:var(--radius);padding:0.75rem 1rem;">
+          <span style="font-size:0.9rem;font-weight:600">6 Months</span>
+          <span style="font-weight:800;font-size:1.05rem">£129</span>
+        </div>
+      </div>
+
+      <a href="#assessments" class="btn btn-primary" style="width:100%;justify-content:center;border-radius:var(--radius);font-size:0.95rem;padding:0.85rem">Start Preparing Now</a>
+      <div style="text-align:center;margin-top:0.75rem;font-size:0.75rem;color:var(--text-muted)">🔒 Money-back guarantee · cancel anytime</div>
     </div>
   </div>
 </section>
+
+<!-- ═══════ STATS BAR ═══════ -->
+<section style="background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+  <div style="max-width:1100px;margin:0 auto;padding:1.1rem 2rem;display:flex;align-items:center;justify-content:center;gap:2.5rem;flex-wrap:wrap">
+    {% for s in [('19','Practice tests'),('30','Banks covered'),('12,000+','Students helped'),('4.8 ★','Average rating'),('Summer 2027','Cycle')] %}
+    <div style="display:flex;align-items:center;gap:0.6rem">
+      <span style="font-weight:800;font-size:1rem;color:var(--accent)">{{ s[0] }}</span>
+      <span style="font-size:0.8rem;color:var(--text-muted)">{{ s[1] }}</span>
+    </div>
+    {% if not loop.last %}<div style="width:1px;height:20px;background:var(--border)"></div>{% endif %}
+    {% endfor %}
+  </div>
+</section>
+
+<!-- ═══════ BANKS COVERED ═══════ -->
+<section style="padding:2.5rem 2rem;background:var(--bg)">
+  <div style="max-width:1100px;margin:0 auto">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2rem">
+      <div style="font-weight:700;font-size:1.05rem;margin-bottom:0.35rem">Banks &amp; investment firms covered</div>
+      <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1.5rem">Accurate practice simulators calibrated for the assessments used by these firms. Updated for Summer 2027.</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.5rem">
+        {% for bank in ['J.P. Morgan','Barclays','HSBC','Morgan Stanley','Deutsche Bank','UBS','Blackstone','BNP Paribas','Fidelity','Nomura','Jefferies','RBC Capital Markets','Bank of America','Goldman Sachs','Citi','Santander','Schroders','Citadel','Macquarie Group','Standard Chartered','Houlihan Lokey','Wells Fargo','PJT Partners','BDO Global','Crédit Agricole','Rothschild & Co.','Moelis & Co','Lazard','BlackRock','Lloyds'] %}
+        <div class="bank-pill"><span class="bank-dot"></span>{{ bank }}</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ TEST PROVIDERS ═══════ -->
+<section style="padding:3rem 2rem;background:var(--bg)">
+  <div style="max-width:1100px;margin:0 auto">
+    <h2 style="font-size:1.4rem;font-weight:800;margin-bottom:0.35rem;text-align:left">Major test providers we simulate</h2>
+    <p style="color:var(--text-muted);font-size:0.87rem;margin-bottom:1.5rem;text-align:left">Many banks share the same assessment partner — so practising one provider often unlocks prep for several firms.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1rem">
+      <div class="provider-card">
+        <div class="provider-label" style="color:#E17055">AON (CUT-E)</div>
+        <h3>Numerical · Verbal · Logical, Switch</h3>
+        <p>Industry standard. Powers Deutsche Bank, UBS, Wells Fargo and others. Rapid-fire item-level timing.</p>
+      </div>
+      <div class="provider-card">
+        <div class="provider-label" style="color:#A29BFE">SHL</div>
+        <h3>Numerical · Verbal · Inductive</h3>
+        <p>Industry standard. Powers Barclays, Goldman Sachs, HSBC. 20–25 min timed sections.</p>
+      </div>
+      <div class="provider-card">
+        <div class="provider-label" style="color:#E17055">KORN FERRY (TALENT-Q)</div>
+        <h3>Adaptive Numerical &amp; Verbal</h3>
+        <p>Question difficulty adjusts to your answers. Powers HSBC, Citi, Deloitte, Standard Chartered.</p>
+      </div>
+      <div class="provider-card">
+        <div class="provider-label" style="color:#00B894">CAPPFINITY</div>
+        <h3>Strengths &amp; Situational Judgment</h3>
+        <p>Strengths-based. Powers KPMG, EY, Lloyds, HSBC, BNP Paribas. PST, SKIM and SJT formats.</p>
+      </div>
+      <div class="provider-card">
+        <div class="provider-label" style="color:#FF6B6B">PYMETRICS (HARVER)</div>
+        <h3>Neuroscience Games</h3>
+        <p>BART, Go/No-Go, N-Back, Digit Span, Attention. Used by JP Morgan, Goldman Sachs, Blackstone.</p>
+      </div>
+      <div class="provider-card">
+        <div class="provider-label" style="color:#0984e3">WATSON GLASER</div>
+        <h3>Critical Thinking</h3>
+        <p>Inferences, assumptions, deductions. Used by Rothschild & Co., Linklaters, Allen & Overy, McKinsey.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ ASSESSMENTS GRID ═══════ -->
+<section id="assessments" style="padding:4rem 2rem;background:var(--bg2);border-top:1px solid var(--border)">
+  <div style="max-width:1100px;margin:0 auto">
+    <h2 style="font-size:1.4rem;font-weight:800;margin-bottom:0.3rem">Practice tests — linked to banks &amp; logged to your dashboard</h2>
+    <p style="color:var(--text-muted);font-size:0.87rem;margin-bottom:2rem">Each completed test saves your score to your dashboard so you can track progress over time.</p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:1rem">
+
+      <a href="/game/numerical" class="assess-card">
+        <div class="ac-icon" style="background:linear-gradient(135deg,#6C5CE7,#4a3ac4)">📊</div>
+        <div class="ac-body">
+          <div class="ac-provider shl">SHL</div>
+          <h3>SHL Numerical Reasoning</h3>
+          <p>Tables, graphs, percentages and ratios — under timed conditions.</p>
+          <div class="ac-banks">Barclays · Rothschild · Fidelity · KBC · Lazard</div>
+          <span class="ac-cta">Start practice →</span>
+        </div>
+      </a>
+
+      <a href="/game/verbal" class="assess-card">
+        <div class="ac-icon" style="background:linear-gradient(135deg,#A29BFE,#6C5CE7)">📝</div>
+        <div class="ac-body">
+          <div class="ac-provider shl">SHL</div>
+          <h3>SHL Verbal Reasoning</h3>
+          <p>True / False / Cannot Say judgments on dense business passages.</p>
+          <div class="ac-banks">Barclays · BNP Paribas · Santander · Schroders</div>
+          <span class="ac-cta">Start practice →</span>
+        </div>
+      </a>
+
+      <a href="/game/inductive" class="assess-card">
+        <div class="ac-icon" style="background:linear-gradient(135deg,#FD79A8,#d94d80)">🔷</div>
+        <div class="ac-body">
+          <div class="ac-provider shl">SHL</div>
+          <h3>SHL Inductive Reasoning</h3>
+          <p>Identify the rule behind sequences of abstract shapes and patterns.</p>
+          <div class="ac-banks">Barclays · Standard Chartered · Macquarie</div>
+          <span class="ac-cta">Start practice →</span>
+        </div>
+      </a>
+
+      <a href="/game/aon-scales" class="assess-card">
+        <div class="ac-icon" style="background:linear-gradient(135deg,#e17055,#b54a30)">⚖️</div>
+        <div class="ac-body">
+          <div class="ac-provider aon">AON cut-e</div>
+          <h3>Aon cut-e Logical (Scales)</h3>
+          <p>Pattern logic with rapid-fire item-level timing.</p>
+          <div class="ac-banks">Deutsche Bank · UBS · Citi · Citadel</div>
+          <span class="ac-cta">Start practice →</span>
+        </div>
+      </a>
+
+      <a href="/game/aon-error" class="assess-card">
+        <div class="ac-icon" style="background:linear-gradient(135deg,#fdcb6e,#e17055)">🔍</div>
+        <div class="ac-body">
+          <div class="ac-provider aon">AON cut-e</div>
+          <h3>Aon cut-e Error Checking</h3>
+          <p>Spot mismatches between rows of data fast and accurately.</p>
+          <div class="ac-banks">Deutsche Bank · UBS · Wells Fargo</div>
+          <span class="ac-cta">Start practice →</span>
+        </div>
+      </a>
+
+      <a href="/game/watson-glaser" class="assess-card">
+        <div class="ac-icon" style="background:linear-gradient(135deg,#0984e3,#065fa8)">🧩</div>
+        <div class="ac-body">
+          <div class="ac-provider watson">Watson Glaser</div>
+          <h3>Watson Glaser Critical Thinking</h3>
+          <p>Inferences, assumptions, deductions, interpretations, argument strength.</p>
+          <div class="ac-banks">Rothschild · Lloyds · Bank of America · Moelis</div>
+          <span class="ac-cta">Start practice →</span>
+        </div>
+      </a>
+
+      <a href="/game/bart" class="assess-card">
+        <div class="ac-icon" style="background:linear-gradient(135deg,#FF6B6B,#cc3333)">🎈</div>
+        <div class="ac-body">
+          <div class="ac-provider pymetrics">Pymetrics</div>
+          <h3>Pymetrics BART (Balloon Risk)</h3>
+          <p>Risk tolerance and decision-making under uncertainty.</p>
+          <div class="ac-banks">JP Morgan · Goldman Sachs · Blackstone</div>
+          <span class="ac-cta">Start practice →</span>
+        </div>
+      </a>
+
+      <a href="/game/gonogo" class="assess-card">
+        <div class="ac-icon" style="background:linear-gradient(135deg,#4ECDC4,#00a896)">⚡</div>
+        <div class="ac-body">
+          <div class="ac-provider pymetrics">Pymetrics</div>
+          <h3>Pymetrics Go / No-Go</h3>
+          <p>Impulse control and attentional focus.</p>
+          <div class="ac-banks">JP Morgan · Blackstone · BlackRock</div>
+          <span class="ac-cta">Start practice →</span>
+        </div>
+      </a>
+
+      <a href="/game/digit-span" class="assess-card">
+        <div class="ac-icon" style="background:linear-gradient(135deg,#45B7D1,#0984a8)">🔢</div>
+        <div class="ac-body">
+          <div class="ac-provider pymetrics">Pymetrics</div>
+          <h3>Pymetrics Digit Span</h3>
+          <p>Working memory — sequences forwards and backwards.</p>
+          <div class="ac-banks">JP Morgan · Goldman Sachs · Fidelity</div>
+          <span class="ac-cta">Start practice →</span>
+        </div>
+      </a>
+
+      <a href="/game/nback" class="assess-card">
+        <div class="ac-icon" style="background:linear-gradient(135deg,#96CEB4,#4aa57c)">🧠</div>
+        <div class="ac-body">
+          <div class="ac-provider pymetrics">Pymetrics</div>
+          <h3>Pymetrics N-Back</h3>
+          <p>Fluid intelligence and working memory updating.</p>
+          <div class="ac-banks">JP Morgan · Blackstone · BlackRock</div>
+          <span class="ac-cta">Start practice →</span>
+        </div>
+      </a>
+
+      <a href="/game/attention" class="assess-card">
+        <div class="ac-icon" style="background:linear-gradient(135deg,#f0c040,#c49a00)">👁️</div>
+        <div class="ac-body">
+          <div class="ac-provider pymetrics">Pymetrics</div>
+          <h3>Pymetrics Attention &amp; Focus</h3>
+          <p>Sustained reaction time under sustained vigilance.</p>
+          <div class="ac-banks">JP Morgan · Goldman Sachs</div>
+          <span class="ac-cta">Start practice →</span>
+        </div>
+      </a>
+
+      <a href="/game/sjt" class="assess-card">
+        <div class="ac-icon" style="background:linear-gradient(135deg,#00B894,#007a60)">💼</div>
+        <div class="ac-body">
+          <div class="ac-provider cappfinity">Cappfinity</div>
+          <h3>Cappfinity Situational Judgment</h3>
+          <p>Workplace scenarios — judgment and values alignment.</p>
+          <div class="ac-banks">HSBC · Lloyds · BlackRock · BNP Paribas</div>
+          <span class="ac-cta">Start practice →</span>
+        </div>
+      </a>
+
+      <a href="/game/cappfinity-numerical" class="assess-card">
+        <div class="ac-icon" style="background:linear-gradient(135deg,#00cec9,#007a60)">📈</div>
+        <div class="ac-body">
+          <div class="ac-provider cappfinity">Cappfinity</div>
+          <h3>Cappfinity Numerical Reasoning</h3>
+          <p>Speed and accuracy across financial data and percentages.</p>
+          <div class="ac-banks">KPMG · EY · Clifford Chance · Lloyds</div>
+          <span class="ac-cta">Start practice →</span>
+        </div>
+      </a>
+
+      <a href="/game/skim" class="assess-card">
+        <div class="ac-icon" style="background:linear-gradient(135deg,#00cec9,#0984e3)">📖</div>
+        <div class="ac-body">
+          <div class="ac-provider cappfinity">Cappfinity</div>
+          <h3>SKIM Reading &amp; Comprehension</h3>
+          <p>Speed-read dense business passages and answer inference questions.</p>
+          <div class="ac-banks">KPMG · Lloyds · Schroders · Legal &amp; General</div>
+          <span class="ac-cta">Start practice →</span>
+        </div>
+      </a>
+
+      <a href="/game/personality" class="assess-card">
+        <div class="ac-icon" style="background:linear-gradient(135deg,#a29bfe,#6c5ce7)">🧭</div>
+        <div class="ac-body">
+          <div class="ac-provider cappfinity">Cappfinity</div>
+          <h3>Personality / Strengths Profile</h3>
+          <p>Likert self-report mapped to a strengths profile.</p>
+          <div class="ac-banks">HSBC · Lloyds · Standard Chartered · Citi</div>
+          <span class="ac-cta">Start practice →</span>
+        </div>
+      </a>
+
+      <a href="/game/pst" class="assess-card">
+        <div class="ac-icon" style="background:linear-gradient(135deg,#0984e3,#065fa8)">📐</div>
+        <div class="ac-body">
+          <div class="ac-provider mckinsey">McKinsey / BCG</div>
+          <h3>Problem Solving Test (PST)</h3>
+          <p>Case-based data, logic and arithmetic — consulting OA format.</p>
+          <div class="ac-banks">McKinsey · BCG · Bain · Oliver Wyman · Kearney</div>
+          <span class="ac-cta">Start practice →</span>
+        </div>
+      </a>
+
+      <a href="/game/korn-ferry" class="assess-card">
+        <div class="ac-icon" style="background:linear-gradient(135deg,#E17055,#b54a30)">🎯</div>
+        <div class="ac-body">
+          <div class="ac-provider kornferry">Korn Ferry</div>
+          <h3>Talent Q Adaptive Test</h3>
+          <p>Adaptive numerical, verbal and logical — difficulty adjusts in real time.</p>
+          <div class="ac-banks">HSBC · Citi · Deloitte · Wells Fargo · Standard Chartered</div>
+          <span class="ac-cta">Start practice →</span>
+        </div>
+      </a>
+
+      <a href="/game/aon-verbal" class="assess-card" style="position:relative">
+        <span style="position:absolute;top:0.75rem;right:0.75rem;background:rgba(0,210,160,0.15);color:var(--success);font-size:0.6rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;padding:0.15rem 0.5rem;border-radius:50px;border:1px solid rgba(0,210,160,0.3)">New</span>
+        <div class="ac-icon" style="background:linear-gradient(135deg,#a29bfe,#e17055)">📋</div>
+        <div class="ac-body">
+          <div class="ac-provider aon">AON cut-e</div>
+          <h3>Aon cut-e Verbal</h3>
+          <p>True / False / Cannot Say — fast-paced verbal reasoning with real finance passages.</p>
+          <div class="ac-banks">Deutsche Bank · UBS · Standard Chartered · Nomura</div>
+          <span class="ac-cta">Start practice →</span>
+        </div>
+      </a>
+
+      <a href="/game/coding" class="assess-card">
+        <div class="ac-icon" style="background:linear-gradient(135deg,#636e72,#2d3436)">💻</div>
+        <div class="ac-body">
+          <div class="ac-provider coding">Coding OA</div>
+          <h3>Quant / Coding OA</h3>
+          <p>Algorithms, complexity, SQL and code tracing.</p>
+          <div class="ac-banks">Citadel · JP Morgan Tech · Goldman Strats</div>
+          <span class="ac-cta">Start practice →</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ HOW IT WORKS ═══════ -->
+<section id="how-it-works" style="padding:4rem 2rem;background:var(--bg);border-top:1px solid var(--border)">
+  <div style="max-width:1100px;margin:0 auto;text-align:center">
+    <h2 style="font-size:1.4rem;font-weight:800;margin-bottom:0.4rem">How AssessSim works</h2>
+    <p style="color:var(--text-muted);font-size:0.87rem;margin-bottom:2.5rem">Three steps from sign-up to internship offer.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0;position:relative">
+      <div style="position:absolute;top:40px;left:calc(16.67% + 1rem);right:calc(16.67% + 1rem);height:1px;background:var(--border);display:none" class="step-line"></div>
+      {% for step in [
+        ('01','Create a free account','Sign up in 30 seconds. No credit card required to start. All 19 practice tests are immediately accessible.','var(--accent)'),
+        ('02','Practise under real conditions','Each test mirrors the exact format, timing, and difficulty of the real assessment. Compete against a live leaderboard.','var(--accent2)'),
+        ('03','Track and improve','Your dashboard shows score history, percentile rank, and where to focus next — so every session counts.','var(--success)')
+      ] %}
+      <div style="padding:2rem 1.5rem;display:flex;flex-direction:column;align-items:center;position:relative">
+        <div style="width:60px;height:60px;border-radius:50%;background:rgba(77,159,255,0.1);border:2px solid {{ step[3] }};display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:900;color:{{ step[3] }};margin-bottom:1.25rem;flex-shrink:0">{{ step[0] }}</div>
+        <h3 style="font-size:1rem;font-weight:700;margin-bottom:0.5rem">{{ step[1] }}</h3>
+        <p style="color:var(--text-muted);font-size:0.83rem;line-height:1.6;max-width:240px">{{ step[2] }}</p>
+      </div>
+      {% endfor %}
+    </div>
+    <div style="margin-top:2.5rem">
+      <a href="#" onclick="openAuthModal('register');return false;" class="btn btn-primary btn-lg">Create Free Account</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ TESTIMONIALS ═══════ -->
+<section style="padding:4rem 2rem;background:var(--bg2);border-top:1px solid var(--border)">
+  <div style="max-width:1100px;margin:0 auto">
+    <h2 style="font-size:1.4rem;font-weight:800;margin-bottom:0.4rem;text-align:left">What students say</h2>
+    <p style="color:var(--text-muted);font-size:0.87rem;margin-bottom:2rem;text-align:left">From students who got summer internship offers at top banks.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem">
+      {% for t in [
+        ('I practised Pymetrics daily for 3 weeks on AssessSim. When the real JP Morgan games came, they felt effortless. Got the offer.','E.M.','LSE · Finance & Accounting · JP Morgan IBD Offer 2026','🎓'),
+        ('The Aon cut-e Error Checking module is scarily accurate to the real Deutsche Bank assessment. I scored in the top 10% and got through every stage.','F.K.','UCL · Economics · Deutsche Bank Markets Offer 2026','🎓'),
+        ('Watson Glaser is the one test nobody prepares for. I did 10 practice runs on AssessSim and breezing it at Rothschild was the best feeling.','A.R.','Oxford · PPE · Rothschild M&A Offer 2025','🎓'),
+        ('The leaderboard feature pushed me to actually compete. Seeing yourself at 68th percentile is a great motivator. Ended up top 5 on most tests.','T.W.','Warwick · Mathematics · Goldman Sachs Offer 2026','🎓'),
+        ('PST prep on here genuinely helped with BCG\'s OA. The case logic and data reading is directly transferable.','J.B.','Cambridge · Economics · BCG Offer 2026','🎓'),
+        ('Cappfinity SJT was the one I was most unsure about. AssessSim\'s explanations taught me the framework behind the "right" answer. Game changer.','S.A.','King\'s College · Mgmt · HSBC Internship 2026','🎓')
+      ] %}
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem">
+        <div style="color:#FFB347;font-size:0.85rem;margin-bottom:0.75rem">★★★★★</div>
+        <p style="font-size:0.87rem;line-height:1.65;color:var(--text);margin-bottom:1.25rem;font-style:italic">"{{ t[0] }}"</p>
+        <div style="display:flex;align-items:center;gap:0.75rem">
+          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0">{{ t[3] }}</div>
+          <div>
+            <div style="font-weight:700;font-size:0.85rem">{{ t[1] }}</div>
+            <div style="font-size:0.72rem;color:var(--text-muted)">{{ t[2] }}</div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ FAQ ═══════ -->
+<section id="faq" style="padding:4rem 2rem;background:var(--bg);border-top:1px solid var(--border)">
+  <div style="max-width:800px;margin:0 auto">
+    <h2 style="font-size:1.4rem;font-weight:800;margin-bottom:0.4rem;text-align:left">Frequently asked questions</h2>
+    <p style="color:var(--text-muted);font-size:0.87rem;margin-bottom:2rem;text-align:left">Everything you need to know about banking internship assessments.</p>
+    <div style="display:flex;flex-direction:column;gap:0.75rem" id="faq-list">
+      {% for q, a in [
+        ('Which banks use Aon cut-e?', 'Deutsche Bank, UBS, Citi, Citadel, Wells Fargo, Nomura and Standard Chartered are major users of Aon cut-e assessments. The cut-e suite typically includes Logical (Scales), Numerical, Verbal and Error Checking — though banks choose different combinations.'),
+        ('Which banks use Pymetrics?', 'JP Morgan, Goldman Sachs, Blackstone, BlackRock and Fidelity are among the largest Pymetrics users. The platform runs 12 neuroscience games in total; banks typically require 8–12 of them.'),
+        ('How does the competitive leaderboard work?', 'When you submit a test, your score is benchmarked against thousands of simulated real candidates (based on actual assessment score distributions). Your rank and percentile update live so you can see exactly where you stand relative to the intern applicant pool.'),
+        ('What is the Cappfinity PST and SKIM?', 'Cappfinity uses several formats: the Strengths-based interview and SJT are most common, but some clients (e.g. KPMG, Lloyds) use the PST (a case-style test) and SKIM (a timed reading comprehension test). AssessSim covers all formats.'),
+        ('Do I need to pay to access all tests?', 'You can sign up free and access all 19 practice tests with full functionality. Paid plans add unlimited score history, detailed analytics, and priority access to new assessment modules.'),
+        ('How accurate are the practice tests?', 'Each module is built from analysis of real assessment formats, published practice materials, and verified reports from candidates who sat the real tests. Difficulty calibrations are updated before each internship season.'),
+        ('How do I know which test each bank uses?', 'Each assessment card on the homepage lists the banks that use that provider. This is based on student-reported data and publicly available firm information — updated for the Summer 2027 cycle.')
+      ] %}
+      <details style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
+        <summary style="padding:1rem 1.25rem;cursor:pointer;font-weight:600;font-size:0.9rem;list-style:none;display:flex;justify-content:space-between;align-items:center;user-select:none">
+          {{ q }}
+          <span style="font-size:1.1rem;color:var(--text-muted);flex-shrink:0;margin-left:1rem">＋</span>
+        </summary>
+        <div style="padding:0 1.25rem 1rem;color:var(--text-muted);font-size:0.87rem;line-height:1.7;border-top:1px solid var(--border)">{{ a }}</div>
+      </details>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ FINAL CTA ═══════ -->
+<section id="pricing" style="padding:5rem 2rem;text-align:center;background:radial-gradient(ellipse 70% 60% at 50% 50%,rgba(77,159,255,0.10) 0%,transparent 70%),var(--bg2);border-top:1px solid var(--border)">
+  <h2 style="font-size:clamp(1.6rem,4vw,2.4rem);font-weight:900;margin-bottom:0.9rem">Ready to outperform in your assessments?</h2>
+  <p style="color:var(--text-muted);max-width:480px;margin:0 auto 2rem;font-size:0.97rem;line-height:1.7">19 practice tests · 30 banks covered · leaderboard benchmarking · score tracking. Free to start.</p>
+  <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+    <a href="#" onclick="openAuthModal('register');return false;" class="btn btn-primary btn-lg">Start Practising Free</a>
+    <a href="#assessments" class="btn btn-outline btn-lg">Browse All Tests</a>
+  </div>
+  <div style="margin-top:3rem;display:flex;justify-content:center;gap:3rem;flex-wrap:wrap">
+    {% for stat in [('19','Practice tests'),('30','Banks covered'),('12,000+','Students helped'),('4.8 ★','Average rating')] %}
+    <div>
+      <div style="font-size:1.8rem;font-weight:900;color:var(--accent)">{{ stat[0] }}</div>
+      <div style="font-size:0.82rem;color:var(--text-muted)">{{ stat[1] }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
 {% endblock %}

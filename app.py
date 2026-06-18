@@ -1,19 +1,15 @@
 """Flask application for AssessSim — internship assessment game simulator."""
 import json
+import math
 import os
 import random
 import sqlite3
 from functools import wraps
 from flask import Flask, g, jsonify, render_template, request, session
-try:
-    import anthropic as _anthropic_module
-except ImportError:
-    _anthropic_module = None
-
 from werkzeug.security import check_password_hash, generate_password_hash
 
 app = Flask(__name__)
-app.secret_key = 'assessment-sim-secret-2024'
+app.secret_key = os.environ.get('SESSION_SECRET', 'assessment-sim-secret-2024')
 DATABASE = os.path.join(os.path.dirname(__file__), 'assesssim.db')
 
 
@@ -132,21 +128,21 @@ def generate_bot_score(difficulty_level, game_type='general'):  # pylint: disabl
 
     tier = tiers.get(difficulty_level, tiers['average'])
 
-    # Simple normal distribution approximation (Box-Muller)
-    u1, u2 = random.random(), random.random()
-    z = (-2 * (u1 ** 0.5)) * (2 * 3.14159 * u2) ** 0.5
+    # Box-Muller transform for normally distributed scores
+    u1, u2 = max(1e-10, random.random()), random.random()
+    z = math.sqrt(-2 * math.log(u1)) * math.cos(2 * math.pi * u2)
     score = tier['mean'] + z * tier['std']
 
     # Clamp score to 0-100
     return max(0, min(100, score))
 
-@app.route('/api/bot/profiles', methods=['GET'])
+@app.route('/sim/bot/profiles', methods=['GET'])
 def get_bot_profiles():
     """Return a sample of bot profiles."""
     sample = random.sample(BOT_PROFILES, min(10, len(BOT_PROFILES)))
     return jsonify({'bots': sample})
 
-@app.route('/api/bot/leaderboard', methods=['POST'])
+@app.route('/sim/bot/leaderboard', methods=['POST'])
 def get_leaderboard():
     """Generate a competitive leaderboard based on user score and difficulty."""
     data = request.get_json()
@@ -265,6 +261,75 @@ def attention():
     return render_template('attention.html')
 
 
+@app.route('/game/watson-glaser')
+def watson_glaser():
+    """Render the Watson Glaser critical thinking test."""
+    return render_template('watson_glaser.html')
+
+
+@app.route('/game/coding')
+def coding():
+    """Render the Coding OA simulator."""
+    return render_template('coding.html')
+
+
+@app.route('/game/korn-ferry')
+def korn_ferry():
+    """Render the Korn Ferry (Talent Q) adaptive test."""
+    return render_template('korn_ferry.html')
+
+
+@app.route('/game/aon-verbal')
+def aon_verbal():
+    """Render the Aon cut-e Verbal test."""
+    return render_template('aon_verbal.html')
+
+
+@app.route('/game/aon-scales')
+def aon_scales():
+    """Render the Aon cut-e Logical (Scales) test."""
+    return render_template('aon_scales.html')
+
+
+@app.route('/game/aon-error')
+def aon_error():
+    """Render the Aon cut-e Error Checking test."""
+    return render_template('aon_error.html')
+
+
+@app.route('/game/cappfinity-numerical')
+def cappfinity_numerical():
+    """Render the Cappfinity Numerical Reasoning test."""
+    return render_template('cappfinity_numerical.html')
+
+
+@app.route('/game/personality')
+def personality():
+    """Render the Personality & Strengths Profile."""
+    return render_template('personality.html')
+
+
+@app.route('/game/pst')
+def pst():
+    """Render the McKinsey/BCG Problem Solving Test."""
+    return render_template('pst.html')
+
+
+@app.route('/game/skim')
+def skim():
+    """Render the SKIM Reading & Comprehension test."""
+    return render_template('skim.html')
+
+
+
+@app.route('/dashboard')
+def dashboard():
+    """Render the user dashboard. Redirects to home if not logged in."""
+    if 'user_id' not in session:
+        return render_template('index.html')
+    return render_template('dashboard.html')
+
+
 @app.route('/results')
 def results():
     """Render the results page with score data from query params."""
@@ -276,7 +341,7 @@ def results():
 # Auth API
 # ---------------------------------------------------------------------------
 
-@app.route('/api/register', methods=['POST'])
+@app.route('/sim/register', methods=['POST'])
 def api_register():
     """Register a new user account."""
     data = request.get_json(silent=True) or {}
@@ -309,7 +374,7 @@ def api_register():
     return jsonify({'user': payload})
 
 
-@app.route('/api/login', methods=['POST'])
+@app.route('/sim/login', methods=['POST'])
 def api_login():
     """Log in with username and password."""
     data = request.get_json(silent=True) or {}
@@ -330,14 +395,14 @@ def api_login():
     return jsonify({'user': payload})
 
 
-@app.route('/api/logout', methods=['POST'])
+@app.route('/sim/logout', methods=['POST'])
 def api_logout():
     """Log the current user out."""
     session.clear()
     return jsonify({'success': True})
 
 
-@app.route('/api/me')
+@app.route('/sim/me')
 def api_me():
     """Return the currently logged-in user, or 401 if not logged in."""
     if 'user_id' not in session:
@@ -355,7 +420,7 @@ def api_me():
 # Score API
 # ---------------------------------------------------------------------------
 
-@app.route('/api/save-score', methods=['POST'])
+@app.route('/sim/save-score', methods=['POST'])
 @login_required
 def api_save_score():
     """Save a game score for the logged-in user."""
@@ -381,7 +446,7 @@ def api_save_score():
     return jsonify({'success': True})
 
 
-@app.route('/api/scores')
+@app.route('/sim/scores')
 @login_required
 def api_scores():
     """Return all scores for the logged-in user, newest first."""
@@ -405,105 +470,6 @@ def api_scores():
 # ---------------------------------------------------------------------------
 # AI Question Generation
 # ---------------------------------------------------------------------------
-
-_QUESTION_PROMPTS = {
-    'numerical': (
-        'Generate 6 fresh SHL-style numerical reasoning questions. '
-        'Each question must use a realistic business data table (company name, financial or operational metrics). '
-        'Return a JSON object: {"questions":[{...},...]} where each question has: '
-        'table:{title:string, headers:[string,...], rows:[[string,...],...]}, '
-        'question:string, options:[string x5], answer:integer (0-indexed correct option), explanation:string. '
-        'Make questions varied — percentages, ratios, absolute changes, projections. Ensure calculations are correct.'
-    ),
-    'verbal': (
-        'Generate 9 fresh SHL-style verbal reasoning questions across 3 distinct passages (3 questions per passage). '
-        'Topics: business, economics, technology or science. '
-        'Return a JSON object: {"questions":[{...},...]} where each question has: '
-        'passage:string (2-3 sentences), statement:string, '
-        'answer:string (exactly "True", "False", or "Cannot Say"), explanation:string. '
-        'Ensure a mix of True, False and Cannot Say answers. Explanations must reference the passage text.'
-    ),
-    'inductive': (
-        'Generate 8 fresh inductive reasoning questions using number or letter patterns (no emoji). '
-        'Return a JSON object: {"questions":[{...},...]} where each question has: '
-        'type:string ("sequence" or "matrix3x3"), label:string, '
-        'for sequence: sequence:[string x4 with last being "?"], options:[string x4], answer:integer (0-indexed), explanation:string. '
-        'for matrix3x3: grid:[[string x3] x3 with bottom-right being "?"], options:[string x4], answer:integer, explanation:string. '
-        'Use clear number sequences (Fibonacci, primes, doubling, arithmetic), letter patterns, or shape counts. '
-        'Make patterns unambiguous with clear explanations.'
-    ),
-    'sjt': (
-        'Generate 5 fresh Cappfinity-style situational judgement scenarios for a finance/consulting internship. '
-        'Return a JSON object: {"questions":[{...},...]} where each question has: '
-        'scenario:string (realistic workplace situation, 2-3 sentences), '
-        'options:[string x5] (realistic response options), '
-        'best:integer (0-indexed best response), worst:integer (0-indexed worst response), '
-        'explanation:string (why best is best and why worst is worst). '
-        'Scenarios should cover: stakeholder management, prioritisation, ethics, communication, teamwork.'
-    ),
-    'watson_glaser': (
-        'Generate 10 fresh Watson Glaser critical thinking questions across all 5 types (2 each): '
-        'Inference, Assumptions, Deductions, Interpretation, Evaluation. '
-        'Return a JSON object: {"questions":[{...},...]} where each question has: '
-        'type:string (one of the 5 types), stem:string (factual premise or argument), statement:string (claim to evaluate), '
-        'opts:[string,...] (for Inference: ["True","Probably True","Insufficient Data","Probably False","False"], '
-        'for Assumptions/Deductions/Interpretation: ["Conclusion Follows","Does Not Follow"], '
-        'for Evaluation: ["Strong","Weak"]), '
-        'ans:integer (0-indexed correct answer), exp:string (explanation). '
-        'Vary topics: business, science, statistics, logic. Ensure logical correctness.'
-    ),
-    'coding': (
-        'Generate 10 fresh computer science and programming questions suitable for a software engineering internship OA. '
-        'Return a JSON object: {"questions":[{...},...]} where each question has: '
-        'q:string (question, may include a short code snippet), opts:[string x4], ans:integer (0-indexed correct), '
-        'exp:string (brief explanation). '
-        'Cover: time/space complexity, data structures, algorithms, Python/JS output tracing, OOP concepts, '
-        'system design fundamentals, SQL basics. Mix difficulty levels.'
-    ),
-}
-
-
-@app.route('/api/generate-questions/<game_type>')
-def api_generate_questions(game_type):
-    """Generate fresh assessment questions via the Claude API."""
-    if game_type not in _QUESTION_PROMPTS:
-        return jsonify({'error': 'Unknown game type'}), 400
-
-    api_key = os.environ.get('ANTHROPIC_API_KEY')
-    if not api_key:
-        return jsonify({'error': 'AI question generation not configured'}), 503
-
-    if _anthropic_module is None:
-        return jsonify({'error': 'anthropic package not installed'}), 503
-
-    try:
-        client = _anthropic_module.Anthropic(api_key=api_key)
-        response = client.messages.create(
-            model='claude-opus-4-7',
-            max_tokens=8192,
-            system=(
-                'You are an expert assessment question generator for graduate and internship '
-                'recruitment at top finance and consulting firms. '
-                'Respond ONLY with a valid JSON object — no markdown fences, no explanation, just raw JSON.'
-            ),
-            messages=[{'role': 'user', 'content': _QUESTION_PROMPTS[game_type]}],
-        )
-        raw = response.content[0].text.strip()
-        # Strip markdown code fences if Claude added them despite instructions
-        if raw.startswith('```'):
-            raw = raw.split('```')[1]
-            if raw.startswith('json'):
-                raw = raw[4:]
-        data = json.loads(raw)
-        questions = data.get('questions', data) if isinstance(data, dict) else data
-        return jsonify({'questions': questions})
-    except json.JSONDecodeError:
-        return jsonify({'error': 'Model returned invalid JSON'}), 500
-    except Exception as exc:  # pylint: disable=broad-except
-        return jsonify({'error': str(exc)}), 500
-
-
-# ---------------------------------------------------------------------------
 # Run
 # ---------------------------------------------------------------------------
 
@@ -511,5 +477,5 @@ with app.app_context():
     init_db()
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5001))
+    port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', debug=False, port=port)

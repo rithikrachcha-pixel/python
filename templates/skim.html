@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% block title %}SKIM Reading & Comprehension — AssessSim{% endblock %}
+{% block content %}
+<div class="game-page">
+  <div class="game-header">
+    <div class="game-header-icon" style="background:linear-gradient(135deg,#00cec9,#0984e3)">📖</div>
+    <div>
+      <h1>SKIM Reading &amp; Comprehension</h1>
+      <p>Cappfinity / Talent Q &mdash; Speed Reading &amp; Critical Comprehension</p>
+    </div>
+  </div>
+  <div class="game-meta">
+    <div class="game-meta-item">📖 <strong>5</strong>&nbsp;passages</div>
+    <div class="game-meta-item">⏱️ <strong>25 min</strong></div>
+    <div class="game-meta-item">🏦 KPMG · Lloyds · Schroders · Legal &amp; General</div>
+  </div>
+
+  <div id="instructions" class="instructions">
+    <h2>📋 Instructions</h2>
+    <ul>
+      <li>Each passage is a business or financial text. Read it, then answer 4–5 questions.</li>
+      <li>Questions test <strong>key facts, main argument, inference, and tone</strong>.</li>
+      <li>The passage stays on screen while you answer — no memorisation required.</li>
+      <li>You have <strong>25 minutes total</strong> across all passages.</li>
+    </ul>
+    <div class="notice" style="margin-top:1rem">💡 <strong>Tip:</strong> Skim the questions first, then read the passage — you'll know exactly what to look for.</div>
+    <div style="margin-top:1.25rem">
+      <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--text-muted);margin-bottom:0.5rem;">⚔️ Competition difficulty</label>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn btn-sm diff-btn" data-d="easy" onclick="setDiff(this)" style="background:rgba(0,210,160,0.15);border:1px solid var(--success);color:var(--success)">Casual</button>
+        <button class="btn btn-sm diff-btn selected-diff" data-d="average" onclick="setDiff(this)" style="background:rgba(77,159,255,0.2);border:1px solid var(--accent);color:var(--accent)">Average</button>
+        <button class="btn btn-sm diff-btn" data-d="above_average" onclick="setDiff(this)" style="background:rgba(162,155,254,0.15);border:1px solid var(--accent2);color:var(--accent2)">Above Average</button>
+        <button class="btn btn-sm diff-btn" data-d="cut_throat" onclick="setDiff(this)" style="background:rgba(255,94,122,0.15);border:1px solid var(--danger);color:var(--danger)">Quant God 🔥</button>
+      </div>
+    </div>
+    <button class="btn btn-primary mt-2" onclick="startGame()">Start Test (25 min)</button>
+  </div>
+
+  <div id="game-area" class="hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <div class="progress-bar-wrap" style="flex:1;margin-right:1rem;margin-bottom:0">
+        <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+      </div>
+      <div class="timer" id="timer">25:00</div>
+    </div>
+    <div id="question-area"></div>
+    <div class="question-nav">
+      <button class="btn btn-outline btn-sm" id="prev-btn" onclick="navigate(-1)">← Previous</button>
+      <span id="q-counter" class="text-muted" style="font-size:0.85rem"></span>
+      <button class="btn btn-primary btn-sm" id="next-btn" onclick="navigate(1)">Next →</button>
+    </div>
+    <div style="text-align:center;margin-top:1.5rem">
+      <button class="btn btn-success" onclick="submitTest()">Submit Test</button>
+    </div>
+  </div>
+
+  <div id="results-area" class="hidden" style="text-align:center;padding:2rem">
+    <h2 style="font-size:1.8rem;margin-bottom:0.5rem">Test Complete!</h2>
+    <div class="score-display" id="final-score">0%</div>
+    <div class="results-grid" style="max-width:500px;margin:1.5rem auto">
+      <div class="result-card"><div class="rc-value" id="r-correct">0</div><div class="rc-label">Correct</div></div>
+      <div class="result-card"><div class="rc-value" id="r-total">22</div><div class="rc-label">Questions</div></div>
+    </div>
+    <div id="leaderboard-area" style="max-width:600px;margin:1.5rem auto;text-align:left"></div>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button class="btn btn-outline" onclick="location.reload()">Try Again</button>
+      <a href="/" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const PASSAGES = [
+  {
+    title:'Central Bank Policy and Inflation',
+    text:`The Bank of England's Monetary Policy Committee (MPC) raised interest rates to 5.25% in August 2023, the highest level in 15 years, as part of its sustained campaign to bring inflation back to the 2% target. Headline CPI had peaked at 11.1% in October 2022 before falling to 6.7% by August 2023, driven primarily by declining energy prices following the normalisation of European gas markets after the Russia-Ukraine supply disruption.
+
+Core inflation — which strips out food and energy — proved more stubborn, remaining above 6% through mid-2023. The MPC noted that services inflation, particularly in hospitality and professional services, was being driven by strong nominal wage growth averaging 7.8% year-on-year, creating a wage-price spiral dynamic that previous rate increases had not fully dampened.
+
+Critics argued that the aggressive rate path risked engineering an unnecessary recession, with the UK mortgage market particularly exposed due to its high proportion of short-term fixed-rate and tracker mortgages, unlike the US or continental Europe where long-term fixed rates are standard.`,
+    questions:[
+      {q:'What was the UK interest rate set by the MPC in August 2023?',opts:['4.75%','5.00%','5.25%','5.50%'],ans:2,exp:'The passage states the rate was raised to 5.25% in August 2023.'},
+      {q:'What was the primary driver of the decline in headline CPI from its peak?',opts:['Lower wage growth','Declining energy prices','Reduced consumer spending','Government price controls'],ans:1,exp:'The passage explicitly states "driven primarily by declining energy prices following the normalisation of European gas markets."'},
+      {q:'According to the passage, what distinguished UK mortgage market risk from the US?',opts:['Higher household debt levels','Shorter mortgage terms','High proportion of short-term fixed and tracker mortgages','Lower homeownership rates'],ans:2,exp:'The passage states "the UK mortgage market particularly exposed due to its high proportion of short-term fixed-rate and tracker mortgages."'},
+      {q:'What does the term "wage-price spiral" as used in the passage most likely mean?',opts:['Employers cutting wages to reduce costs','Wages and prices reinforcing each other upward','Central banks raising rates to cut wages','A government policy to control pay increases'],ans:1,exp:'A wage-price spiral refers to wages and prices pushing each other higher — workers demand higher wages due to inflation, which increases business costs, which raises prices further.'},
+      {q:'Which of the following is NOT mentioned as a cause of stubborn core inflation?',opts:['Strong nominal wage growth','Services sector inflation','Hospitality sector pricing','Supply chain disruptions'],ans:3,exp:'Supply chain disruptions are not mentioned in relation to core inflation — the passage cites wage growth and services sector (hospitality, professional services).'},
+    ]
+  },
+  {
+    title:'ESG Investing and Greenwashing Risk',
+    text:`Environmental, Social and Governance (ESG) investing has grown from a niche ethical consideration to a mainstream asset class, with global ESG-labelled assets under management exceeding $35 trillion by 2022 — roughly 36% of all professionally managed assets. This rapid growth has, however, attracted significant regulatory scrutiny, particularly around the accuracy of ESG claims made by fund managers.
+
+The practice of "greenwashing" — presenting investments as more environmentally or socially responsible than they are — has prompted regulatory intervention in multiple jurisdictions. In the EU, the Sustainable Finance Disclosure Regulation (SFDR) introduced mandatory disclosure requirements, classifying funds into Article 6 (no ESG integration), Article 8 (ESG promotion) and Article 9 (sustainable investment objective) categories. Early implementation revealed widespread reclassification of funds from Article 9 to Article 8, suggesting that many managers had initially overstated their sustainability credentials.
+
+In the UK, the Financial Conduct Authority (FCA) introduced the Sustainability Disclosure Requirements (SDR) framework in 2023, which prohibits the use of terms such as "sustainable", "responsible" or "ESG" in fund names unless strict criteria are met. Analysts predict that this will force significant product redesign across the fund management industry.`,
+    questions:[
+      {q:'Approximately what proportion of professionally managed assets are ESG-labelled?',opts:['18%','27%','36%','45%'],ans:2,exp:'The passage states ESG assets represent "roughly 36% of all professionally managed assets."'},
+      {q:'What does the reclassification of funds from Article 9 to Article 8 suggest?',opts:['ESG assets outperformed in 2022','Many managers had overstated their sustainability credentials','The EU tightened its definition of Article 9','Investors preferred lower-ESG funds'],ans:1,exp:'The passage states this reclassification suggested "many managers had initially overstated their sustainability credentials."'},
+      {q:'Under the UK SDR framework, which of the following actions is prohibited?',opts:['Investing in fossil fuel companies','Using "ESG" in a fund name without meeting strict criteria','Charging management fees above 0.75%','Marketing funds to retail investors'],ans:1,exp:'The FCA SDR "prohibits the use of terms such as \'sustainable\', \'responsible\' or \'ESG\' in fund names unless strict criteria are met."'},
+      {q:'Which Article under SFDR applies to funds with a sustainable investment objective?',opts:['Article 6','Article 7','Article 8','Article 9'],ans:3,exp:'The passage states Article 9 covers "sustainable investment objective" funds.'},
+    ]
+  },
+  {
+    title:'Private Equity Deal Structures',
+    text:`Private equity firms typically acquire companies using a leveraged buyout (LBO) structure, in which the acquisition is financed using a combination of equity contributed by the fund and debt secured against the assets or cash flows of the target company. The debt component, commonly comprising senior secured loans, second-lien debt, and mezzanine financing, typically represents 50–70% of the total acquisition price at the time of purchase.
+
+The fundamental logic of the LBO is threefold. First, leverage amplifies equity returns: if a firm buys a company for £100m with £60m of debt and £40m of equity, and sells it for £130m, the equity return is not 30% but rather 75% (£30m gain on £40m equity). Second, the target's own cash flows service the debt, effectively having the acquired company pay for its own purchase. Third, management incentive schemes — typically involving equity warrants or co-investment — align the interests of operating management with the fund.
+
+However, high leverage introduces significant downside risk. Covenant breaches, triggered when financial ratios fall below agreed thresholds, can give lenders control over restructuring decisions. The 2008 financial crisis saw numerous PE-backed companies enter administration precisely because leverage ratios that appeared sustainable at deal signing became untenable when revenues fell.`,
+    questions:[
+      {q:'In the example given, what is the equity return on a £100m acquisition sold for £130m with £60m debt?',opts:['30%','50%','75%','90%'],ans:2,exp:'Equity invested: £40m. Gain: £30m (all goes to equity after debt repaid). Return: £30m/£40m = 75%.'},
+      {q:'What is the typical debt proportion in an LBO at the time of purchase?',opts:['20–40%','30–50%','50–70%','70–90%'],ans:2,exp:'The passage states "typically represents 50–70% of the total acquisition price."'},
+      {q:'What triggers a covenant breach?',opts:['The PE firm selling its stake','Revenue growing above projections','Financial ratios falling below agreed thresholds','The target company changing CEO'],ans:2,exp:'Covenant breaches are "triggered when financial ratios fall below agreed thresholds."'},
+      {q:'What is described as the second logical benefit of an LBO structure?',opts:['Leverage amplifies returns','The target\'s cash flows service the debt','Management incentives align interests','Debt is secured against target assets'],ans:1,exp:'The passage lists: First — leverage amplifies returns. Second — "the target\'s own cash flows service the debt."'},
+      {q:'Which of the following best describes the tone of the final paragraph?',opts:['Promotional of private equity strategies','Cautionary about the risks of high leverage','Critical of lenders in the 2008 crisis','Neutral and descriptive throughout'],ans:1,exp:'The final paragraph highlights "significant downside risk," covenant breaches, and cites the 2008 crisis as an example of how leverage can be "untenable." This is cautionary in tone.'},
+    ]
+  },
+  {
+    title:'Algorithmic Trading and Market Microstructure',
+    text:`High-frequency trading (HFT) firms account for an estimated 50–60% of daily equity trading volume in US markets and a growing proportion in European and Asian exchanges. These firms exploit speed advantages measured in microseconds to profit from bid-ask spreads, statistical arbitrage, and latency advantages over slower market participants.
+
+Proponents argue that HFT improves market quality by tightening bid-ask spreads and increasing liquidity, particularly in normal market conditions. Academic research has documented significant reductions in transaction costs for retail investors since the widespread adoption of electronic and algorithmic trading in the 2000s.
+
+Critics, however, highlight the "flash crash" of May 6, 2010, when the Dow Jones Industrial Average fell nearly 1,000 points in minutes before recovering, as evidence that algorithmic systems can amplify market instability. Subsequent investigations found that a large institutional sell order interacted with HFT algorithms in ways that withdrew liquidity precisely when it was most needed, creating a self-reinforcing collapse.
+
+Regulators have responded with mechanisms including circuit breakers — which pause trading when prices move beyond set thresholds — and rules requiring HFT firms to maintain quotes for minimum periods, limiting their ability to withdraw liquidity at will.`,
+    questions:[
+      {q:'Approximately what proportion of US daily equity trading volume do HFT firms account for?',opts:['20–30%','30–40%','50–60%','70–80%'],ans:2,exp:'The passage states HFT firms "account for an estimated 50–60% of daily equity trading volume in US markets."'},
+      {q:'What happened during the flash crash of May 2010?',opts:['The DJIA rose 1,000 points in minutes','The DJIA fell nearly 1,000 points before recovering','The NYSE was suspended for 2 hours','The SEC banned HFT temporarily'],ans:1,exp:'The passage states the Dow "fell nearly 1,000 points in minutes before recovering."'},
+      {q:'According to proponents, what is a key benefit of HFT?',opts:['It reduces the need for regulators','It tightens bid-ask spreads and increases liquidity','It eliminates insider trading','It reduces market volatility in all conditions'],ans:1,exp:'Proponents argue HFT "improves market quality by tightening bid-ask spreads and increasing liquidity."'},
+      {q:'What do circuit breakers do, according to the passage?',opts:['Ban HFT firms from trading','Pause trading when prices move beyond set thresholds','Force HFT firms to buy when liquidity falls','Alert regulators to unusual volume'],ans:1,exp:'Circuit breakers "pause trading when prices move beyond set thresholds."'},
+    ]
+  },
+  {
+    title:'The Role of Investment Banking in M&A',
+    text:`Investment banks act as intermediaries in mergers and acquisitions (M&A) transactions, advising either the acquirer or the target on deal structure, valuation, negotiation tactics, and financing. For large transactions, a "fairness opinion" — an independent assessment of whether a deal's terms are fair from a financial standpoint — is commonly provided to a company's board of directors to satisfy fiduciary duties to shareholders.
+
+The fees charged by investment banks for M&A advisory services are typically structured on a "success fee" basis, payable only on deal completion, and calculated as a percentage of deal value using the Lehman Formula or variations thereof (e.g., 5% of the first $1m, 4% of the next $1m, etc.). For large transactions above $1 billion, fees typically compress to 0.1–0.5% of deal value, reflecting the non-linear relationship between deal size and advisory complexity.
+
+Recent years have seen increasing competition from boutique advisory firms — such as Lazard, Rothschild & Co, Evercore, and Centerview — which specialise exclusively in advisory and are perceived to have fewer conflicts of interest than bulge-bracket banks that also underwrite securities or provide acquisition financing. This dynamic has led to a bifurcation of the M&A advisory market, with boutiques capturing an increasing share of high-value mandates.`,
+    questions:[
+      {q:'What is the primary purpose of a "fairness opinion"?',opts:['To determine the tax structure of a deal','To assess whether deal terms are financially fair for the board\'s fiduciary duties','To provide a credit rating for acquisition financing','To evaluate the target\'s ESG credentials'],ans:1,exp:'A fairness opinion is "an independent assessment of whether a deal\'s terms are fair from a financial standpoint" provided "to satisfy fiduciary duties to shareholders."'},
+      {q:'How are M&A advisory fees typically structured?',opts:['Fixed annual retainer','Success fee payable on deal completion','Hourly rate billed monthly','A mix of retainer and milestone payments'],ans:1,exp:'Fees are "typically structured on a \'success fee\' basis, payable only on deal completion."'},
+      {q:'What tends to happen to the percentage fee as deal size increases above $1 billion?',opts:['It increases proportionally','It remains fixed','It compresses to 0.1–0.5%','It is replaced by a fixed fee'],ans:2,exp:'The passage states fees "typically compress to 0.1–0.5% of deal value" for large transactions above $1 billion.'},
+      {q:'Why are boutique advisory firms perceived to have fewer conflicts of interest?',opts:['They charge lower fees','They specialise exclusively in advisory without underwriting or financing','They are regulated differently from bulge-bracket banks','They only advise on cross-border deals'],ans:1,exp:'Boutiques "specialise exclusively in advisory and are perceived to have fewer conflicts of interest than bulge-bracket banks that also underwrite securities or provide acquisition financing."'},
+      {q:'Which of the following is NOT listed as a boutique advisory firm in the passage?',opts:['Lazard','Rothschild & Co','Goldman Sachs','Evercore'],ans:2,exp:'Goldman Sachs is not mentioned. The boutiques listed are Lazard, Rothschild & Co, Evercore, and Centerview.'},
+    ]
+  },
+];
+
+// Flatten questions
+const QUESTIONS=[];
+PASSAGES.forEach(p=>{p.questions.forEach(q=>{QUESTIONS.push({...q,passage:`<div class="passage-box"><strong>${p.title}</strong><br><br>${p.text.replace(/\n\n/g,'<br><br>')}</div>`});});});
+
+let selectedDiff='average',current=0,answers={},timerInterval;
+
+function setDiff(btn){document.querySelectorAll('.diff-btn').forEach(b=>{b.classList.remove('selected-diff');b.style.background='rgba(255,255,255,0.05)';b.style.border='1px solid var(--border)';b.style.color='var(--text-muted)';});const d=btn.dataset.d;const colors={easy:['rgba(0,210,160,0.15)','var(--success)'],average:['rgba(77,159,255,0.2)','var(--accent)'],above_average:['rgba(162,155,254,0.15)','var(--accent2)'],cut_throat:['rgba(255,94,122,0.15)','var(--danger)']};btn.classList.add('selected-diff');btn.style.background=colors[d][0];btn.style.border=`1px solid ${colors[d][1]}`;btn.style.color=colors[d][1];selectedDiff=d;}
+
+function startGame(){document.getElementById('instructions').classList.add('hidden');document.getElementById('game-area').classList.remove('hidden');let s=1500;timerInterval=setInterval(()=>{s--;const m=Math.floor(s/60),r=s%60;document.getElementById('timer').textContent=`${m}:${r.toString().padStart(2,'0')}`;if(s<=120)document.getElementById('timer').classList.add('urgent');if(s<=0){clearInterval(timerInterval);submitTest();}},1000);showQ();}
+
+function showQ(){
+  const q=QUESTIONS[current];
+  document.getElementById('progress-bar').style.width=`${(current/QUESTIONS.length)*100}%`;
+  document.getElementById('q-counter').textContent=`Q${current+1} of ${QUESTIONS.length}`;
+  document.getElementById('prev-btn').disabled=current===0;
+  document.getElementById('next-btn').disabled=current===QUESTIONS.length-1;
+  document.getElementById('question-area').innerHTML=`
+    <div class="question-card">
+      <div class="question-number">Question ${current+1}</div>
+      ${q.passage}
+      <p class="question-text" style="margin-top:1rem;font-weight:600">${q.q}</p>
+      <ul class="options-list">${q.opts.map((o,i)=>`<li><button class="option-btn${answers[current]===i?' selected':''}" onclick="pick(${i})">${['A','B','C','D','E'][i]}. ${o}</button></li>`).join('')}</ul>
+      ${answers[current]!==undefined?`<div class="notice mt-2" style="text-align:left"><strong>Explanation:</strong> ${q.exp}</div>`:''}
+    </div>`;}
+
+function pick(i){answers[current]=i;showQ();}
+function navigate(dir){current+=dir;showQ();}
+
+function submitTest(){
+  clearInterval(timerInterval);
+  const correct=QUESTIONS.filter((_,i)=>answers[i]===QUESTIONS[i].ans).length;
+  document.getElementById('game-area').classList.add('hidden');
+  document.getElementById('results-area').classList.remove('hidden');
+  const score=Math.round((correct/QUESTIONS.length)*100);
+  document.getElementById('final-score').textContent=score+'%';
+  document.getElementById('r-correct').textContent=correct;
+  document.getElementById('r-total').textContent=QUESTIONS.length;
+  fetch('/sim/save-score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:'skim',score})}).catch(()=>{});
+  loadLeaderboard(score);
+}
+
+async function loadLeaderboard(score){try{const res=await fetch('/sim/bot/leaderboard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({score,difficulty:selectedDiff,game:'skim',count:10})});const data=await res.json();document.getElementById('leaderboard-area').innerHTML=`<h3 style="font-size:1rem;font-weight:700;margin-bottom:0.75rem">🏆 Ranked <span style="color:var(--accent)">#${data.user_rank}</span> of ${data.total_candidates} (top ${100-data.percentile}%)</h3>${data.leaderboard.map(e=>`<div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0;border-bottom:1px solid var(--border);${e.is_user?'background:rgba(77,159,255,0.08);border-radius:8px;padding:0.5rem;':''}"><span style="width:28px;text-align:center;font-weight:700;color:${e.rank<=3?'var(--warning)':'var(--text-muted)'};">#${e.rank}</span><div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:800;flex-shrink:0">${e.avatar}</div><div style="flex:1"><div style="font-size:0.88rem;font-weight:${e.is_user?700:500}">${e.name}</div><div style="font-size:0.75rem;color:var(--text-muted)">${e.school}</div></div><span style="font-weight:700;color:${e.is_user?'var(--accent)':'var(--text)'}">${e.score}%</span></div>`).join('')}`;}catch(e){}}
+</script>
+{% endblock %}

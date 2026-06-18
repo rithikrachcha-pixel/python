@@ -1,0 +1,391 @@
+{% extends "base.html" %}
+{% block title %}Watson Glaser — AssessSim{% endblock %}
+
+{% block content %}
+<div class="game-page">
+  <div class="game-header">
+    <div class="game-header-icon" style="background:#0984e3">🧩</div>
+    <div>
+      <h1>Watson Glaser</h1>
+      <p>Critical Thinking — Used by Law Firms, Banks &amp; Consulting</p>
+    </div>
+  </div>
+
+  <div class="game-meta">
+    <div class="game-meta-item">📋 <strong>20</strong>&nbsp;questions</div>
+    <div class="game-meta-item">⏱️ <strong>30 min</strong>&nbsp;timer</div>
+    <div class="game-meta-item">🧩 5 question types</div>
+    <div class="game-meta-item">✏️ Multiple choice</div>
+  </div>
+
+  <div id="instructions" class="instructions">
+    <h2>📋 Instructions</h2>
+    <ul>
+      <li>This test measures <strong>critical thinking</strong> across five skills.</li>
+      <li><strong>Inference</strong> — How likely is a conclusion given the facts?</li>
+      <li><strong>Assumptions</strong> — Is an assumption being taken for granted?</li>
+      <li><strong>Deductions</strong> — Does the conclusion necessarily follow?</li>
+      <li><strong>Interpretation</strong> — Does the evidence support this conclusion?</li>
+      <li><strong>Evaluation</strong> — Is this argument strong or weak?</li>
+    </ul>
+    <div class="notice" style="margin-top:1rem">
+      💡 <strong>Tip:</strong> Base every answer strictly on the information given — not your general knowledge or personal opinions.
+    </div>
+    <div style="margin-top:1.25rem">
+      <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--text-muted);margin-bottom:0.5rem;">⚔️ Competition difficulty</label>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn btn-sm diff-btn" data-d="easy" onclick="setDiff(this)" style="background:rgba(0,210,160,0.15);border:1px solid var(--success);color:var(--success)">Casual</button>
+        <button class="btn btn-sm diff-btn selected-diff" data-d="average" onclick="setDiff(this)" style="background:rgba(77,159,255,0.2);border:1px solid var(--accent);color:var(--accent)">Average</button>
+        <button class="btn btn-sm diff-btn" data-d="above_average" onclick="setDiff(this)" style="background:rgba(162,155,254,0.15);border:1px solid var(--accent2);color:var(--accent2)">Above Average</button>
+        <button class="btn btn-sm diff-btn" data-d="cut_throat" onclick="setDiff(this)" style="background:rgba(255,94,122,0.15);border:1px solid var(--danger);color:var(--danger)">Quant God 🔥</button>
+      </div>
+    </div>
+    <button class="btn btn-primary mt-2" onclick="startGame()">Start Test (30 min timer)</button>
+  </div>
+
+  <div id="game-area" class="hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <div class="progress-bar-wrap" style="flex:1;margin-right:1rem;margin-bottom:0">
+        <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+      </div>
+      <div class="timer" id="timer">30:00</div>
+    </div>
+    <div id="question-area"></div>
+    <div class="question-nav">
+      <button id="prev-btn" class="btn btn-outline btn-sm" onclick="navigate(-1)">← Previous</button>
+      <span id="q-counter" class="text-muted" style="font-size:0.85rem"></span>
+      <button id="next-btn" class="btn btn-primary btn-sm" onclick="navigate(1)">Next →</button>
+    </div>
+    <div style="text-align:center;margin-top:1.5rem">
+      <button class="btn btn-success" onclick="submitTest()">Submit Test</button>
+    </div>
+  </div>
+
+  <div id="results-area" class="hidden" style="text-align:center;padding:2rem">
+    <h2 style="font-size:1.8rem;margin-bottom:0.5rem">Test Complete!</h2>
+    <div class="score-display" id="final-score"></div>
+    <p class="text-muted">Correct Answers</p>
+    <div id="leaderboard-area" style="max-width:600px;margin:1.5rem auto;text-align:left"></div>
+    <div id="review-area" style="max-width:700px;margin:1.5rem auto;text-align:left"></div>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button class="btn btn-outline" onclick="location.reload()">Retake</button>
+      <a href="/" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const questions = [
+  // INFERENCE (5 options: True, Probably True, Insufficient Data, Probably False, False)
+  {
+    type: "Inference",
+    stem: "A survey of 1,200 university students found that 74% check social media within 10 minutes of waking up. Students who checked social media first thing reported feeling more anxious about the day ahead compared to those who did not.",
+    statement: "Reducing morning social media use would eliminate anxiety in students.",
+    opts: ["True","Probably True","Insufficient Data","Probably False","False"],
+    ans: 4,
+    exp: "The data shows a correlation between morning social media use and anxiety, but eliminating it would not necessarily eliminate all anxiety — correlation does not imply complete causation, and other anxiety sources exist."
+  },
+  {
+    type: "Inference",
+    stem: "A survey of 1,200 university students found that 74% check social media within 10 minutes of waking up. Students who checked social media first thing reported feeling more anxious about the day ahead compared to those who did not.",
+    statement: "A majority of the surveyed students check social media shortly after waking.",
+    opts: ["True","Probably True","Insufficient Data","Probably False","False"],
+    ans: 0,
+    exp: "74% is a majority — this is directly stated in the passage, so True."
+  },
+  {
+    type: "Inference",
+    stem: "A manufacturing firm introduced a four-day working week on full pay. After six months, productivity (measured by output per employee) rose by 8%, employee sick days fell by 22%, and staff turnover dropped from 18% to 11% annually.",
+    statement: "The four-day week caused the reduction in sick days.",
+    opts: ["True","Probably True","Insufficient Data","Probably False","False"],
+    ans: 2,
+    exp: "The data shows a correlation but cannot confirm causation — other changes during those six months could have contributed. Insufficient Data."
+  },
+  {
+    type: "Inference",
+    stem: "A manufacturing firm introduced a four-day working week on full pay. After six months, productivity (measured by output per employee) rose by 8%, employee sick days fell by 22%, and staff turnover dropped from 18% to 11% annually.",
+    statement: "The firm is likely to retain more employees than before if it maintains the four-day week.",
+    opts: ["True","Probably True","Insufficient Data","Probably False","False"],
+    ans: 1,
+    exp: "Turnover fell from 18% to 11%, suggesting improved retention. If this continues, more employees are probably retained — Probably True."
+  },
+  // ASSUMPTIONS (2 options: Assumption Made, Assumption Not Made)
+  {
+    type: "Assumptions",
+    stem: "A government minister stated: 'We must increase university tuition fees or cut arts funding — there is simply no other way to balance the education budget.'",
+    statement: "Assumption: There are no alternative ways to balance the education budget.",
+    opts: ["Assumption Made","Assumption Not Made"],
+    ans: 0,
+    exp: "The statement 'there is simply no other way' implicitly assumes this — the minister takes it for granted that only these two options exist."
+  },
+  {
+    type: "Assumptions",
+    stem: "A government minister stated: 'We must increase university tuition fees or cut arts funding — there is simply no other way to balance the education budget.'",
+    statement: "Assumption: University tuition fees are currently too low.",
+    opts: ["Assumption Made","Assumption Not Made"],
+    ans: 1,
+    exp: "The minister presents increasing fees as an option but does not assume fees are currently too low — that is not taken for granted in the argument."
+  },
+  {
+    type: "Assumptions",
+    stem: "An investment bank's memo reads: 'All analysts must complete the compliance training module before accessing the new trading platform.'",
+    statement: "Assumption: Some analysts have not yet completed the compliance training.",
+    opts: ["Assumption Made","Assumption Not Made"],
+    ans: 0,
+    exp: "The instruction would be unnecessary if all analysts had already completed the training — so the memo assumes some have not yet done so."
+  },
+  // DEDUCTIONS (2 options: Conclusion Follows, Does Not Follow)
+  {
+    type: "Deductions",
+    stem: "All partners at the firm have at least 10 years of experience. Sarah has 7 years of experience.",
+    statement: "Sarah is not a partner at the firm.",
+    opts: ["Conclusion Follows","Does Not Follow"],
+    ans: 0,
+    exp: "Since all partners have ≥10 years and Sarah has only 7 years, it necessarily follows that she cannot be a partner."
+  },
+  {
+    type: "Deductions",
+    stem: "Some high-performing employees receive bonuses. All employees who receive bonuses attend the annual gala.",
+    statement: "All high-performing employees attend the annual gala.",
+    opts: ["Conclusion Follows","Does Not Follow"],
+    ans: 1,
+    exp: "Only 'some' high-performers receive bonuses, so it does not follow that all high-performers attend the gala — only bonus recipients do."
+  },
+  {
+    type: "Deductions",
+    stem: "No investment is risk-free. Government bonds are investments.",
+    statement: "Government bonds carry some degree of risk.",
+    opts: ["Conclusion Follows","Does Not Follow"],
+    ans: 0,
+    exp: "If no investment is risk-free and government bonds are investments, it necessarily follows that government bonds are not risk-free."
+  },
+  // INTERPRETATION (2 options: Conclusion Follows, Does Not Follow)
+  {
+    type: "Interpretation",
+    stem: "A study of 500 law firms found that firms offering flexible working arrangements had 31% lower associate attrition than those that did not. The study controlled for firm size, practice area, and market.",
+    statement: "Flexible working is one factor that may help law firms retain junior lawyers.",
+    opts: ["Conclusion Follows","Does Not Follow"],
+    ans: 0,
+    exp: "The evidence — lower attrition at firms with flexible working, controlling for confounders — supports this interpretation."
+  },
+  {
+    type: "Interpretation",
+    stem: "A study of 500 law firms found that firms offering flexible working arrangements had 31% lower associate attrition than those that did not. The study controlled for firm size, practice area, and market.",
+    statement: "Law firms that introduce flexible working will always retain all their associates.",
+    opts: ["Conclusion Follows","Does Not Follow"],
+    ans: 1,
+    exp: "'Always retain all' is far too strong a conclusion — the data shows lower attrition on average, not zero attrition universally."
+  },
+  {
+    type: "Interpretation",
+    stem: "Data from the UK shows that constituencies with higher median incomes voted for the incumbent party at a rate of 62%, compared to 38% in constituencies with below-median incomes.",
+    statement: "Wealthier constituencies were more likely to vote for the incumbent party than poorer constituencies.",
+    opts: ["Conclusion Follows","Does Not Follow"],
+    ans: 0,
+    exp: "62% vs 38% directly supports this conclusion — it follows from the data."
+  },
+  // EVALUATION (2 options: Strong, Weak)
+  {
+    type: "Evaluation",
+    stem: "Proposal: The voting age should be lowered to 16. Argument: Young people are directly affected by policy decisions on education, climate, and housing, so they should have a say in choosing the government that sets these policies.",
+    statement: "This is a strong argument for lowering the voting age.",
+    opts: ["Strong","Weak"],
+    ans: 0,
+    exp: "The argument is relevant and directly addresses why 16-year-olds have a stake in voting — it is a substantive, logical reason rather than a trivial one."
+  },
+  {
+    type: "Evaluation",
+    stem: "Proposal: The voting age should be lowered to 16. Argument: Many 16-year-olds enjoy music festivals, which are often held outdoors.",
+    statement: "This is a strong argument for lowering the voting age.",
+    opts: ["Strong","Weak"],
+    ans: 1,
+    exp: "Music festival attendance is entirely irrelevant to voting rights or political participation — this is a weak, irrelevant argument."
+  },
+  {
+    type: "Evaluation",
+    stem: "Proposal: Corporations should be required to publish their gender pay gap data annually. Argument: Without transparent data, stakeholders cannot identify or pressure firms to address structural pay inequalities.",
+    statement: "This is a strong argument for mandatory gender pay gap reporting.",
+    opts: ["Strong","Weak"],
+    ans: 0,
+    exp: "The argument directly links transparency to accountability — it is a substantive reason that supports the proposal."
+  },
+  {
+    type: "Evaluation",
+    stem: "Proposal: Corporations should be required to publish their gender pay gap data annually. Argument: Some companies already publish this data voluntarily.",
+    statement: "This is a strong argument for mandatory reporting.",
+    opts: ["Strong","Weak"],
+    ans: 1,
+    exp: "The fact that some firms already do this voluntarily actually weakens the case for mandatory reporting — it does not support the proposal."
+  },
+  // Extra INFERENCE
+  {
+    type: "Inference",
+    stem: "Global average temperatures have risen by 1.1°C since pre-industrial times. The last decade was the hottest on record. Extreme weather events — floods, heatwaves, droughts — have increased in frequency and severity.",
+    statement: "Human activity is the sole cause of the temperature rise.",
+    opts: ["True","Probably True","Insufficient Data","Probably False","False"],
+    ans: 2,
+    exp: "The passage presents data on temperature rises and extreme weather but does not attribute causation — 'sole cause' goes beyond what the data states."
+  },
+  {
+    type: "Assumptions",
+    stem: "A consultant advises: 'To improve client satisfaction scores, the firm should invest in client-facing staff training.'",
+    statement: "Assumption: Current client satisfaction scores are below the desired level.",
+    opts: ["Assumption Made","Assumption Not Made"],
+    ans: 0,
+    exp: "The recommendation to improve scores implicitly assumes they are not already satisfactory — otherwise the recommendation would be unnecessary."
+  },
+  {
+    type: "Deductions",
+    stem: "All board members must disclose their shareholdings. Elena is not required to disclose her shareholdings.",
+    statement: "Elena is not a board member.",
+    opts: ["Conclusion Follows","Does Not Follow"],
+    ans: 0,
+    exp: "All board members must disclose; Elena does not have to disclose; therefore Elena cannot be a board member — the conclusion necessarily follows."
+  }
+];
+
+const TYPE_COLOURS = {
+  "Inference": "#0984e3",
+  "Assumptions": "#6c5ce7",
+  "Deductions": "#00b894",
+  "Interpretation": "#e17055",
+  "Evaluation": "#fdcb6e"
+};
+
+let currentQ = 0;
+let answers = new Array(questions.length).fill(null);
+let timerInterval = null;
+let secondsLeft = 30 * 60;
+let selectedDiff = 'average';
+
+function setDiff(btn) {
+  document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected-diff'));
+  btn.classList.add('selected-diff');
+  selectedDiff = btn.dataset.d;
+}
+
+function startGame() {
+  document.getElementById('instructions').classList.add('hidden');
+  document.getElementById('game-area').classList.remove('hidden');
+  renderQuestion(0);
+  startTimer();
+}
+
+function startTimer() {
+  timerInterval = setInterval(() => {
+    secondsLeft--;
+    const m = Math.floor(secondsLeft / 60).toString().padStart(2,'0');
+    const s = (secondsLeft % 60).toString().padStart(2,'0');
+    const el = document.getElementById('timer');
+    el.textContent = `${m}:${s}`;
+    if (secondsLeft <= 60) el.classList.add('urgent');
+    if (secondsLeft <= 0) { clearInterval(timerInterval); submitTest(); }
+  }, 1000);
+}
+
+function renderQuestion(idx) {
+  currentQ = idx;
+  const q = questions[idx];
+  document.getElementById('q-counter').textContent = `Question ${idx+1} of ${questions.length}`;
+  document.getElementById('progress-bar').style.width = ((idx+1)/questions.length*100) + '%';
+  document.getElementById('prev-btn').disabled = idx === 0;
+  document.getElementById('next-btn').disabled = idx === questions.length - 1;
+
+  const col = TYPE_COLOURS[q.type] || '#666';
+  let html = `<div class="question-card">
+    <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem">
+      <span style="background:${col};color:#fff;padding:0.2rem 0.7rem;border-radius:20px;font-size:0.78rem;font-weight:600">${q.type}</span>
+      <span class="question-number" style="margin:0">Question ${idx+1}</span>
+    </div>
+    <div class="passage-box">${q.stem}</div>
+    <div class="question-text"><strong>Statement:</strong> ${q.statement}</div>
+    <ul class="options-list">`;
+
+  q.opts.forEach((opt, i) => {
+    const sel = answers[idx] === i ? 'selected' : '';
+    html += `<li><button class="option-btn ${sel}" onclick="selectAnswer(${idx},${i},this)">
+      <span class="option-letter">${String.fromCharCode(65+i)}</span>${opt}
+    </button></li>`;
+  });
+  html += `</ul></div>`;
+  document.getElementById('question-area').innerHTML = html;
+}
+
+function selectAnswer(qIdx, optIdx, btn) {
+  answers[qIdx] = optIdx;
+  document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function navigate(dir) {
+  const next = currentQ + dir;
+  if (next >= 0 && next < questions.length) renderQuestion(next);
+}
+
+function submitTest() {
+  clearInterval(timerInterval);
+  document.getElementById('game-area').classList.add('hidden');
+  document.getElementById('results-area').classList.remove('hidden');
+
+  let score = 0;
+  let reviewHtml = '';
+
+  questions.forEach((q, i) => {
+    const userAnsIdx = answers[i];
+    const correct = userAnsIdx === q.ans;
+    if (correct) score++;
+
+    reviewHtml += `<div class="question-card" style="margin-bottom:1rem">
+      <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem">
+        <span style="background:${TYPE_COLOURS[q.type]||'#666'};color:#fff;padding:0.15rem 0.6rem;border-radius:20px;font-size:0.75rem">${q.type}</span>
+        <span style="color:${correct?'var(--success)':'var(--danger)'};font-weight:600">Q${i+1} — ${correct ? '✅ Correct' : '✗ Incorrect'}</span>
+      </div>
+      <div class="passage-box" style="font-size:0.8rem">${q.stem}</div>
+      <div style="font-size:0.88rem;margin-bottom:0.4rem"><strong>Statement:</strong> ${q.statement}</div>
+      <div style="font-size:0.85rem">
+        <span style="color:var(--text-muted)">Your answer: </span>
+        <strong style="color:${correct?'var(--success)':'var(--danger)'}">${userAnsIdx !== null ? q.opts[userAnsIdx] : 'Not answered'}</strong>
+      </div>`;
+    if (!correct) {
+      reviewHtml += `<div style="font-size:0.85rem;margin-top:0.2rem">
+        <span style="color:var(--text-muted)">Correct: </span>
+        <strong style="color:var(--success)">${q.opts[q.ans]}</strong>
+      </div>`;
+    }
+    reviewHtml += `<div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.3rem">💡 ${q.exp}</div></div>`;
+  });
+
+  const pct = Math.round(score / questions.length * 100);
+  document.getElementById('final-score').textContent = `${score} / ${questions.length}`;
+  document.getElementById('review-area').innerHTML = reviewHtml;
+  loadLeaderboard(pct);
+}
+
+async function loadLeaderboard(userScore) {
+  const res = await fetch('/sim/bot/leaderboard', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({score: userScore, difficulty: selectedDiff, game: 'watson_glaser', count: 12})
+  });
+  const data = await res.json();
+  const lb = data.leaderboard;
+  let html = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.5rem">
+    <h3 style="font-size:1rem;font-weight:700;margin-bottom:0.25rem">🏆 Leaderboard</h3>
+    <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1rem">You ranked <strong style="color:var(--accent)">#${data.user_rank}</strong> out of ${data.total_candidates} — top <strong style="color:var(--accent)">${Math.round(100-data.percentile+100/data.total_candidates)}%</strong></p>
+    <div style="display:flex;flex-direction:column;gap:0.4rem">`;
+  lb.slice(0,8).forEach(e => {
+    const you = e.is_user;
+    html += `<div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0.75rem;border-radius:8px;background:${you?'rgba(77,159,255,0.12)':'rgba(255,255,255,0.02)'};border:1px solid ${you?'rgba(77,159,255,0.3)':'transparent'}">
+      <span style="width:22px;text-align:center;font-size:0.78rem;font-weight:700;color:${e.rank<=3?'var(--warning)':'var(--text-muted)'}">${e.rank}</span>
+      <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:800;flex-shrink:0">${e.avatar.slice(0,2)}</div>
+      <div style="flex:1;min-width:0"><div style="font-size:0.85rem;font-weight:${you?700:500}">${e.name}${you?' 👈':''}</div><div style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.school}</div></div>
+      <span style="font-size:0.88rem;font-weight:700;color:${you?'var(--accent)':'var(--text)'}">${e.score}%</span>
+    </div>`;
+  });
+  html += `</div></div>`;
+  document.getElementById('leaderboard-area').innerHTML = html;
+}
+</script>
+{% endblock %}

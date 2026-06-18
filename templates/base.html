@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{% block title %}Assessment Games Simulator{% endblock %}</title>
+  <title>{% block title %}AssessSim — Internship Assessment Simulator{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
   {% block head %}{% endblock %}
 </head>
@@ -13,18 +13,224 @@
       <span class="logo-icon">◈</span>
       <span>AssessSim</span>
     </a>
-    <div class="nav-links">
-      <a href="/#pymetrics">Pymetrics</a>
-      <a href="/#shl">SHL</a>
-      <a href="/#cappfinity">Cappfinity</a>
+    <div class="navbar-inner">
+      <div class="nav-links">
+        <a href="/#assessments">Assessments</a>
+        <a href="/" style="color:var(--accent)">Banking Internship</a>
+        <a href="/#pricing">Pricing</a>
+        <a href="/dashboard">Dashboard</a>
+      </div>
+      <div class="nav-auth" id="navAuth">
+        <a href="#" class="btn btn-outline btn-sm" id="navLoginBtn">Log In</a>
+        <a href="#" class="btn btn-primary btn-sm" id="navSignUpBtn">Sign Up</a>
+      </div>
+    </div>
+    <div class="nav-hamburger" id="navHamburger" aria-label="Open menu">
+      <span></span>
+      <span></span>
+      <span></span>
     </div>
   </nav>
+
   <main>
     {% block content %}{% endblock %}
   </main>
-  <footer class="footer">
-    <p>AssessSim &mdash; Practice tool for internship assessment games. Not affiliated with Pymetrics, SHL, or Cappfinity.</p>
+
+  <footer class="footer" style="background:var(--bg2);border-top:1px solid var(--border);padding:3rem 2rem 2rem;margin-top:0">
+    <div style="max-width:1100px;margin:0 auto">
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:2rem;margin-bottom:2.5rem">
+        <div>
+          <div style="display:flex;align-items:center;gap:0.5rem;font-weight:800;font-size:1.1rem;margin-bottom:0.75rem">
+            <span style="color:var(--accent)">◈</span> AssessSim
+          </div>
+          <p style="color:var(--text-muted);font-size:0.83rem;line-height:1.65;max-width:280px">The most accurate banking internship test simulator. Practice Aon, SHL, Cappfinity, Pymetrics and more — all in one place.</p>
+          <div style="margin-top:1rem;font-size:0.75rem;color:var(--text-muted)">★★★★★ 4.8 · 12,000+ students · Summer 2027</div>
+        </div>
+        <div>
+          <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:0.75rem">Assessments</div>
+          <div style="display:flex;flex-direction:column;gap:0.4rem">
+            <a href="/game/numerical" style="color:var(--text-muted);font-size:0.83rem;text-decoration:none">SHL Numerical</a>
+            <a href="/game/verbal" style="color:var(--text-muted);font-size:0.83rem;text-decoration:none">SHL Verbal</a>
+            <a href="/game/aon-scales" style="color:var(--text-muted);font-size:0.83rem;text-decoration:none">Aon cut-e Logical</a>
+            <a href="/game/aon-error" style="color:var(--text-muted);font-size:0.83rem;text-decoration:none">Aon cut-e Error</a>
+            <a href="/game/bart" style="color:var(--text-muted);font-size:0.83rem;text-decoration:none">Pymetrics BART</a>
+            <a href="/game/sjt" style="color:var(--text-muted);font-size:0.83rem;text-decoration:none">Cappfinity SJT</a>
+            <a href="/game/pst" style="color:var(--text-muted);font-size:0.83rem;text-decoration:none">PST (McKinsey)</a>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:0.75rem">Banks</div>
+          <div style="display:flex;flex-direction:column;gap:0.4rem">
+            <span style="color:var(--text-muted);font-size:0.83rem">J.P. Morgan</span>
+            <span style="color:var(--text-muted);font-size:0.83rem">Goldman Sachs</span>
+            <span style="color:var(--text-muted);font-size:0.83rem">Barclays</span>
+            <span style="color:var(--text-muted);font-size:0.83rem">Deutsche Bank</span>
+            <span style="color:var(--text-muted);font-size:0.83rem">HSBC</span>
+            <span style="color:var(--text-muted);font-size:0.83rem">Blackstone</span>
+            <span style="color:var(--text-muted);font-size:0.83rem">+ 24 more</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:0.75rem">Platform</div>
+          <div style="display:flex;flex-direction:column;gap:0.4rem">
+            <a href="/#assessments" style="color:var(--text-muted);font-size:0.83rem;text-decoration:none">All Tests</a>
+            <a href="/dashboard" style="color:var(--text-muted);font-size:0.83rem;text-decoration:none">Dashboard</a>
+            <a href="/#pricing" style="color:var(--text-muted);font-size:0.83rem;text-decoration:none">Pricing</a>
+            <a href="/#how-it-works" style="color:var(--text-muted);font-size:0.83rem;text-decoration:none">How It Works</a>
+            <a href="/#faq" style="color:var(--text-muted);font-size:0.83rem;text-decoration:none">FAQ</a>
+          </div>
+        </div>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:1.25rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem">
+        <p style="color:var(--text-muted);font-size:0.78rem;margin:0">© 2027 AssessSim. Not affiliated with Pymetrics, SHL, Cappfinity, Aon, or any bank.</p>
+        <p style="color:var(--text-muted);font-size:0.78rem;margin:0">Practice platform for internship aspirants.</p>
+      </div>
+    </div>
   </footer>
+
   {% block scripts %}{% endblock %}
+
+  <!-- Auth modal -->
+  <div id="authModal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);align-items:center;justify-content:center;">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2rem;width:100%;max-width:400px;margin:1rem;position:relative;">
+      <button onclick="closeAuthModal()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--text-muted);font-size:1.2rem;cursor:pointer;">✕</button>
+      <div id="authTabs" style="display:flex;gap:0;margin-bottom:1.5rem;border-bottom:1px solid var(--border);">
+        <button onclick="switchTab('login')" id="tabLogin" style="flex:1;padding:0.6rem;background:none;border:none;color:var(--accent);font-weight:700;font-size:0.9rem;border-bottom:2px solid var(--accent);cursor:pointer;">Log In</button>
+        <button onclick="switchTab('register')" id="tabRegister" style="flex:1;padding:0.6rem;background:none;border:none;color:var(--text-muted);font-weight:600;font-size:0.9rem;border-bottom:2px solid transparent;cursor:pointer;">Sign Up</button>
+      </div>
+      <div id="authError" style="display:none;background:rgba(255,94,122,0.1);border:1px solid rgba(255,94,122,0.3);border-radius:8px;padding:0.6rem 0.85rem;font-size:0.83rem;color:var(--danger);margin-bottom:1rem;"></div>
+      <form id="loginForm" onsubmit="submitLogin(event)">
+        <div style="margin-bottom:1rem;">
+          <label style="display:block;font-size:0.8rem;font-weight:600;color:var(--text-muted);margin-bottom:0.4rem;text-transform:uppercase;letter-spacing:0.06em;">Username</label>
+          <input id="loginUsername" type="text" placeholder="your_username" autocomplete="username" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:0.7rem 0.9rem;color:var(--text);font-size:0.9rem;outline:none;" />
+        </div>
+        <div style="margin-bottom:1.5rem;">
+          <label style="display:block;font-size:0.8rem;font-weight:600;color:var(--text-muted);margin-bottom:0.4rem;text-transform:uppercase;letter-spacing:0.06em;">Password</label>
+          <input id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:0.7rem 0.9rem;color:var(--text);font-size:0.9rem;outline:none;" />
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Log In</button>
+      </form>
+      <form id="registerForm" style="display:none;" onsubmit="submitRegister(event)">
+        <div style="margin-bottom:1rem;">
+          <label style="display:block;font-size:0.8rem;font-weight:600;color:var(--text-muted);margin-bottom:0.4rem;text-transform:uppercase;letter-spacing:0.06em;">Username</label>
+          <input id="regUsername" type="text" placeholder="your_username" autocomplete="username" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:0.7rem 0.9rem;color:var(--text);font-size:0.9rem;outline:none;" />
+        </div>
+        <div style="margin-bottom:1rem;">
+          <label style="display:block;font-size:0.8rem;font-weight:600;color:var(--text-muted);margin-bottom:0.4rem;text-transform:uppercase;letter-spacing:0.06em;">Email</label>
+          <input id="regEmail" type="email" placeholder="you@university.ac.uk" autocomplete="email" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:0.7rem 0.9rem;color:var(--text);font-size:0.9rem;outline:none;" />
+        </div>
+        <div style="margin-bottom:1.5rem;">
+          <label style="display:block;font-size:0.8rem;font-weight:600;color:var(--text-muted);margin-bottom:0.4rem;text-transform:uppercase;letter-spacing:0.06em;">Password</label>
+          <input id="regPassword" type="password" placeholder="At least 6 characters" autocomplete="new-password" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:0.7rem 0.9rem;color:var(--text);font-size:0.9rem;outline:none;" />
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Create Account</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // ── Auth modal ──────────────────────────────────────────────────────────
+    const modal = document.getElementById('authModal');
+
+    function openAuthModal(tab) {
+      modal.style.display = 'flex';
+      switchTab(tab || 'login');
+      document.getElementById('authError').style.display = 'none';
+    }
+
+    function closeAuthModal() {
+      modal.style.display = 'none';
+    }
+
+    modal.addEventListener('click', e => { if (e.target === modal) closeAuthModal(); });
+
+    function switchTab(tab) {
+      const isLogin = tab === 'login';
+      document.getElementById('loginForm').style.display   = isLogin ? 'block' : 'none';
+      document.getElementById('registerForm').style.display = isLogin ? 'none' : 'block';
+      document.getElementById('tabLogin').style.color       = isLogin ? 'var(--accent)' : 'var(--text-muted)';
+      document.getElementById('tabLogin').style.borderBottomColor = isLogin ? 'var(--accent)' : 'transparent';
+      document.getElementById('tabRegister').style.color    = isLogin ? 'var(--text-muted)' : 'var(--accent)';
+      document.getElementById('tabRegister').style.borderBottomColor = isLogin ? 'transparent' : 'var(--accent)';
+    }
+
+    function showAuthError(msg) {
+      const el = document.getElementById('authError');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    async function submitLogin(e) {
+      e.preventDefault();
+      const res = await fetch('/sim/login', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          username: document.getElementById('loginUsername').value,
+          password: document.getElementById('loginPassword').value
+        })
+      });
+      const data = await res.json();
+      if (res.ok) { closeAuthModal(); updateNavAuth(data.user); }
+      else showAuthError(data.error || 'Login failed');
+    }
+
+    async function submitRegister(e) {
+      e.preventDefault();
+      const res = await fetch('/sim/register', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          username: document.getElementById('regUsername').value,
+          email: document.getElementById('regEmail').value,
+          password: document.getElementById('regPassword').value
+        })
+      });
+      const data = await res.json();
+      if (res.ok) { closeAuthModal(); updateNavAuth(data.user); }
+      else showAuthError(data.error || 'Registration failed');
+    }
+
+    function updateNavAuth(user) {
+      const authDiv = document.getElementById('navAuth');
+      if (user) {
+        authDiv.innerHTML = `
+          <a href="/dashboard" class="btn btn-outline btn-sm">Dashboard</a>
+          <button onclick="doLogout()" class="btn btn-sm" style="background:rgba(255,255,255,0.07);border:1px solid var(--border);">Log Out</button>
+        `;
+      } else {
+        authDiv.innerHTML = `
+          <a href="#" class="btn btn-outline btn-sm" onclick="openAuthModal('login');return false;">Log In</a>
+          <a href="#" class="btn btn-primary btn-sm" onclick="openAuthModal('register');return false;">Sign Up</a>
+        `;
+      }
+    }
+
+    async function doLogout() {
+      await fetch('/sim/logout', {method: 'POST'});
+      updateNavAuth(null);
+      window.location.href = '/';
+    }
+
+    // Bind nav buttons
+    document.getElementById('navLoginBtn')?.addEventListener('click', e => { e.preventDefault(); openAuthModal('login'); });
+    document.getElementById('navSignUpBtn')?.addEventListener('click', e => { e.preventDefault(); openAuthModal('register'); });
+
+    // Check session on load
+    fetch('/sim/me').then(r => r.ok ? r.json() : null).then(d => { if (d?.user) updateNavAuth(d.user); });
+
+    // Mobile hamburger
+    const hamburger = document.getElementById('navHamburger');
+    const navLinksEl = document.querySelector('.nav-links');
+    hamburger?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      navLinksEl?.classList.toggle('nav-open');
+    });
+    document.addEventListener('click', (e) => {
+      if (navLinksEl?.classList.contains('nav-open') && !navLinksEl.contains(e.target) && e.target !== hamburger) {
+        navLinksEl.classList.remove('nav-open');
+      }
+    });
+  </script>
 </body>
 </html>

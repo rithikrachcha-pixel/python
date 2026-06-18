@@ -30,6 +30,15 @@
     <div class="notice" style="margin-top:1rem">
       💡 <strong>Tip:</strong> Cappfinity assesses "strengths" like curiosity, resilience, and collaboration. Avoid extremes — neither passive nor confrontational approaches score well.
     </div>
+    <div style="margin-top:1.25rem">
+      <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--text-muted);margin-bottom:0.5rem;">⚔️ Competition difficulty</label>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn btn-sm diff-btn" data-d="easy" onclick="setDiff(this)" style="background:rgba(0,210,160,0.15);border:1px solid var(--success);color:var(--success)">Casual</button>
+        <button class="btn btn-sm diff-btn selected-diff" data-d="average" onclick="setDiff(this)" style="background:rgba(77,159,255,0.2);border:1px solid var(--accent);color:var(--accent)">Average</button>
+        <button class="btn btn-sm diff-btn" data-d="above_average" onclick="setDiff(this)" style="background:rgba(162,155,254,0.15);border:1px solid var(--accent2);color:var(--accent2)">Above Average</button>
+        <button class="btn btn-sm diff-btn" data-d="cut_throat" onclick="setDiff(this)" style="background:rgba(255,94,122,0.15);border:1px solid var(--danger);color:var(--danger)">Quant God 🔥</button>
+      </div>
+    </div>
     <button class="btn btn-primary mt-2" onclick="startGame()">Start Test (30 min timer)</button>
   </div>
 
@@ -55,6 +64,7 @@
     <h2 style="font-size:1.8rem;margin-bottom:0.5rem">SJT Complete!</h2>
     <div class="score-display" id="final-score"></div>
     <p class="text-muted">Score (2 pts per full correct, 1 pt per partial)</p>
+    <div id="leaderboard-area" style="max-width:600px;margin:1.5rem auto;text-align:left"></div>
     <div id="review-area" style="max-width:700px;margin:1.5rem auto;text-align:left"></div>
     <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
       <button class="btn btn-outline" onclick="location.reload()">Retake</button>
@@ -200,6 +210,7 @@ const scenarios = [
   }
 ];
 
+  let selectedDiff = 'average';
   let currentQ = 0;
   let answers = new Array(scenarios.length).fill(null).map(() => ({ best: null, worst: null }));
   let timerInterval = null;
@@ -318,6 +329,40 @@ const scenarios = [
 
     document.getElementById('final-score').textContent = `${score} / ${maxScore}`;
     document.getElementById('review-area').innerHTML = reviewHtml;
+
+    const sjtScore = Math.round((score / maxScore) * 100);
+    loadLeaderboard(sjtScore, 'sjt');
+  }
+
+  function setDiff(btn) {
+    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected-diff'));
+    btn.classList.add('selected-diff');
+    selectedDiff = btn.dataset.d;
+  }
+
+  async function loadLeaderboard(userScore, gameName) {
+    const res = await fetch('/sim/bot/leaderboard', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({score: userScore, difficulty: selectedDiff, game: gameName, count: 12})
+    });
+    const data = await res.json();
+    const lb = data.leaderboard;
+    let html = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.5rem">
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:0.25rem">🏆 Leaderboard</h3>
+      <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1rem">You ranked <strong style="color:var(--accent)">#${data.user_rank}</strong> out of ${data.total_candidates} — top <strong style="color:var(--accent)">${Math.round(100-data.percentile+100/data.total_candidates)}%</strong></p>
+      <div style="display:flex;flex-direction:column;gap:0.4rem">`;
+    lb.slice(0,8).forEach(e => {
+      const you = e.is_user;
+      html += `<div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0.75rem;border-radius:8px;background:${you?'rgba(77,159,255,0.12)':'rgba(255,255,255,0.02)'};border:1px solid ${you?'rgba(77,159,255,0.3)':'transparent'}">
+        <span style="width:22px;text-align:center;font-size:0.78rem;font-weight:700;color:${e.rank<=3?'var(--warning)':'var(--text-muted)'}">${e.rank}</span>
+        <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:800;flex-shrink:0">${e.avatar.slice(0,2)}</div>
+        <div style="flex:1;min-width:0"><div style="font-size:0.85rem;font-weight:${you?700:500}">${e.name}${you?' 👈':''}</div><div style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.school}</div></div>
+        <span style="font-size:0.88rem;font-weight:700;color:${you?'var(--accent)':'var(--text)'}">${e.score}%</span>
+      </div>`;
+    });
+    html += `</div></div>`;
+    document.getElementById('leaderboard-area').innerHTML = html;
   }
 </script>
 {% endblock %}
