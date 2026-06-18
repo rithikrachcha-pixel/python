@@ -10,7 +10,9 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SESSION_SECRET', 'assessment-sim-secret-2024')
-DATABASE = os.path.join(os.path.dirname(__file__), 'assesssim.db')
+# On Vercel the project filesystem is read-only; use /tmp for SQLite
+_db_dir = '/tmp' if os.environ.get('VERCEL') else os.path.dirname(__file__)
+DATABASE = os.path.join(_db_dir, 'assesssim.db')
 
 
 # ---------------------------------------------------------------------------
