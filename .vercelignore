@@ -1,10 +1,9 @@
-/app.py
 /assesssim.db
 /render.yaml
-/static/
-/templates/
 /helloWorld
 /tradehub.html
 /tradehub-deploy/
+/api/
+/worldcup_fantasy/
 *.pyc
 __pycache__/
