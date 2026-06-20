@@ -146,19 +146,16 @@
       weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
     });
 
-    // Fetch user
-    const meRes = await fetch('/sim/me');
-    if (!meRes.ok) {
-      window.location.href = '/';
-      return;
-    }
-    const meData = await meRes.json();
-    document.getElementById('dashGreeting').textContent = `Welcome back, ${meData.user.username} 👋`;
+    // Fetch user (optional — dashboard works without login)
+    const meRes = await fetch('/sim/me').catch(() => null);
+    const meData = (meRes && meRes.ok) ? await meRes.json() : null;
+    const username = meData?.user?.username || null;
+    document.getElementById('dashGreeting').textContent = username
+      ? `Welcome back, ${username} 👋`
+      : `Welcome back 👋`;
 
-    // Fetch scores
-    const scoresRes = await fetch('/sim/scores');
-    const scoresData = scoresRes.ok ? await scoresRes.json() : { scores: [] };
-    const scores = scoresData.scores || [];
+    // Load scores from localStorage (persists across Vercel cold starts)
+    const scores = JSON.parse(localStorage.getItem('assesssim_scores') || '[]');
 
     // Build per-game best score map
     const bestByGame = {};

@@ -326,9 +326,7 @@ def skim():
 
 @app.route('/dashboard')
 def dashboard():
-    """Render the user dashboard. Redirects to home if not logged in."""
-    if 'user_id' not in session:
-        return render_template('index.html')
+    """Render the user dashboard. Works without login (scores stored client-side)."""
     return render_template('dashboard.html')
 
 

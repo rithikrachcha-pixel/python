@@ -88,6 +88,29 @@
     </div>
   </footer>
 
+  <script>
+  // Mirror every /sim/save-score POST to localStorage so scores survive Vercel cold starts
+  (function() {
+    var _fetch = window.fetch.bind(window);
+    window.fetch = function(url, opts) {
+      if (typeof url === 'string' && url === '/sim/save-score' && opts && opts.method === 'POST') {
+        try {
+          var b = JSON.parse(opts.body);
+          var arr = JSON.parse(localStorage.getItem('assesssim_scores') || '[]');
+          arr.unshift({
+            game: b.game,
+            score: Number(b.score),
+            details: b.details || null,
+            played_at: new Date().toISOString().replace('T', ' ').slice(0, 19)
+          });
+          localStorage.setItem('assesssim_scores', JSON.stringify(arr.slice(0, 500)));
+        } catch(e) {}
+      }
+      return _fetch(url, opts);
+    };
+  })();
+  </script>
+
   {% block scripts %}{% endblock %}
 
   <!-- Auth modal -->
