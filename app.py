@@ -379,20 +379,8 @@ def faces():
 @app.route('/game/stroop')
 def stroop(): return render_template('stroop.html')
 
-@app.route('/game/nback')
-def nback(): return render_template('nback.html')
-
 @app.route('/game/patterns')
 def patterns(): return render_template('patterns.html')
-
-@app.route('/game/numerical')
-def numerical(): return render_template('numerical.html')
-
-@app.route('/game/verbal')
-def verbal(): return render_template('verbal.html')
-
-@app.route('/game/sjt')
-def sjt(): return render_template('sjt.html')
 
 @app.route('/game/matrix')
 def matrix(): return render_template('matrix.html')
