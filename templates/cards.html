@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% block title %}Cards Game (Iowa) — AssessSim{% endblock %}
+{% block content %}
+<div class="game-page">
+  <div class="game-header">
+    <div class="game-header-icon" style="background:linear-gradient(135deg,#fd79a8,#e84393)">🃏</div>
+    <div>
+      <h1>Cards Game</h1>
+      <p>Pymetrics — Decision Making, Learning &amp; Risk Assessment</p>
+    </div>
+  </div>
+  <div class="game-meta">
+    <div class="game-meta-item">🃏 <strong>80</strong>&nbsp;draws</div>
+    <div class="game-meta-item">💰 4 decks to discover</div>
+    <div class="game-meta-item">🏦 JP Morgan · Goldman Sachs · Blackstone</div>
+  </div>
+
+  <div id="instructions" class="instructions">
+    <h2>📋 Instructions</h2>
+    <ul>
+      <li>Draw cards from <strong>4 decks (A, B, C, D)</strong>. Each deck has different hidden win/loss patterns.</li>
+      <li>Some decks are <strong>profitable</strong> in the long run; others lead to losses.</li>
+      <li>Your goal is to <strong>maximise total winnings</strong> over 80 draws.</li>
+      <li>Click any deck to draw. The win or loss amount appears immediately.</li>
+      <li>You start with <strong>$2,000</strong> in play money.</li>
+    </ul>
+    <div class="notice" style="margin-top:1rem">💡 <strong>Tip:</strong> Pay attention to which decks give consistent small gains vs big occasional losses. The real game analyses how quickly you learn — not just your final total.</div>
+    <div style="margin-top:1.25rem">
+      <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--text-muted);margin-bottom:0.5rem;">⚔️ Competition difficulty</label>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn btn-sm diff-btn" data-d="easy" onclick="setDiff(this)" style="background:rgba(0,210,160,0.15);border:1px solid var(--success);color:var(--success)">Casual</button>
+        <button class="btn btn-sm diff-btn selected-diff" data-d="average" onclick="setDiff(this)" style="background:rgba(77,159,255,0.2);border:1px solid var(--accent);color:var(--accent)">Average</button>
+        <button class="btn btn-sm diff-btn" data-d="above_average" onclick="setDiff(this)" style="background:rgba(162,155,254,0.15);border:1px solid var(--accent2);color:var(--accent2)">Above Average</button>
+        <button class="btn btn-sm diff-btn" data-d="cut_throat" onclick="setDiff(this)" style="background:rgba(255,94,122,0.15);border:1px solid var(--danger);color:var(--danger)">Quant God 🔥</button>
+      </div>
+    </div>
+    <button class="btn btn-primary mt-2" onclick="startGame()">Start Game ($2,000 balance)</button>
+  </div>
+
+  <div id="game-area" class="hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem">
+      <div id="draw-counter" class="text-muted" style="font-size:0.85rem"></div>
+      <div style="font-size:1.1rem;font-weight:800">Balance: <span id="balance-display" style="color:var(--accent)">$2,000</span></div>
+    </div>
+    <div class="progress-bar-wrap" style="margin-bottom:1.5rem">
+      <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem" id="decks-area">
+      <button onclick="draw('A')" id="deck-A" class="question-card" style="cursor:pointer;text-align:center;padding:2rem 0.5rem;border:2px solid var(--border);transition:all 0.2s;min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.5rem">
+        <div style="font-size:2.5rem">🎴</div>
+        <div style="font-weight:800;font-size:1.1rem">Deck A</div>
+        <div id="count-A" style="font-size:0.75rem;color:var(--text-muted)">0 draws</div>
+      </button>
+      <button onclick="draw('B')" id="deck-B" class="question-card" style="cursor:pointer;text-align:center;padding:2rem 0.5rem;border:2px solid var(--border);transition:all 0.2s;min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.5rem">
+        <div style="font-size:2.5rem">🎴</div>
+        <div style="font-weight:800;font-size:1.1rem">Deck B</div>
+        <div id="count-B" style="font-size:0.75rem;color:var(--text-muted)">0 draws</div>
+      </button>
+      <button onclick="draw('C')" id="deck-C" class="question-card" style="cursor:pointer;text-align:center;padding:2rem 0.5rem;border:2px solid var(--border);transition:all 0.2s;min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.5rem">
+        <div style="font-size:2.5rem">🎴</div>
+        <div style="font-weight:800;font-size:1.1rem">Deck C</div>
+        <div id="count-C" style="font-size:0.75rem;color:var(--text-muted)">0 draws</div>
+      </button>
+      <button onclick="draw('D')" id="deck-D" class="question-card" style="cursor:pointer;text-align:center;padding:2rem 0.5rem;border:2px solid var(--border);transition:all 0.2s;min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.5rem">
+        <div style="font-size:2.5rem">🎴</div>
+        <div style="font-weight:800;font-size:1.1rem">Deck D</div>
+        <div id="count-D" style="font-size:0.75rem;color:var(--text-muted)">0 draws</div>
+      </button>
+    </div>
+
+    <div id="outcome-flash" style="text-align:center;font-size:1.5rem;font-weight:800;min-height:2.5rem;transition:opacity 0.3s"></div>
+    <div style="font-size:0.78rem;color:var(--text-muted);text-align:center;margin-top:0.5rem">Click any deck to draw a card</div>
+  </div>
+
+  <div id="results-area" class="hidden" style="text-align:center;padding:2rem">
+    <h2 style="font-size:1.8rem;margin-bottom:0.5rem">Game Complete!</h2>
+    <div class="score-display" id="final-score"></div>
+    <p class="text-muted" id="score-label">Learning Score (good deck preference in final 40 draws)</p>
+    <div class="results-grid" style="max-width:540px;margin:1.5rem auto">
+      <div class="result-card"><div class="rc-value" id="r-balance">$2000</div><div class="rc-label">Final Balance</div></div>
+      <div class="result-card"><div class="rc-value" id="r-good">0%</div><div class="rc-label">Good Deck (C+D) %</div></div>
+      <div class="result-card"><div class="rc-value" id="r-best">—</div><div class="rc-label">Most Used Deck</div></div>
+      <div class="result-card"><div class="rc-value" id="r-insight">—</div><div class="rc-label">Learning Speed</div></div>
+    </div>
+    <div id="deck-breakdown" style="max-width:600px;margin:0 auto 1.5rem;text-align:left"></div>
+    <div id="leaderboard-area" style="max-width:600px;margin:1.5rem auto;text-align:left"></div>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button class="btn btn-outline" onclick="location.reload()">Play Again</button>
+      <a href="/" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+// Iowa Gambling Task deck profiles (per-draw)
+// A: win $100; 25% chance lose $150-350 → net negative
+// B: win $100; 10% chance lose $1250 → very negative
+// C: win $50;  50% chance lose $25-50  → slight positive
+// D: win $50;  10% chance lose $25     → positive (best)
+const DECKS = {
+  A: { win:100, lossPct:0.25, lossMin:150, lossMax:350 },
+  B: { win:100, lossPct:0.10, lossMin:1250, lossMax:1250 },
+  C: { win:50,  lossPct:0.50, lossMin:25,  lossMax:50  },
+  D: { win:50,  lossPct:0.10, lossMin:25,  lossMax:25  },
+};
+const TOTAL=80;
+let balance=2000, drawCount=0, deckCounts={A:0,B:0,C:0,D:0};
+let last40={A:0,B:0,C:0,D:0}, drawHistory=[], locked=false;
+let selectedDiff='average';
+
+function setDiff(btn){document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('selected-diff'));btn.classList.add('selected-diff');selectedDiff=btn.dataset.d;}
+
+function startGame(){
+  document.getElementById('instructions').classList.add('hidden');
+  document.getElementById('game-area').classList.remove('hidden');
+  balance=2000;drawCount=0;deckCounts={A:0,B:0,C:0,D:0};last40={A:0,B:0,C:0,D:0};drawHistory=[];locked=false;
+  updateUI();
+}
+
+function draw(deck){
+  if(locked||drawCount>=TOTAL) return;
+  locked=true;
+  const d=DECKS[deck];
+  const win=d.win;
+  const lost=Math.random()<d.lossPct?Math.round(d.lossMin+Math.random()*(d.lossMax-d.lossMin)):0;
+  const net=win-lost;
+  balance+=net;
+  drawCount++;
+  deckCounts[deck]++;
+  if(drawCount>40) last40[deck]++;
+  drawHistory.push({deck,win,lost,net});
+
+  const flash=document.getElementById('outcome-flash');
+  if(net>0){flash.textContent='+$'+net;flash.style.color='var(--success)';}
+  else if(net<0){flash.textContent='-$'+Math.abs(net)+' (won $'+win+', lost $'+lost+')';flash.style.color='var(--danger)';}
+  else{flash.textContent='$0 net';flash.style.color='var(--text-muted)';}
+  flash.style.opacity='1';
+
+  const deckBtn=document.getElementById('deck-'+deck);
+  deckBtn.style.borderColor=net>=0?'rgba(0,210,160,0.5)':'rgba(255,94,122,0.5)';
+  document.getElementById('count-'+deck).textContent=deckCounts[deck]+' draws';
+
+  updateUI();
+  setTimeout(()=>{
+    flash.style.opacity='0';
+    deckBtn.style.borderColor='var(--border)';
+    locked=false;
+    if(drawCount>=TOTAL) endGame();
+  },600);
+}
+
+function updateUI(){
+  document.getElementById('balance-display').textContent='$'+balance.toLocaleString();
+  document.getElementById('balance-display').style.color=balance>=2000?'var(--success)':balance>=1500?'var(--accent)':'var(--danger)';
+  document.getElementById('draw-counter').textContent='Draw '+drawCount+' / '+TOTAL;
+  document.getElementById('progress-bar').style.width=(drawCount/TOTAL*100)+'%';
+}
+
+function endGame(){
+  document.getElementById('game-area').classList.add('hidden');
+  document.getElementById('results-area').classList.remove('hidden');
+  const totalLast40=Object.values(last40).reduce((a,b)=>a+b,0)||1;
+  const goodPct=Math.round((last40.C+last40.D)/totalLast40*100);
+  const score=goodPct;
+  const totalDraws=Object.values(deckCounts).reduce((a,b)=>a+b,0)||1;
+  const bestDeck=Object.entries(deckCounts).sort((a,b)=>b[1]-a[1])[0][0];
+  const insight=goodPct>=70?'Fast learner':goodPct>=50?'Moderate learning':goodPct>=30?'Slow learner':'Minimal adaptation';
+
+  document.getElementById('final-score').textContent=score+'%';
+  document.getElementById('r-balance').textContent='$'+balance.toLocaleString();
+  document.getElementById('r-good').textContent=goodPct+'%';
+  document.getElementById('r-best').textContent='Deck '+bestDeck;
+  document.getElementById('r-insight').textContent=insight;
+
+  document.getElementById('deck-breakdown').innerHTML=`
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:1rem">
+      <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:0.75rem">📊 Deck Breakdown</h3>
+      ${['A','B','C','D'].map(d=>{
+        const pct=Math.round(deckCounts[d]/totalDraws*100);
+        const isGood=d==='C'||d==='D';
+        return `<div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.5rem">
+          <div style="width:60px;font-weight:700;font-size:0.88rem">Deck ${d}</div>
+          <div style="flex:1;background:var(--bg3);border-radius:4px;height:18px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${isGood?'var(--success)':'var(--danger)'};border-radius:4px"></div>
+          </div>
+          <div style="width:55px;font-size:0.8rem;color:var(--text-muted)">${deckCounts[d]} draws (${pct}%)</div>
+          <div style="font-size:0.72rem;color:${isGood?'var(--success)':'var(--danger)'}">${isGood?'✓ Good':'✗ Bad'}</div>
+        </div>`;
+      }).join('')}
+      <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.75rem">Good decks: C & D (positive expected value). Bad decks: A & B (negative expected value).</div>
+    </div>`;
+
+  fetch('/sim/save-score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:'cards',score,details:{balance,goodPct,deckCounts}})}).catch(()=>{});
+  loadLeaderboard(score);
+}
+
+async function loadLeaderboard(score){
+  try{
+    const res=await fetch('/sim/bot/leaderboard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({score,difficulty:selectedDiff,game:'cards',count:10})});
+    const data=await res.json();
+    document.getElementById('leaderboard-area').innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem"><h3 style="font-size:1rem;font-weight:700;margin-bottom:0.5rem">🏆 Ranked <span style="color:var(--accent)">#${data.user_rank}</span> of ${data.total_candidates}</h3>${data.leaderboard.slice(0,8).map(e=>`<div style="display:flex;align-items:center;gap:0.75rem;padding:0.4rem 0.6rem;border-radius:8px;background:${e.is_user?'rgba(77,159,255,0.1)':'transparent'};border:1px solid ${e.is_user?'rgba(77,159,255,0.3)':'transparent'};margin-bottom:0.25rem"><span style="width:22px;text-align:center;font-size:0.78rem;font-weight:700;color:${e.rank<=3?'var(--warning)':'var(--text-muted)'}">${e.rank}</span><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:800;flex-shrink:0">${e.avatar.slice(0,2)}</div><div style="flex:1;min-width:0"><div style="font-size:0.83rem;font-weight:${e.is_user?700:500}">${e.name}${e.is_user?' 👈':''}</div><div style="font-size:0.72rem;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.school}</div></div><span style="font-size:0.85rem;font-weight:700;color:${e.is_user?'var(--accent)':'var(--text)'}">${e.score}%</span></div>`).join('')}</div>`;
+  }catch(e){}
+}
+</script>
+{% endblock %}

@@ -1,0 +1,710 @@
+{% extends "base.html" %}
+
+{% block title %}Faces / Emotion Recognition — Pymetrics | AssessSim{% endblock %}
+
+{% block content %}
+<div class="game-page">
+
+  <!-- ── INTRO SCREEN ── -->
+  <div id="introScreen">
+    <div class="game-header">
+      <div class="game-header-icon">😄</div>
+      <div>
+        <h1 style="margin:0 0 0.25rem;font-size:1.75rem;font-weight:800;">Faces / Emotion Recognition</h1>
+        <p style="margin:0;color:var(--text-muted);font-size:0.93rem;">Pymetrics — Emotional Intelligence Battery</p>
+        <div class="game-meta" style="margin-top:0.6rem;">
+          <span class="game-meta-item">😊 24 Questions</span>
+          <span class="game-meta-item">⏱ 8 s / question</span>
+          <span class="game-meta-item">🏦 Pymetrics</span>
+          <span class="game-meta-item">🎯 Emotion Recognition</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="instructions">
+      <strong>How to play</strong>
+      <ul style="margin:0.6rem 0 0;padding-left:1.25rem;line-height:1.8;color:var(--text-muted);font-size:0.9rem;">
+        <li>You will see an emoji face and optional context for each question.</li>
+        <li>Select the emotion the person is most likely feeling.</li>
+        <li>You have <strong style="color:var(--text);">8 seconds</strong> per question — the timer bar counts down automatically.</li>
+        <li>If time runs out the question is marked wrong and the game advances.</li>
+        <li>Your score is <strong style="color:var(--text);">correct answers / 24 × 100</strong>.</li>
+      </ul>
+    </div>
+
+    <div class="notice" style="margin-top:1rem;">
+      <strong>Tip:</strong> Focus on the shape of the mouth, eyes, and brows — context helps but the face is the primary signal.
+    </div>
+
+    <!-- Difficulty selector -->
+    <div style="margin-top:1.5rem;">
+      <label style="display:block;font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:0.5rem;">Leaderboard Difficulty</label>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;" id="difficultyBtns">
+        <button class="btn btn-outline btn-sm diff-btn" data-diff="easy" onclick="setDifficulty('easy')">Easy</button>
+        <button class="btn btn-primary btn-sm diff-btn" data-diff="average" onclick="setDifficulty('average')">Average</button>
+        <button class="btn btn-outline btn-sm diff-btn" data-diff="above_average" onclick="setDifficulty('above_average')">Above Average</button>
+        <button class="btn btn-outline btn-sm diff-btn" data-diff="cut_throat" onclick="setDifficulty('cut_throat')">Cut-Throat</button>
+      </div>
+    </div>
+
+    <div style="margin-top:2rem;display:flex;gap:0.75rem;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="startGame()" style="font-size:1rem;padding:0.75rem 2rem;">
+        Start Game
+      </button>
+      <a href="/" class="btn btn-outline">Back to Home</a>
+    </div>
+  </div>
+
+  <!-- ── GAME SCREEN ── -->
+  <div id="gameScreen" class="hidden">
+    <!-- Progress + timer -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;">
+      <span class="question-number" id="questionNumber">Question 1 / 24</span>
+      <span class="timer" id="timerDisplay">8</span>
+    </div>
+    <!-- Timer bar -->
+    <div class="progress-bar-wrap" style="margin-bottom:0.25rem;">
+      <div class="progress-bar-fill" id="progressBar" style="width:100%;transition:width 0.05s linear;background:var(--success);"></div>
+    </div>
+    <!-- Overall question progress bar -->
+    <div class="progress-bar-wrap" style="margin-bottom:1.5rem;height:4px;">
+      <div class="progress-bar-fill" id="questionProgress" style="background:var(--accent);width:0%;"></div>
+    </div>
+
+    <div class="question-card">
+      <!-- Emoji display -->
+      <div style="text-align:center;font-size:6rem;line-height:1;margin-bottom:1rem;" id="faceEmoji">😄</div>
+
+      <!-- Context -->
+      <p class="question-text" id="faceContext" style="text-align:center;color:var(--text-muted);font-style:italic;min-height:1.4em;margin-bottom:1.25rem;"></p>
+
+      <p style="text-align:center;font-weight:700;font-size:0.95rem;color:var(--text);margin-bottom:1rem;">What emotion is this person feeling?</p>
+
+      <ul class="options-list" id="optionsList">
+        <!-- filled by JS -->
+      </ul>
+    </div>
+  </div>
+
+  <!-- ── RESULTS SCREEN ── -->
+  <div id="resultsScreen" class="hidden">
+    <div class="game-header">
+      <div class="game-header-icon" id="resultIcon">🎉</div>
+      <div>
+        <h2 style="margin:0 0 0.25rem;font-size:1.6rem;font-weight:800;">Game Complete!</h2>
+        <p style="margin:0;color:var(--text-muted);">Faces / Emotion Recognition</p>
+      </div>
+    </div>
+
+    <!-- Score display -->
+    <div class="score-display" id="scoreDisplay" style="margin:1.5rem 0;">
+      <div class="rc-value" id="finalScoreVal" style="font-size:3rem;">—</div>
+      <div class="rc-label">Your Score</div>
+    </div>
+
+    <!-- Stats grid -->
+    <div class="results-grid" style="margin-bottom:1.75rem;">
+      <div class="result-card">
+        <div class="rc-value" id="rcCorrect">—</div>
+        <div class="rc-label">Correct</div>
+      </div>
+      <div class="result-card">
+        <div class="rc-value" id="rcWrong">—</div>
+        <div class="rc-label">Incorrect</div>
+      </div>
+      <div class="result-card">
+        <div class="rc-value" id="rcSkipped">—</div>
+        <div class="rc-label">Timed Out</div>
+      </div>
+      <div class="result-card">
+        <div class="rc-value" id="rcAccuracy">—</div>
+        <div class="rc-label">Accuracy</div>
+      </div>
+    </div>
+
+    <!-- Leaderboard -->
+    <div id="leaderboardSection" style="margin-bottom:2rem;">
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:0.75rem;">Leaderboard</h3>
+      <div id="leaderboardContent" style="color:var(--text-muted);font-size:0.9rem;">Loading leaderboard…</div>
+    </div>
+
+    <!-- Wrong answers review -->
+    <div id="wrongAnswersSection" style="margin-bottom:2rem;">
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:0.75rem;">Review: Incorrect Answers</h3>
+      <div id="wrongAnswersList"></div>
+    </div>
+
+    <!-- Action buttons -->
+    <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:0.5rem;">
+      <button class="btn btn-primary" onclick="playAgain()" style="font-size:1rem;padding:0.75rem 2rem;">Play Again</button>
+      <a href="/" class="btn btn-outline">Back to Home</a>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ─────────────────────────────────────────────────────────────────
+// QUESTION DATA — 24 questions
+// ─────────────────────────────────────────────────────────────────
+const QUESTIONS = [
+  {
+    emoji: "😄",
+    context: "You just got the job offer!",
+    correct: "Happy",
+    distractors: ["Surprised", "Proud", "Nervous"],
+    explanation: "The wide genuine smile and crinkled eyes signal joy — a classic Happy expression. Upward lip corners and cheek lift are key markers."
+  },
+  {
+    emoji: "😢",
+    context: "Saying goodbye to a close friend moving abroad",
+    correct: "Sad",
+    distractors: ["Angry", "Tired", "Contemptuous"],
+    explanation: "Downturned mouth corners, raised inner eyebrows, and glistening eyes all point to Sadness. This is grief at separation."
+  },
+  {
+    emoji: "😠",
+    context: "Someone cut in front of the queue",
+    correct: "Angry",
+    distractors: ["Surprised", "Sad", "Disgusted"],
+    explanation: "Lowered, drawn-together brows and a tight pressed mouth indicate Anger. The intense gaze reinforces the feeling of being wronged."
+  },
+  {
+    emoji: "😲",
+    context: "Opening an unexpected gift",
+    correct: "Surprised",
+    distractors: ["Happy", "Fearful", "Neutral"],
+    explanation: "Wide eyes, raised brows, and an open O-shaped mouth are the textbook markers of Surprise — an unexpected event registered instantly."
+  },
+  {
+    emoji: "😨",
+    context: "Waiting for exam results",
+    correct: "Fearful",
+    distractors: ["Surprised", "Sad", "Angry"],
+    explanation: "Raised and drawn-together brows, wide open eyes, and a slightly open mouth signal Fear — anticipating a potentially negative outcome."
+  },
+  {
+    emoji: "🤢",
+    context: "",
+    correct: "Disgusted",
+    distractors: ["Sad", "Angry", "Fearful"],
+    explanation: "The wrinkled nose, raised upper lip, and green tinge are universal signals of Disgust — a reaction to something offensive or revolting."
+  },
+  {
+    emoji: "😤",
+    context: "After being falsely blamed",
+    correct: "Contemptuous",
+    distractors: ["Angry", "Sad", "Neutral"],
+    explanation: "A one-sided lip raise (asymmetric sneer) is the hallmark of Contempt — a sense of moral superiority or disdain toward another."
+  },
+  {
+    emoji: "😐",
+    context: "Reading a boring report",
+    correct: "Neutral",
+    distractors: ["Sad", "Tired", "Contemptuous"],
+    explanation: "Flat mouth, relaxed brow, and unfocused eyes indicate a Neutral state — no strong emotion activated, just passive attention."
+  },
+  {
+    emoji: "😁",
+    context: "Winning a prize unexpectedly",
+    correct: "Happy",
+    distractors: ["Surprised", "Neutral", "Proud"],
+    explanation: "A broad toothy grin with raised cheeks and narrowed eyes (Duchenne smile) are reliable indicators of genuine Happiness."
+  },
+  {
+    emoji: "😔",
+    context: "",
+    correct: "Sad",
+    distractors: ["Neutral", "Fearful", "Contemptuous"],
+    explanation: "Drooping eyelids, downturned mouth corners, and slumped expression all reflect Sadness — low energy and emotional pain."
+  },
+  {
+    emoji: "😡",
+    context: "Being lied to directly",
+    correct: "Angry",
+    distractors: ["Disgusted", "Contemptuous", "Fearful"],
+    explanation: "The furrowed brow, flared nostrils, and clenched-looking jaw communicate intense Anger — a response to a perceived injustice."
+  },
+  {
+    emoji: "😮",
+    context: "Seeing a magic trick",
+    correct: "Surprised",
+    distractors: ["Happy", "Neutral", "Fearful"],
+    explanation: "Jaw drop, raised brows, and round eyes all mark Surprise. Unlike Fear, there is no tension — it is a neutral, brief startle."
+  },
+  {
+    emoji: "😰",
+    context: "About to give a speech to 500 people",
+    correct: "Fearful",
+    distractors: ["Surprised", "Angry", "Sad"],
+    explanation: "Sweat, wide eyes, and a slightly open trembling mouth signal Fear — the body preparing for a threatening (if imagined) event."
+  },
+  {
+    emoji: "🤮",
+    context: "",
+    correct: "Disgusted",
+    distractors: ["Fearful", "Sad", "Angry"],
+    explanation: "An extreme Disgust reaction — the protruding tongue and nausea expression indicate rejection of something deeply offensive."
+  },
+  {
+    emoji: "🙄",
+    context: "Listening to someone brag endlessly",
+    correct: "Contemptuous",
+    distractors: ["Angry", "Neutral", "Disgusted"],
+    explanation: "Eye-rolling is a social signal of Contempt — dismissing someone's words as unworthy of serious attention."
+  },
+  {
+    emoji: "😑",
+    context: "",
+    correct: "Neutral",
+    distractors: ["Sad", "Contemptuous", "Fearful"],
+    explanation: "Completely flat affect, straight brow, and closed mouth with zero movement — this is textbook Neutral with slight impatience."
+  },
+  {
+    emoji: "😊",
+    context: "Getting a heartfelt thank-you note",
+    correct: "Happy",
+    distractors: ["Surprised", "Neutral", "Sad"],
+    explanation: "Soft warm smile and slightly raised cheeks reflect gentle Happiness — contentment and positive social connection."
+  },
+  {
+    emoji: "😭",
+    context: "Finding out a beloved pet passed away",
+    correct: "Sad",
+    distractors: ["Fearful", "Angry", "Disgusted"],
+    explanation: "Streaming tears, deeply furrowed brow, and open crying mouth are extreme Sadness — grief at a significant loss."
+  },
+  {
+    emoji: "😬",
+    context: "Accidentally saying something embarrassing in public",
+    correct: "Fearful",
+    distractors: ["Surprised", "Angry", "Neutral"],
+    explanation: "The teeth-baring grimace with tensed muscles signals social Fear — anticipating negative judgment or embarrassment."
+  },
+  {
+    emoji: "😇",
+    context: "",
+    correct: "Happy",
+    distractors: ["Neutral", "Surprised", "Contemptuous"],
+    explanation: "The halo and gentle smile signal innocent, serene Happiness — a feeling of contentment and positive virtue."
+  },
+  {
+    emoji: "😒",
+    context: "Asked to do the same boring task again",
+    correct: "Contemptuous",
+    distractors: ["Angry", "Neutral", "Sad"],
+    explanation: "The side-eye and slight sneer reflect Contempt — a low regard for the request and the person making it."
+  },
+  {
+    emoji: "🤨",
+    context: "Someone tells you an unlikely story",
+    correct: "Contemptuous",
+    distractors: ["Surprised", "Neutral", "Angry"],
+    explanation: "One raised brow with a skeptical expression signals Contempt — doubting someone's credibility or honesty."
+  },
+  {
+    emoji: "😖",
+    context: "Being stuck in traffic when already late",
+    correct: "Angry",
+    distractors: ["Fearful", "Sad", "Disgusted"],
+    explanation: "Tightly shut eyes and strained expression channel the frustration-driven Anger of feeling helpless and obstructed."
+  },
+  {
+    emoji: "😌",
+    context: "",
+    correct: "Neutral",
+    distractors: ["Happy", "Sad", "Contemptuous"],
+    explanation: "Gently closed eyes and a relaxed, almost peaceful expression indicate a calm Neutral — restful and undisturbed."
+  }
+];
+
+// ─────────────────────────────────────────────────────────────────
+// GAME STATE
+// ─────────────────────────────────────────────────────────────────
+let currentQ = 0;
+let correctCount = 0;
+let wrongCount = 0;
+let timedOutCount = 0;
+let answers = []; // {qIndex, chosen, correct, timedOut, isCorrect}
+let timerInterval = null;
+let timeLeft = 8;
+let difficulty = "average";
+let gameActive = false;
+
+// ─────────────────────────────────────────────────────────────────
+// DIFFICULTY
+// ─────────────────────────────────────────────────────────────────
+function setDifficulty(diff) {
+  difficulty = diff;
+  document.querySelectorAll('.diff-btn').forEach(function(btn) {
+    const active = btn.dataset.diff === diff;
+    btn.className = active ? 'btn btn-primary btn-sm diff-btn' : 'btn btn-outline btn-sm diff-btn';
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────
+// SHUFFLE HELPER
+// ─────────────────────────────────────────────────────────────────
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+  }
+  return a;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// START / RESET
+// ─────────────────────────────────────────────────────────────────
+function startGame() {
+  currentQ = 0;
+  correctCount = 0;
+  wrongCount = 0;
+  timedOutCount = 0;
+  answers = [];
+  gameActive = true;
+
+  document.getElementById('introScreen').classList.add('hidden');
+  document.getElementById('resultsScreen').classList.add('hidden');
+  document.getElementById('gameScreen').classList.remove('hidden');
+
+  loadQuestion();
+}
+
+function playAgain() {
+  document.getElementById('resultsScreen').classList.add('hidden');
+  document.getElementById('introScreen').classList.remove('hidden');
+}
+
+// ─────────────────────────────────────────────────────────────────
+// LOAD QUESTION
+// ─────────────────────────────────────────────────────────────────
+function loadQuestion() {
+  if (currentQ >= QUESTIONS.length) {
+    endGame();
+    return;
+  }
+
+  const q = QUESTIONS[currentQ];
+
+  document.getElementById('questionNumber').textContent = 'Question ' + (currentQ + 1) + ' / ' + QUESTIONS.length;
+
+  // Overall progress bar
+  const pct = (currentQ / QUESTIONS.length) * 100;
+  document.getElementById('questionProgress').style.width = pct + '%';
+
+  // Emoji + context
+  document.getElementById('faceEmoji').textContent = q.emoji;
+  const ctxEl = document.getElementById('faceContext');
+  if (q.context) {
+    ctxEl.textContent = q.context;
+    ctxEl.style.display = 'block';
+  } else {
+    ctxEl.textContent = '';
+    ctxEl.style.display = 'none';
+  }
+
+  // Build shuffled options
+  const options = shuffle([q.correct].concat(q.distractors));
+  const ol = document.getElementById('optionsList');
+  ol.innerHTML = '';
+  options.forEach(function(opt) {
+    const li = document.createElement('li');
+    li.className = 'option-btn';
+    li.textContent = opt;
+    li.setAttribute('role', 'button');
+    li.setAttribute('tabindex', '0');
+    li.addEventListener('click', function() { if (gameActive) selectAnswer(opt); });
+    li.addEventListener('keydown', function(e) { if ((e.key === 'Enter' || e.key === ' ') && gameActive) selectAnswer(opt); });
+    ol.appendChild(li);
+  });
+
+  startTimer();
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TIMER
+// ─────────────────────────────────────────────────────────────────
+function startTimer() {
+  clearInterval(timerInterval);
+  timeLeft = 8;
+  updateTimerUI(8);
+
+  timerInterval = setInterval(function() {
+    timeLeft -= 0.05;
+    if (timeLeft <= 0) {
+      timeLeft = 0;
+      updateTimerUI(0);
+      clearInterval(timerInterval);
+      handleTimeout();
+    } else {
+      updateTimerUI(timeLeft);
+    }
+  }, 50);
+}
+
+function updateTimerUI(t) {
+  const pct = (t / 8) * 100;
+  const bar = document.getElementById('progressBar');
+  const disp = document.getElementById('timerDisplay');
+
+  bar.style.width = pct + '%';
+  disp.textContent = Math.ceil(t);
+
+  if (t > 4) {
+    bar.style.background = 'var(--success)';
+    disp.style.color = 'var(--success)';
+  } else if (t > 2) {
+    bar.style.background = 'var(--warning)';
+    disp.style.color = 'var(--warning)';
+  } else {
+    bar.style.background = 'var(--danger)';
+    disp.style.color = 'var(--danger)';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// ANSWER HANDLING
+// ─────────────────────────────────────────────────────────────────
+function selectAnswer(chosen) {
+  clearInterval(timerInterval);
+  gameActive = false;
+
+  const q = QUESTIONS[currentQ];
+  const isCorrect = chosen === q.correct;
+
+  if (isCorrect) {
+    correctCount++;
+  } else {
+    wrongCount++;
+  }
+
+  answers.push({
+    qIndex: currentQ,
+    chosen: chosen,
+    correct: q.correct,
+    timedOut: false,
+    isCorrect: isCorrect
+  });
+
+  // Visual feedback
+  const btns = document.querySelectorAll('.option-btn');
+  btns.forEach(function(btn) {
+    btn.style.pointerEvents = 'none';
+    if (btn.textContent === q.correct) {
+      btn.style.background = 'rgba(0,220,130,0.15)';
+      btn.style.borderColor = 'var(--success)';
+      btn.style.color = 'var(--success)';
+    } else if (btn.textContent === chosen && !isCorrect) {
+      btn.style.background = 'rgba(255,94,122,0.15)';
+      btn.style.borderColor = 'var(--danger)';
+      btn.style.color = 'var(--danger)';
+    }
+  });
+
+  setTimeout(function() {
+    currentQ++;
+    gameActive = true;
+    loadQuestion();
+  }, 900);
+}
+
+function handleTimeout() {
+  gameActive = false;
+  const q = QUESTIONS[currentQ];
+  timedOutCount++;
+  wrongCount++;
+
+  answers.push({
+    qIndex: currentQ,
+    chosen: null,
+    correct: q.correct,
+    timedOut: true,
+    isCorrect: false
+  });
+
+  // Show correct answer
+  const btns = document.querySelectorAll('.option-btn');
+  btns.forEach(function(btn) {
+    btn.style.pointerEvents = 'none';
+    if (btn.textContent === q.correct) {
+      btn.style.background = 'rgba(0,220,130,0.15)';
+      btn.style.borderColor = 'var(--success)';
+      btn.style.color = 'var(--success)';
+    }
+  });
+
+  setTimeout(function() {
+    currentQ++;
+    gameActive = true;
+    loadQuestion();
+  }, 900);
+}
+
+// ─────────────────────────────────────────────────────────────────
+// END GAME
+// ─────────────────────────────────────────────────────────────────
+async function endGame() {
+  clearInterval(timerInterval);
+  gameActive = false;
+
+  document.getElementById('gameScreen').classList.add('hidden');
+  document.getElementById('resultsScreen').classList.remove('hidden');
+
+  const finalScore = Math.round((correctCount / QUESTIONS.length) * 100);
+
+  document.getElementById('finalScoreVal').textContent = finalScore + '%';
+  document.getElementById('rcCorrect').textContent = correctCount;
+  document.getElementById('rcWrong').textContent = wrongCount - timedOutCount;
+  document.getElementById('rcSkipped').textContent = timedOutCount;
+  document.getElementById('rcAccuracy').textContent = finalScore + '%';
+
+  let icon = '😔';
+  if (finalScore >= 85) icon = '🎉';
+  else if (finalScore >= 70) icon = '😊';
+  else if (finalScore >= 50) icon = '😐';
+  document.getElementById('resultIcon').textContent = icon;
+
+  buildWrongAnswersSection();
+
+  // Save score
+  try {
+    await fetch('/sim/save-score', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ game: 'faces', score: finalScore })
+    });
+  } catch (e) {
+    console.warn('save-score failed', e);
+  }
+
+  // Leaderboard
+  try {
+    const lbRes = await fetch('/sim/bot/leaderboard', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        score: finalScore,
+        difficulty: difficulty,
+        game: 'faces',
+        count: 10
+      })
+    });
+    if (lbRes.ok) {
+      const lbData = await lbRes.json();
+      renderLeaderboard(lbData);
+    } else {
+      document.getElementById('leaderboardContent').textContent = 'Leaderboard unavailable.';
+    }
+  } catch (e) {
+    document.getElementById('leaderboardContent').textContent = 'Leaderboard unavailable.';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// WRONG ANSWERS REVIEW
+// ─────────────────────────────────────────────────────────────────
+function buildWrongAnswersSection() {
+  const wrongAnswers = answers.filter(function(a) { return !a.isCorrect; });
+  const container = document.getElementById('wrongAnswersList');
+
+  if (wrongAnswers.length === 0) {
+    container.innerHTML = '<p style="color:var(--success);font-weight:600;">Perfect score! You got every question right.</p>';
+    return;
+  }
+
+  const html = wrongAnswers.map(function(a) {
+    const q = QUESTIONS[a.qIndex];
+    const chosenText = a.timedOut
+      ? '<em style="color:var(--danger);">Timed out — no answer selected</em>'
+      : '<span style="color:var(--danger);">' + a.chosen + '</span>';
+    const contextLine = q.context ? ' — ' + q.context : '';
+    return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:0.75rem;">'
+      + '<div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.6rem;">'
+      + '<span style="font-size:2.5rem;line-height:1;">' + q.emoji + '</span>'
+      + '<div style="flex:1;">'
+      + '<div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:0.2rem;">Q' + (a.qIndex + 1) + contextLine + '</div>'
+      + '<div style="font-size:0.88rem;">Your answer: ' + chosenText + ' &nbsp;·&nbsp; Correct: <span style="color:var(--success);font-weight:600;">' + q.correct + '</span></div>'
+      + '</div>'
+      + '</div>'
+      + '<p style="margin:0;font-size:0.83rem;color:var(--text-muted);line-height:1.55;border-top:1px solid var(--border);padding-top:0.6rem;">' + q.explanation + '</p>'
+      + '</div>';
+  }).join('');
+
+  container.innerHTML = html;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// LEADERBOARD RENDER
+// ─────────────────────────────────────────────────────────────────
+function renderLeaderboard(data) {
+  const leaderboard = data.leaderboard || [];
+  const user_rank = data.user_rank;
+  const total_candidates = data.total_candidates;
+  const percentile = data.percentile;
+
+  let statsHtml = '';
+  if (user_rank != null) {
+    statsHtml = '<div style="display:flex;gap:1.5rem;flex-wrap:wrap;margin-bottom:1rem;font-size:0.88rem;color:var(--text-muted);">'
+      + '<span>Your rank: <strong style="color:var(--text);">#' + user_rank + '</strong></span>';
+    if (total_candidates != null) {
+      statsHtml += '<span>Total candidates: <strong style="color:var(--text);">' + total_candidates + '</strong></span>';
+    }
+    if (percentile != null) {
+      statsHtml += '<span>Percentile: <strong style="color:var(--accent);">' + percentile + '%</strong></span>';
+    }
+    statsHtml += '</div>';
+  }
+
+  if (leaderboard.length === 0) {
+    document.getElementById('leaderboardContent').innerHTML = statsHtml + '<p style="color:var(--text-muted);">No leaderboard data yet.</p>';
+    return;
+  }
+
+  const rows = leaderboard.map(function(entry) {
+    const isUser = entry.is_user;
+    let avatarHtml;
+    if (entry.avatar) {
+      avatarHtml = '<img src="' + entry.avatar + '" style="width:24px;height:24px;border-radius:50%;object-fit:cover;" alt="" />';
+    } else {
+      const initial = (entry.name || '?')[0].toUpperCase();
+      avatarHtml = '<div style="width:24px;height:24px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:var(--text-muted);">' + initial + '</div>';
+    }
+    const rankColor = entry.rank <= 3 ? 'var(--warning)' : 'var(--text-muted)';
+    const rowBg = isUser ? 'background:rgba(99,102,241,0.08);' : '';
+    const nameFw = isUser ? '700' : '400';
+    const nameColor = isUser ? 'var(--accent)' : 'var(--text)';
+    const nameLabel = entry.name || '—';
+    const youBadge = isUser ? ' (You)' : '';
+
+    return '<tr style="' + rowBg + '">'
+      + '<td style="padding:0.55rem 0.75rem;font-size:0.85rem;font-weight:' + nameFw + ';color:' + rankColor + ';">' + entry.rank + '</td>'
+      + '<td style="padding:0.55rem 0.75rem;">'
+      + '<div style="display:flex;align-items:center;gap:0.5rem;">'
+      + avatarHtml
+      + '<span style="font-size:0.88rem;font-weight:' + nameFw + ';color:' + nameColor + ';">' + nameLabel + youBadge + '</span>'
+      + '</div>'
+      + '</td>'
+      + '<td style="padding:0.55rem 0.75rem;font-size:0.82rem;color:var(--text-muted);">' + (entry.school || '') + '</td>'
+      + '<td style="padding:0.55rem 0.75rem;font-size:0.9rem;font-weight:700;color:var(--text);text-align:right;">' + entry.score + '%</td>'
+      + '</tr>';
+  }).join('');
+
+  const tableHtml = '<div class="data-table" style="overflow-x:auto;">'
+    + '<table style="width:100%;border-collapse:collapse;">'
+    + '<thead><tr style="border-bottom:1px solid var(--border);">'
+    + '<th style="padding:0.5rem 0.75rem;text-align:left;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);">#</th>'
+    + '<th style="padding:0.5rem 0.75rem;text-align:left;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);">Candidate</th>'
+    + '<th style="padding:0.5rem 0.75rem;text-align:left;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);">University</th>'
+    + '<th style="padding:0.5rem 0.75rem;text-align:right;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);">Score</th>'
+    + '</tr></thead>'
+    + '<tbody>' + rows + '</tbody>'
+    + '</table></div>';
+
+  document.getElementById('leaderboardContent').innerHTML = statsHtml + tableHtml;
+}
+</script>
+{% endblock %}

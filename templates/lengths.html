@@ -1,0 +1,511 @@
+{% extends "base.html" %}
+{% block title %}Lengths Comparison — Pymetrics | AssessSim{% endblock %}
+
+{% block content %}
+<div class="game-page">
+
+  <!-- ── INTRO SCREEN ─────────────────────────────────────────────────────── -->
+  <div id="introScreen">
+    <div class="game-header">
+      <div class="game-header-icon">📏</div>
+      <div>
+        <h1 style="font-size:1.75rem;font-weight:800;margin:0 0 0.3rem;">Lengths Comparison</h1>
+        <div class="game-meta">
+          <span class="game-meta-item">Pymetrics</span>
+          <span class="game-meta-item">25 Trials</span>
+          <span class="game-meta-item">3s per trial</span>
+          <span class="game-meta-item">Perceptual Accuracy</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="instructions">
+      <h3 style="margin:0 0 0.75rem;font-size:1rem;font-weight:700;">How to Play</h3>
+      <ul style="margin:0;padding-left:1.25rem;display:flex;flex-direction:column;gap:0.45rem;color:var(--text-muted);font-size:0.9rem;line-height:1.55;">
+        <li>Two horizontal bars will appear side by side.</li>
+        <li><strong style="color:var(--text);">Click the longer bar</strong> as quickly as you can.</li>
+        <li>You have <strong style="color:var(--text);">3 seconds</strong> per trial — if you don't respond, the trial is marked wrong.</li>
+        <li>Differences start obvious and become more subtle as you progress.</li>
+        <li>There are <strong style="color:var(--text);">25 trials</strong> in total.</li>
+      </ul>
+    </div>
+
+    <div class="notice" style="margin-top:1rem;">
+      This test measures your perceptual accuracy and speed — key traits assessed in Pymetrics for banking roles.
+    </div>
+
+    <div style="margin-top:1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+      <div>
+        <label style="display:block;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);margin-bottom:0.4rem;">Leaderboard Difficulty</label>
+        <select id="difficultySelect" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:0.55rem 0.85rem;color:var(--text);font-size:0.9rem;cursor:pointer;outline:none;">
+          <option value="easy">Easy</option>
+          <option value="average" selected>Average</option>
+          <option value="above_average">Above Average</option>
+          <option value="cut_throat">Cut-Throat</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="startGame()" style="margin-top:1.4rem;">Start Game</button>
+    </div>
+  </div>
+
+  <!-- ── GAME SCREEN ──────────────────────────────────────────────────────── -->
+  <div id="gameScreen" class="hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:0.5rem;">
+      <div style="display:flex;align-items:center;gap:0.75rem;">
+        <span style="font-size:0.85rem;color:var(--text-muted);">Trial</span>
+        <span id="trialNum" style="font-size:1.1rem;font-weight:800;color:var(--accent);">1</span>
+        <span style="font-size:0.85rem;color:var(--text-muted);">/ 25</span>
+      </div>
+      <div class="timer" id="timerDisplay">3.0s</div>
+      <div style="display:flex;align-items:center;gap:0.5rem;">
+        <span style="font-size:0.85rem;color:var(--text-muted);">Score:</span>
+        <span id="liveScore" style="font-size:1rem;font-weight:700;color:var(--success);">0 / 0</span>
+      </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="progress-bar-wrap" style="margin-bottom:1.75rem;">
+      <div class="progress-bar-fill" id="progressFill" style="width:0%;transition:width 0.3s ease;"></div>
+    </div>
+
+    <!-- Bar arena -->
+    <div id="barArena" style="display:flex;align-items:center;justify-content:center;gap:3rem;min-height:220px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2rem 2.5rem;">
+      <!-- Left bar container -->
+      <div id="leftContainer" class="bar-container" onclick="handleChoice('left')"
+           style="display:flex;flex-direction:column;align-items:center;gap:0.75rem;cursor:pointer;flex:1;max-width:260px;">
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);">Bar A</div>
+        <div style="width:100%;height:80px;display:flex;align-items:center;justify-content:flex-start;">
+          <div id="leftBar" style="height:32px;border-radius:6px;background:var(--accent);transition:background 0.15s;"></div>
+        </div>
+      </div>
+
+      <div style="font-size:1.3rem;font-weight:800;color:var(--border);user-select:none;flex-shrink:0;">VS</div>
+
+      <!-- Right bar container -->
+      <div id="rightContainer" class="bar-container" onclick="handleChoice('right')"
+           style="display:flex;flex-direction:column;align-items:center;gap:0.75rem;cursor:pointer;flex:1;max-width:260px;">
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);">Bar B</div>
+        <div style="width:100%;height:80px;display:flex;align-items:center;justify-content:flex-start;">
+          <div id="rightBar" style="height:32px;border-radius:6px;background:var(--accent);transition:background 0.15s;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feedback flash -->
+    <div id="feedbackFlash" class="hidden" style="text-align:center;margin-top:1rem;font-size:1.05rem;font-weight:700;padding:0.5rem 1rem;border-radius:var(--radius);"></div>
+
+    <!-- Subtle hint -->
+    <div style="text-align:center;margin-top:1.25rem;font-size:0.8rem;color:var(--text-muted);">
+      Click the <strong>longer</strong> bar as fast as you can
+    </div>
+  </div>
+
+  <!-- ── RESULTS SCREEN ───────────────────────────────────────────────────── -->
+  <div id="resultsScreen" class="hidden">
+    <div class="game-header" style="margin-bottom:1.5rem;">
+      <div class="game-header-icon">📏</div>
+      <div>
+        <h1 style="font-size:1.6rem;font-weight:800;margin:0 0 0.25rem;">Lengths — Results</h1>
+        <p style="color:var(--text-muted);font-size:0.9rem;margin:0;">Here's how you performed across all 25 trials.</p>
+      </div>
+    </div>
+
+    <div class="score-display" id="finalScoreDisplay" style="margin-bottom:1.5rem;"></div>
+
+    <div class="results-grid" style="margin-bottom:1.5rem;">
+      <div class="result-card">
+        <div class="rc-value" id="rcCorrect">—</div>
+        <div class="rc-label">Correct</div>
+      </div>
+      <div class="result-card">
+        <div class="rc-value" id="rcAccuracy">—</div>
+        <div class="rc-label">Accuracy</div>
+      </div>
+      <div class="result-card">
+        <div class="rc-value" id="rcAvgRT">—</div>
+        <div class="rc-label">Avg. Reaction Time</div>
+      </div>
+      <div class="result-card">
+        <div class="rc-value" id="rcTimeouts">—</div>
+        <div class="rc-label">Timeouts</div>
+      </div>
+    </div>
+
+    <!-- Reaction-time breakdown by trial band -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:1.5rem;">
+      <h3 style="margin:0 0 1rem;font-size:0.95rem;font-weight:700;">Reaction Time Breakdown by Difficulty Band</h3>
+      <div id="rtBreakdown" style="display:flex;flex-direction:column;gap:0.6rem;"></div>
+    </div>
+
+    <!-- Leaderboard -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:1.5rem;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
+        <h3 style="margin:0;font-size:0.95rem;font-weight:700;">Leaderboard</h3>
+        <span id="lbDifficultyBadge" class="platform-tag" style="font-size:0.75rem;"></span>
+      </div>
+      <div id="leaderboardTable" style="font-size:0.88rem;"></div>
+      <div id="userRankSummary" style="margin-top:0.75rem;padding:0.65rem 0.9rem;background:var(--bg3);border-radius:var(--radius);font-size:0.85rem;color:var(--text-muted);"></div>
+    </div>
+
+    <!-- Actions -->
+    <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="resetGame()">Play Again</button>
+      <a href="/" class="btn btn-outline">Back to Home</a>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+  .bar-container {
+    border: 2px solid transparent;
+    border-radius: var(--radius-lg);
+    padding: 0.75rem;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .bar-container:hover {
+    border-color: var(--accent);
+    background: rgba(99,102,241,0.06);
+  }
+  .bar-container.correct-flash {
+    border-color: var(--success) !important;
+    background: rgba(16,185,129,0.10) !important;
+  }
+  .bar-container.wrong-flash {
+    border-color: var(--danger) !important;
+    background: rgba(239,68,68,0.10) !important;
+  }
+  .lb-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.6rem;
+    border-radius: var(--radius);
+    margin-bottom: 0.25rem;
+  }
+  .lb-row.is-user {
+    background: rgba(99,102,241,0.12);
+    border: 1px solid rgba(99,102,241,0.3);
+  }
+  .lb-rank {
+    width: 1.8rem;
+    text-align: center;
+    font-weight: 700;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    flex-shrink: 0;
+  }
+  .lb-avatar {
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    background: var(--bg3);
+    flex-shrink: 0;
+  }
+  .lb-name {
+    font-weight: 600;
+    font-size: 0.88rem;
+  }
+  .lb-school {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+  }
+  .lb-score {
+    font-weight: 700;
+    color: var(--accent);
+    font-size: 0.9rem;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+  #rtBreakdown .rt-band-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.85rem;
+    padding: 0.45rem 0.6rem;
+    border-radius: var(--radius);
+    background: var(--bg3);
+  }
+  #rtBreakdown .rt-band-label {
+    min-width: 175px;
+    color: var(--text-muted);
+  }
+  #rtBreakdown .rt-band-correct {
+    font-weight: 700;
+    min-width: 70px;
+  }
+  #rtBreakdown .rt-band-rt {
+    color: var(--text-muted);
+  }
+</style>
+
+<script>
+// ── Game state ────────────────────────────────────────────────────────────────
+const TOTAL_TRIALS = 25;
+let trialIndex    = 0;
+let correctCount  = 0;
+let timerInterval = null;
+let trialStart    = 0;
+let timeLeft      = 3.0;
+let answered      = false;
+let reactionTimes = [];  // ms, correct-only
+let allResults    = [];  // {correct, rt, timeout, diff_pct}
+let longerSide    = 'left';
+
+// Percentage difference between longer and shorter bar.
+// Trial 0 → 20% diff, Trial 24 → 2% diff (linear interpolation)
+function getDiffPct(idx) {
+  const maxDiff = 20, minDiff = 2;
+  return maxDiff - ((maxDiff - minDiff) / (TOTAL_TRIALS - 1)) * idx;
+}
+
+// ── Start ─────────────────────────────────────────────────────────────────────
+function startGame() {
+  trialIndex    = 0;
+  correctCount  = 0;
+  reactionTimes = [];
+  allResults    = [];
+
+  document.getElementById('introScreen').classList.add('hidden');
+  document.getElementById('resultsScreen').classList.add('hidden');
+  document.getElementById('gameScreen').classList.remove('hidden');
+
+  showTrial();
+}
+
+// ── Show a trial ──────────────────────────────────────────────────────────────
+function showTrial() {
+  if (trialIndex >= TOTAL_TRIALS) { endGame(); return; }
+
+  answered = false;
+  timeLeft = 3.0;
+
+  document.getElementById('trialNum').textContent    = trialIndex + 1;
+  document.getElementById('liveScore').textContent   = correctCount + ' / ' + trialIndex;
+  document.getElementById('progressFill').style.width = ((trialIndex / TOTAL_TRIALS) * 100) + '%';
+  document.getElementById('timerDisplay').textContent = '3.0s';
+  document.getElementById('timerDisplay').style.color = '';
+  document.getElementById('feedbackFlash').classList.add('hidden');
+
+  const lc = document.getElementById('leftContainer');
+  const rc = document.getElementById('rightContainer');
+  lc.classList.remove('correct-flash', 'wrong-flash');
+  rc.classList.remove('correct-flash', 'wrong-flash');
+  lc.style.pointerEvents = 'auto';
+  rc.style.pointerEvents = 'auto';
+
+  // Determine bar widths
+  const diffPct   = getDiffPct(trialIndex);
+  // Use a base of 100px; max width stays ≤ 240px at trial 0
+  const baseWidth = 100;
+  longerSide      = Math.random() < 0.5 ? 'left' : 'right';
+
+  const shorterW = baseWidth;
+  const longerW  = Math.round(baseWidth * (1 + diffPct / 100));
+  const leftW    = longerSide === 'left'  ? longerW : shorterW;
+  const rightW   = longerSide === 'right' ? longerW : shorterW;
+
+  document.getElementById('leftBar').style.width  = leftW  + 'px';
+  document.getElementById('rightBar').style.width = rightW + 'px';
+
+  trialStart = performance.now();
+
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timeLeft = Math.max(timeLeft - 0.1, 0);
+    document.getElementById('timerDisplay').textContent = timeLeft.toFixed(1) + 's';
+    if (timeLeft <= 1.0) document.getElementById('timerDisplay').style.color = 'var(--danger)';
+    if (timeLeft === 0) {
+      clearInterval(timerInterval);
+      if (!answered) handleTimeout();
+    }
+  }, 100);
+}
+
+// ── Handle a click ────────────────────────────────────────────────────────────
+function handleChoice(side) {
+  if (answered) return;
+  answered = true;
+  clearInterval(timerInterval);
+
+  const rt      = Math.round(performance.now() - trialStart);
+  const correct = side === longerSide;
+
+  allResults.push({ correct, rt, timeout: false, diff_pct: getDiffPct(trialIndex) });
+  if (correct) { correctCount++; reactionTimes.push(rt); }
+
+  const lc = document.getElementById('leftContainer');
+  const rc = document.getElementById('rightContainer');
+  lc.style.pointerEvents = 'none';
+  rc.style.pointerEvents = 'none';
+
+  const chosenEl  = side === 'left'      ? lc : rc;
+  const correctEl = longerSide === 'left' ? lc : rc;
+
+  if (correct) {
+    chosenEl.classList.add('correct-flash');
+    showFeedback('✓ Correct! (' + rt + ' ms)', 'var(--success)');
+  } else {
+    chosenEl.classList.add('wrong-flash');
+    correctEl.classList.add('correct-flash');
+    showFeedback('✗ Wrong — that bar was shorter', 'var(--danger)');
+  }
+
+  setTimeout(() => { trialIndex++; showTrial(); }, 650);
+}
+
+// ── Handle timeout ────────────────────────────────────────────────────────────
+function handleTimeout() {
+  if (answered) return;
+  answered = true;
+
+  allResults.push({ correct: false, rt: 3000, timeout: true, diff_pct: getDiffPct(trialIndex) });
+  document.getElementById('leftContainer').style.pointerEvents  = 'none';
+  document.getElementById('rightContainer').style.pointerEvents = 'none';
+  showFeedback("⏱ Time's up!", 'var(--warning)');
+
+  setTimeout(() => { trialIndex++; showTrial(); }, 750);
+}
+
+function showFeedback(msg, color) {
+  const el = document.getElementById('feedbackFlash');
+  el.textContent      = msg;
+  el.style.color      = color;
+  el.style.background = color + '18';
+  el.classList.remove('hidden');
+}
+
+// ── End game ──────────────────────────────────────────────────────────────────
+async function endGame() {
+  clearInterval(timerInterval);
+  document.getElementById('gameScreen').classList.add('hidden');
+
+  const score    = Math.round((correctCount / TOTAL_TRIALS) * 100);
+  const timeouts = allResults.filter(r => r.timeout).length;
+  const avgRT    = reactionTimes.length
+    ? Math.round(reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length)
+    : null;
+
+  // Score display
+  const scoreColor = score >= 80 ? 'var(--success)' : score >= 60 ? 'var(--accent)' : 'var(--danger)';
+  document.getElementById('finalScoreDisplay').innerHTML = `
+    <div style="text-align:center;padding:1.5rem 1rem;">
+      <div style="font-size:3.5rem;font-weight:900;color:${scoreColor};line-height:1;">${score}</div>
+      <div style="color:var(--text-muted);font-size:0.9rem;margin-top:0.4rem;">out of 100</div>
+    </div>
+  `;
+
+  document.getElementById('rcCorrect').textContent  = correctCount + ' / ' + TOTAL_TRIALS;
+  document.getElementById('rcAccuracy').textContent = score + '%';
+  document.getElementById('rcAvgRT').textContent    = avgRT ? avgRT + ' ms' : 'N/A';
+  document.getElementById('rcTimeouts').textContent = timeouts;
+
+  buildRTBreakdown();
+
+  document.getElementById('resultsScreen').classList.remove('hidden');
+
+  const difficulty = document.getElementById('difficultySelect').value;
+
+  // Save score
+  fetch('/sim/save-score', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      game: 'lengths',
+      score,
+      details: { correct: correctCount, accuracy: score, avg_rt: avgRT, timeouts }
+    })
+  }).catch(() => {});
+
+  // Leaderboard
+  try {
+    const res = await fetch('/sim/bot/leaderboard', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ score, difficulty, game: 'lengths', count: 10 })
+    });
+    if (res.ok) renderLeaderboard(await res.json(), difficulty);
+    else throw new Error();
+  } catch {
+    document.getElementById('leaderboardTable').innerHTML =
+      '<p style="color:var(--text-muted);font-size:0.85rem;margin:0;">Leaderboard unavailable offline.</p>';
+  }
+}
+
+// ── RT breakdown ──────────────────────────────────────────────────────────────
+function buildRTBreakdown() {
+  const bands = [
+    { label: 'Trials 1–9  (Easy, ≥12% diff)',    slice: [0, 9]  },
+    { label: 'Trials 10–17 (Medium, 5–12% diff)', slice: [9, 17] },
+    { label: 'Trials 18–25 (Hard, 2–5% diff)',   slice: [17, 25] },
+  ];
+  const container = document.getElementById('rtBreakdown');
+  container.innerHTML = '';
+  bands.forEach(band => {
+    const results  = allResults.slice(band.slice[0], band.slice[1]);
+    const correct  = results.filter(r => r.correct).length;
+    const total    = results.length;
+    const rts      = results.filter(r => r.correct && !r.timeout).map(r => r.rt);
+    const avgRT    = rts.length ? Math.round(rts.reduce((a, b) => a + b, 0) / rts.length) : null;
+    const pct      = total ? Math.round((correct / total) * 100) : 0;
+    const colorVal = pct >= 80 ? 'var(--success)' : pct >= 55 ? 'var(--accent)' : 'var(--danger)';
+
+    const row = document.createElement('div');
+    row.className = 'rt-band-row';
+    row.innerHTML = `
+      <span class="rt-band-label">${band.label}</span>
+      <span class="rt-band-correct" style="color:${colorVal};">${correct}/${total}</span>
+      <span class="rt-band-rt">${avgRT ? avgRT + ' ms avg' : 'no correct answers'}</span>
+    `;
+    container.appendChild(row);
+  });
+}
+
+// ── Leaderboard render ────────────────────────────────────────────────────────
+function renderLeaderboard(data, difficulty) {
+  const diffLabels = {
+    easy: 'Easy', average: 'Average',
+    above_average: 'Above Average', cut_throat: 'Cut-Throat'
+  };
+  document.getElementById('lbDifficultyBadge').textContent = diffLabels[difficulty] || difficulty;
+
+  const tableEl = document.getElementById('leaderboardTable');
+  if (!data.leaderboard || !data.leaderboard.length) {
+    tableEl.innerHTML = '<p style="color:var(--text-muted);font-size:0.85rem;margin:0;">No data yet.</p>';
+    return;
+  }
+
+  const medals = ['🥇','🥈','🥉'];
+  tableEl.innerHTML = data.leaderboard.map(entry => `
+    <div class="lb-row ${entry.is_user ? 'is-user' : ''}">
+      <div class="lb-rank">${entry.rank <= 3 ? medals[entry.rank - 1] : '#' + entry.rank}</div>
+      <div class="lb-avatar">${entry.avatar || '👤'}</div>
+      <div style="flex:1;min-width:0;">
+        <div class="lb-name">${entry.name}${entry.is_user ? ' <span style="color:var(--accent);font-size:0.73rem;">(You)</span>' : ''}</div>
+        ${entry.school ? '<div class="lb-school">' + entry.school + '</div>' : ''}
+      </div>
+      <div class="lb-score">${entry.score}</div>
+    </div>
+  `).join('');
+
+  const sumEl = document.getElementById('userRankSummary');
+  if (data.user_rank) {
+    sumEl.innerHTML = `You ranked <strong style="color:var(--text);">#${data.user_rank}</strong> out of ${(data.total_candidates || 0).toLocaleString()} candidates &nbsp;·&nbsp; Top <strong style="color:var(--accent);">${data.percentile}%</strong>`;
+  } else {
+    sumEl.innerHTML = '';
+  }
+}
+
+// ── Reset ─────────────────────────────────────────────────────────────────────
+function resetGame() {
+  document.getElementById('resultsScreen').classList.add('hidden');
+  document.getElementById('introScreen').classList.remove('hidden');
+}
+</script>
+{% endblock %}

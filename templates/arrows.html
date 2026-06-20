@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% block title %}Arrows Game — AssessSim{% endblock %}
+{% block content %}
+<div class="game-page">
+  <div class="game-header">
+    <div class="game-header-icon" style="background:linear-gradient(135deg,#a29bfe,#6c5ce7)">🏹</div>
+    <div>
+      <h1>Arrows Game</h1>
+      <p>Pymetrics — Adaptivity, Learning &amp; Rule-Switching</p>
+    </div>
+  </div>
+  <div class="game-meta">
+    <div class="game-meta-item">🏹 <strong>30</strong>&nbsp;trials</div>
+    <div class="game-meta-item">⏱️ 1.5s per trial</div>
+    <div class="game-meta-item">🏦 JP Morgan · Goldman Sachs · Blackstone</div>
+  </div>
+
+  <div id="instructions" class="instructions">
+    <h2>📋 Instructions</h2>
+    <ul>
+      <li>An arrow appears in <span style="color:#4ECDC4;font-weight:700">TEAL</span> or <span style="color:#FF6B6B;font-weight:700">RED</span>.</li>
+      <li><strong style="color:#4ECDC4">Teal arrow</strong>: press the direction the arrow <strong>points</strong>.</li>
+      <li><strong style="color:#FF6B6B">Red arrow</strong>: press the <strong>opposite</strong> direction.</li>
+      <li>Use arrow keys <strong>← → ↑ ↓</strong> or the on-screen buttons.</li>
+      <li>You have <strong>1.5 seconds</strong> per trial. No response = wrong.</li>
+    </ul>
+    <div class="notice" style="margin-top:1rem">💡 <strong>Tip:</strong> The rule switch from teal→red is the hardest part. Focus on the colour first, then the direction.</div>
+    <div style="margin-top:1.25rem">
+      <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--text-muted);margin-bottom:0.5rem;">⚔️ Competition difficulty</label>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn btn-sm diff-btn" data-d="easy" onclick="setDiff(this)" style="background:rgba(0,210,160,0.15);border:1px solid var(--success);color:var(--success)">Casual</button>
+        <button class="btn btn-sm diff-btn selected-diff" data-d="average" onclick="setDiff(this)" style="background:rgba(77,159,255,0.2);border:1px solid var(--accent);color:var(--accent)">Average</button>
+        <button class="btn btn-sm diff-btn" data-d="above_average" onclick="setDiff(this)" style="background:rgba(162,155,254,0.15);border:1px solid var(--accent2);color:var(--accent2)">Above Average</button>
+        <button class="btn btn-sm diff-btn" data-d="cut_throat" onclick="setDiff(this)" style="background:rgba(255,94,122,0.15);border:1px solid var(--danger);color:var(--danger)">Quant God 🔥</button>
+      </div>
+    </div>
+    <button class="btn btn-primary mt-2" onclick="startGame()">Start Game</button>
+  </div>
+
+  <div id="game-area" class="hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <div class="progress-bar-wrap" style="flex:1;margin-right:1rem;margin-bottom:0">
+        <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+      </div>
+      <div id="trial-counter" class="text-muted" style="font-size:0.85rem;white-space:nowrap"></div>
+    </div>
+
+    <div style="text-align:center;padding:1.5rem 0">
+      <div id="rule-display" style="font-size:0.85rem;font-weight:600;margin-bottom:1.5rem;padding:0.5rem 1.25rem;display:inline-block;border-radius:50px;background:var(--bg2);border:1px solid var(--border)"></div>
+      <div id="arrow-display" style="font-size:8rem;line-height:1;min-height:10rem;display:flex;align-items:center;justify-content:center;transition:color 0.05s"></div>
+      <div id="feedback-display" style="font-size:1rem;font-weight:600;min-height:1.5rem;margin-top:0.5rem"></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;max-width:260px;margin:1rem auto">
+      <div></div>
+      <button class="btn btn-outline" onclick="respond('up')" style="font-size:1.3rem;padding:0.75rem">↑</button>
+      <div></div>
+      <button class="btn btn-outline" onclick="respond('left')" style="font-size:1.3rem;padding:0.75rem">←</button>
+      <div></div>
+      <button class="btn btn-outline" onclick="respond('right')" style="font-size:1.3rem;padding:0.75rem">→</button>
+      <div></div>
+      <button class="btn btn-outline" onclick="respond('down')" style="font-size:1.3rem;padding:0.75rem">↓</button>
+      <div></div>
+    </div>
+  </div>
+
+  <div id="results-area" class="hidden" style="text-align:center;padding:2rem">
+    <h2 style="font-size:1.8rem;margin-bottom:0.5rem">Game Complete!</h2>
+    <div class="score-display" id="final-score"></div>
+    <p class="text-muted">Arrows Score</p>
+    <div class="results-grid" style="max-width:540px;margin:1.5rem auto">
+      <div class="result-card"><div class="rc-value" id="r-correct">0</div><div class="rc-label">Correct</div></div>
+      <div class="result-card"><div class="rc-value" id="r-teal">0</div><div class="rc-label">Teal Accuracy</div></div>
+      <div class="result-card"><div class="rc-value" id="r-red">0</div><div class="rc-label">Red Accuracy</div></div>
+      <div class="result-card"><div class="rc-value" id="r-rt">—</div><div class="rc-label">Avg RT (ms)</div></div>
+    </div>
+    <div id="leaderboard-area" style="max-width:600px;margin:1.5rem auto;text-align:left"></div>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button class="btn btn-outline" onclick="location.reload()">Play Again</button>
+      <a href="/" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const TOTAL=30, TRIAL_MS=1500, ITI_MS=600;
+const DIRS=['left','right','up','down'];
+const GLYPHS={left:'←',right:'→',up:'↑',down:'↓'};
+const OPP={left:'right',right:'left',up:'down',down:'up'};
+
+let trials=[],trialIdx=0,responded=false,trialStart=0,trialTimer=null;
+let correct=0,tealCorrect=0,tealTotal=0,redCorrect=0,redTotal=0,rts=[];
+let selectedDiff='average';
+
+function setDiff(btn){document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('selected-diff'));btn.classList.add('selected-diff');selectedDiff=btn.dataset.d;}
+
+function startGame(){
+  // Build trial sequence: 15 teal, 15 red, shuffled
+  trials=[];
+  for(let i=0;i<15;i++) trials.push({colour:'teal',dir:DIRS[Math.floor(Math.random()*4)]});
+  for(let i=0;i<15;i++) trials.push({colour:'red',dir:DIRS[Math.floor(Math.random()*4)]});
+  for(let i=trials.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[trials[i],trials[j]]=[trials[j],trials[i]];}
+  trialIdx=0;correct=0;tealCorrect=0;tealTotal=0;redCorrect=0;redTotal=0;rts=[];
+  document.getElementById('instructions').classList.add('hidden');
+  document.getElementById('game-area').classList.remove('hidden');
+  document.addEventListener('keydown',onKey);
+  nextTrial();
+}
+
+function onKey(e){
+  const map={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down'};
+  if(map[e.key]){e.preventDefault();respond(map[e.key]);}
+}
+
+function nextTrial(){
+  if(trialIdx>=TOTAL){endGame();return;}
+  responded=false;
+  clearTimeout(trialTimer);
+  const t=trials[trialIdx];
+  const arrowEl=document.getElementById('arrow-display');
+  const feedEl=document.getElementById('feedback-display');
+  const ruleEl=document.getElementById('rule-display');
+  arrowEl.textContent='';feedEl.textContent='';
+  document.getElementById('trial-counter').textContent=(trialIdx+1)+' / '+TOTAL;
+  document.getElementById('progress-bar').style.width=(trialIdx/TOTAL*100)+'%';
+  ruleEl.textContent=t.colour==='teal'?'🟢 TEAL — respond in the same direction':'🔴 RED — respond in the OPPOSITE direction';
+  ruleEl.style.color=t.colour==='teal'?'#4ECDC4':'#FF6B6B';
+  setTimeout(()=>{
+    arrowEl.textContent=GLYPHS[t.dir];
+    arrowEl.style.color=t.colour==='teal'?'#4ECDC4':'#FF6B6B';
+    trialStart=Date.now();
+    trialTimer=setTimeout(()=>{
+      if(!responded){
+        responded=true;
+        handleResult(t,null);
+      }
+    },TRIAL_MS);
+  },300);
+}
+
+function respond(dir){
+  if(responded)return;
+  responded=true;
+  clearTimeout(trialTimer);
+  const rt=Date.now()-trialStart;
+  rts.push(rt);
+  handleResult(trials[trialIdx],dir,rt);
+}
+
+function handleResult(t,dir,rt){
+  const expected=t.colour==='teal'?t.dir:OPP[t.dir];
+  const isCorrect=dir===expected;
+  if(t.colour==='teal'){tealTotal++;if(isCorrect)tealCorrect++;}
+  else{redTotal++;if(isCorrect)redCorrect++;}
+  if(isCorrect)correct++;
+  const feedEl=document.getElementById('feedback-display');
+  if(dir===null){feedEl.textContent='⏱️ Too slow';feedEl.style.color='var(--danger)';}
+  else if(isCorrect){feedEl.textContent='✓ Correct'+(rt?' ('+rt+'ms)':'');feedEl.style.color='var(--success)';}
+  else{feedEl.textContent='✗ Wrong — expected '+GLYPHS[expected];feedEl.style.color='var(--danger)';}
+  trialIdx++;
+  setTimeout(nextTrial,ITI_MS);
+}
+
+function endGame(){
+  document.removeEventListener('keydown',onKey);
+  document.getElementById('game-area').classList.add('hidden');
+  document.getElementById('results-area').classList.remove('hidden');
+  const avgRt=rts.length?Math.round(rts.reduce((a,b)=>a+b,0)/rts.length):0;
+  const speedScore=avgRt?Math.max(0,1-avgRt/1200):0;
+  const acc=correct/TOTAL;
+  const score=Math.round(acc*80+speedScore*20);
+  document.getElementById('final-score').textContent=score+'%';
+  document.getElementById('r-correct').textContent=correct+' / '+TOTAL;
+  document.getElementById('r-teal').textContent=Math.round(tealCorrect/(tealTotal||1)*100)+'%';
+  document.getElementById('r-red').textContent=Math.round(redCorrect/(redTotal||1)*100)+'%';
+  document.getElementById('r-rt').textContent=avgRt?avgRt+'ms':'—';
+  fetch('/sim/save-score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:'arrows',score})}).catch(()=>{});
+  loadLeaderboard(score);
+}
+
+async function loadLeaderboard(score){
+  try{
+    const res=await fetch('/sim/bot/leaderboard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({score,difficulty:selectedDiff,game:'arrows',count:10})});
+    const data=await res.json();
+    document.getElementById('leaderboard-area').innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem"><h3 style="font-size:1rem;font-weight:700;margin-bottom:0.5rem">🏆 Ranked <span style="color:var(--accent)">#${data.user_rank}</span> of ${data.total_candidates}</h3>${data.leaderboard.slice(0,8).map(e=>`<div style="display:flex;align-items:center;gap:0.75rem;padding:0.4rem 0.6rem;border-radius:8px;background:${e.is_user?'rgba(77,159,255,0.1)':'transparent'};border:1px solid ${e.is_user?'rgba(77,159,255,0.3)':'transparent'};margin-bottom:0.25rem"><span style="width:22px;text-align:center;font-size:0.78rem;font-weight:700;color:${e.rank<=3?'var(--warning)':'var(--text-muted)'}">${e.rank}</span><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:800;flex-shrink:0">${e.avatar.slice(0,2)}</div><div style="flex:1;min-width:0"><div style="font-size:0.83rem;font-weight:${e.is_user?700:500}">${e.name}${e.is_user?' 👈':''}</div><div style="font-size:0.72rem;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.school}</div></div><span style="font-size:0.85rem;font-weight:700;color:${e.is_user?'var(--accent)':'var(--text)'}">${e.score}%</span></div>`).join('')}</div>`;
+  }catch(e){}
+}
+</script>
+{% endblock %}

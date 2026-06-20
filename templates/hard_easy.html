@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block title %}Hard or Easy Task — AssessSim{% endblock %}
+{% block content %}
+<div class="game-page">
+  <div class="game-header">
+    <div class="game-header-icon" style="background:linear-gradient(135deg,#e17055,#fdcb6e)">🎲</div>
+    <div>
+      <h1>Hard or Easy Task</h1>
+      <p>Pymetrics — Effort, Decision Making &amp; Motivation</p>
+    </div>
+  </div>
+  <div class="game-meta">
+    <div class="game-meta-item">🎲 <strong>12</strong>&nbsp;rounds</div>
+    <div class="game-meta-item">💰 Risk vs Reward</div>
+    <div class="game-meta-item">🏦 JP Morgan · Goldman Sachs · Morgan Stanley</div>
+  </div>
+
+  <div id="instructions" class="instructions">
+    <h2>📋 Instructions</h2>
+    <ul>
+      <li>Each round, choose between two tasks:</li>
+      <li><strong style="color:var(--success)">Easy Task</strong>: 70% chance of winning <strong>$4</strong></li>
+      <li><strong style="color:var(--danger)">Hard Task</strong>: 30% chance of winning <strong>$12</strong></li>
+      <li>After choosing, the outcome is revealed instantly.</li>
+      <li>Your goal is to earn as much money as possible over 12 rounds.</li>
+    </ul>
+    <div class="notice" style="margin-top:1rem">💡 <strong>Tip:</strong> Think about expected value — but also consider your risk tolerance. The real Pymetrics game analyses your <em>pattern</em> of choices, not just your total.</div>
+    <div style="margin-top:1.25rem">
+      <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--text-muted);margin-bottom:0.5rem;">⚔️ Competition difficulty</label>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn btn-sm diff-btn" data-d="easy" onclick="setDiff(this)" style="background:rgba(0,210,160,0.15);border:1px solid var(--success);color:var(--success)">Casual</button>
+        <button class="btn btn-sm diff-btn selected-diff" data-d="average" onclick="setDiff(this)" style="background:rgba(77,159,255,0.2);border:1px solid var(--accent);color:var(--accent)">Average</button>
+        <button class="btn btn-sm diff-btn" data-d="above_average" onclick="setDiff(this)" style="background:rgba(162,155,254,0.15);border:1px solid var(--accent2);color:var(--accent2)">Above Average</button>
+        <button class="btn btn-sm diff-btn" data-d="cut_throat" onclick="setDiff(this)" style="background:rgba(255,94,122,0.15);border:1px solid var(--danger);color:var(--danger)">Quant God 🔥</button>
+      </div>
+    </div>
+    <button class="btn btn-primary mt-2" onclick="startGame()">Start Game</button>
+  </div>
+
+  <div id="game-area" class="hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem">
+      <div id="round-label" class="text-muted" style="font-size:0.85rem"></div>
+      <div style="font-size:1rem;font-weight:700">Total: <span id="total-earnings" style="color:var(--accent)">$0</span></div>
+    </div>
+    <div class="progress-bar-wrap" style="margin-bottom:1.5rem">
+      <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+    </div>
+    <div id="choice-area" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <button class="question-card" id="easy-btn" onclick="choose('easy')" style="cursor:pointer;border:2px solid var(--border);text-align:center;padding:2rem 1rem;transition:all 0.2s">
+        <div style="font-size:2.5rem;margin-bottom:0.75rem">😊</div>
+        <div style="font-size:1rem;font-weight:800;color:var(--success);margin-bottom:0.5rem">EASY TASK</div>
+        <div style="font-size:0.88rem;color:var(--text-muted);margin-bottom:0.5rem">70% chance of winning</div>
+        <div style="font-size:1.5rem;font-weight:900;color:var(--success)">$4</div>
+      </button>
+      <button class="question-card" id="hard-btn" onclick="choose('hard')" style="cursor:pointer;border:2px solid var(--border);text-align:center;padding:2rem 1rem;transition:all 0.2s">
+        <div style="font-size:2.5rem;margin-bottom:0.75rem">🔥</div>
+        <div style="font-size:1rem;font-weight:800;color:var(--danger);margin-bottom:0.5rem">HARD TASK</div>
+        <div style="font-size:0.88rem;color:var(--text-muted);margin-bottom:0.5rem">30% chance of winning</div>
+        <div style="font-size:1.5rem;font-weight:900;color:var(--danger)">$12</div>
+      </button>
+    </div>
+    <div id="outcome-area" style="text-align:center;margin-top:1.5rem;min-height:3rem"></div>
+  </div>
+
+  <div id="results-area" class="hidden" style="text-align:center;padding:2rem">
+    <h2 style="font-size:1.8rem;margin-bottom:0.5rem">Game Complete!</h2>
+    <div class="score-display" id="final-score"></div>
+    <p class="text-muted" id="score-label">Score</p>
+    <div class="results-grid" style="max-width:540px;margin:1.5rem auto">
+      <div class="result-card"><div class="rc-value" id="r-earn">$0</div><div class="rc-label">Total Earned</div></div>
+      <div class="result-card"><div class="rc-value" id="r-hard">0</div><div class="rc-label">Hard Choices</div></div>
+      <div class="result-card"><div class="rc-value" id="r-wins">0</div><div class="rc-label">Wins</div></div>
+      <div class="result-card"><div class="rc-value" id="r-profile">—</div><div class="rc-label">Risk Profile</div></div>
+    </div>
+    <div id="leaderboard-area" style="max-width:600px;margin:1.5rem auto;text-align:left"></div>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button class="btn btn-outline" onclick="location.reload()">Play Again</button>
+      <a href="/" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const TOTAL_ROUNDS=12;
+let round=0,totalEarnings=0,hardChoices=0,wins=0,selectedDiff='average',choosing=true;
+
+function setDiff(btn){document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('selected-diff'));btn.classList.add('selected-diff');selectedDiff=btn.dataset.d;}
+
+function startGame(){
+  document.getElementById('instructions').classList.add('hidden');
+  document.getElementById('game-area').classList.remove('hidden');
+  round=0;totalEarnings=0;hardChoices=0;wins=0;
+  updateUI();
+}
+
+function updateUI(){
+  document.getElementById('round-label').textContent='Round '+(round+1)+' of '+TOTAL_ROUNDS;
+  document.getElementById('progress-bar').style.width=(round/TOTAL_ROUNDS*100)+'%';
+  document.getElementById('total-earnings').textContent='$'+totalEarnings;
+}
+
+function choose(type){
+  if(!choosing) return;
+  choosing=false;
+  const isHard=type==='hard';
+  if(isHard) hardChoices++;
+  const prob=isHard?0.30:0.70;
+  const reward=isHard?12:4;
+  const won=Math.random()<prob;
+  if(won){wins++;totalEarnings+=reward;}
+
+  const eBtn=document.getElementById('easy-btn');
+  const hBtn=document.getElementById('hard-btn');
+  eBtn.disabled=true;hBtn.disabled=true;
+  if(isHard){hBtn.style.borderColor='var(--accent)';hBtn.style.background='rgba(77,159,255,0.08)';}
+  else{eBtn.style.borderColor='var(--accent)';eBtn.style.background='rgba(77,159,255,0.08)';}
+
+  const out=document.getElementById('outcome-area');
+  if(won){
+    out.innerHTML=`<div style="font-size:1.3rem;font-weight:800;color:var(--success)">✓ You won <strong>$${reward}</strong>!</div>`;
+  } else {
+    out.innerHTML=`<div style="font-size:1.3rem;font-weight:800;color:var(--danger)">✗ Unlucky — no win this round.</div>`;
+  }
+  document.getElementById('total-earnings').textContent='$'+totalEarnings;
+
+  round++;
+  if(round>=TOTAL_ROUNDS){
+    setTimeout(endGame,1200);
+  } else {
+    setTimeout(()=>{
+      eBtn.disabled=false;hBtn.disabled=false;
+      eBtn.style.borderColor='var(--border)';eBtn.style.background='';
+      hBtn.style.borderColor='var(--border)';hBtn.style.background='';
+      out.innerHTML='';
+      choosing=true;
+      updateUI();
+    },1200);
+  }
+}
+
+function endGame(){
+  document.getElementById('game-area').classList.add('hidden');
+  document.getElementById('results-area').classList.remove('hidden');
+  const maxPossible=TOTAL_ROUNDS*12;
+  const score=Math.round(Math.min(100,(totalEarnings/36)*100));
+  const pctHard=Math.round(hardChoices/TOTAL_ROUNDS*100);
+  const profile=pctHard>=70?'Risk-Taker':pctHard>=50?'Balanced':pctHard>=25?'Cautious':'Risk-Averse';
+  document.getElementById('final-score').textContent=score+'%';
+  document.getElementById('score-label').textContent='Performance Score (normalised)';
+  document.getElementById('r-earn').textContent='$'+totalEarnings;
+  document.getElementById('r-hard').textContent=hardChoices+' / '+TOTAL_ROUNDS;
+  document.getElementById('r-wins').textContent=wins;
+  document.getElementById('r-profile').textContent=profile;
+  fetch('/sim/save-score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:'hard-easy',score,details:{earned:totalEarnings,hardChoices,wins,profile}})}).catch(()=>{});
+  loadLeaderboard(score);
+}
+
+async function loadLeaderboard(score){
+  try{
+    const res=await fetch('/sim/bot/leaderboard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({score,difficulty:selectedDiff,game:'hard-easy',count:10})});
+    const data=await res.json();
+    document.getElementById('leaderboard-area').innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem"><h3 style="font-size:1rem;font-weight:700;margin-bottom:0.5rem">🏆 Ranked <span style="color:var(--accent)">#${data.user_rank}</span> of ${data.total_candidates}</h3>${data.leaderboard.slice(0,8).map(e=>`<div style="display:flex;align-items:center;gap:0.75rem;padding:0.4rem 0.6rem;border-radius:8px;background:${e.is_user?'rgba(77,159,255,0.1)':'transparent'};border:1px solid ${e.is_user?'rgba(77,159,255,0.3)':'transparent'};margin-bottom:0.25rem"><span style="width:22px;text-align:center;font-size:0.78rem;font-weight:700;color:${e.rank<=3?'var(--warning)':'var(--text-muted)'}">${e.rank}</span><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:800;flex-shrink:0">${e.avatar.slice(0,2)}</div><div style="flex:1;min-width:0"><div style="font-size:0.83rem;font-weight:${e.is_user?700:500}">${e.name}${e.is_user?' 👈':''}</div><div style="font-size:0.72rem;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.school}</div></div><span style="font-size:0.85rem;font-weight:700;color:${e.is_user?'var(--accent)':'var(--text)'}">${e.score}%</span></div>`).join('')}</div>`;
+  }catch(e){}
+}
+</script>
+{% endblock %}

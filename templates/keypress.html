@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}Keypress Game — AssessSim{% endblock %}
+{% block content %}
+<div class="game-page">
+  <div class="game-header">
+    <div class="game-header-icon" style="background:linear-gradient(135deg,#00b894,#0984e3)">⌨️</div>
+    <div>
+      <h1>Keypress Game</h1>
+      <p>Pymetrics — Following Instructions &amp; Impulsivity Control</p>
+    </div>
+  </div>
+  <div class="game-meta">
+    <div class="game-meta-item">⌨️ <strong>20</strong>&nbsp;rounds</div>
+    <div class="game-meta-item">⏱️ Fast-paced</div>
+    <div class="game-meta-item">🏦 JP Morgan · Goldman Sachs · BCG</div>
+  </div>
+
+  <div id="instructions" class="instructions">
+    <h2>📋 Instructions</h2>
+    <ul>
+      <li>Press <strong>SPACE</strong> (or tap the screen) as fast as you can when you see <span style="color:var(--success);font-weight:700">PRESS!</span></li>
+      <li><strong>Do NOT press</strong> anything when you see <span style="color:var(--danger);font-weight:700">WAIT</span>.</li>
+      <li>The game rapidly alternates between PRESS and WAIT phases.</li>
+      <li>This game measures <strong>reaction speed</strong> and ability to <strong>inhibit impulses</strong>.</li>
+    </ul>
+    <div class="notice" style="margin-top:1rem">💡 <strong>Tip:</strong> Stay alert — the colour change is your only signal. Pressing during WAIT costs you more than a slow reaction.</div>
+    <div style="margin-top:1.25rem">
+      <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--text-muted);margin-bottom:0.5rem;">⚔️ Competition difficulty</label>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn btn-sm diff-btn" data-d="easy" onclick="setDiff(this)" style="background:rgba(0,210,160,0.15);border:1px solid var(--success);color:var(--success)">Casual</button>
+        <button class="btn btn-sm diff-btn selected-diff" data-d="average" onclick="setDiff(this)" style="background:rgba(77,159,255,0.2);border:1px solid var(--accent);color:var(--accent)">Average</button>
+        <button class="btn btn-sm diff-btn" data-d="above_average" onclick="setDiff(this)" style="background:rgba(162,155,254,0.15);border:1px solid var(--accent2);color:var(--accent2)">Above Average</button>
+        <button class="btn btn-sm diff-btn" data-d="cut_throat" onclick="setDiff(this)" style="background:rgba(255,94,122,0.15);border:1px solid var(--danger);color:var(--danger)">Quant God 🔥</button>
+      </div>
+    </div>
+    <button class="btn btn-primary mt-2" onclick="startGame()">Start Game</button>
+  </div>
+
+  <div id="game-area" class="hidden" style="text-align:center;padding:2rem 1rem">
+    <div id="phase-display" style="font-size:5rem;font-weight:900;margin:2rem 0;min-height:7rem;display:flex;align-items:center;justify-content:center;transition:color 0.05s;border-radius:var(--radius-lg);background:var(--bg2);border:2px solid var(--border)"></div>
+    <div id="feedback" style="font-size:1.1rem;min-height:2rem;margin-bottom:0.5rem"></div>
+    <div style="color:var(--text-muted);font-size:0.85rem">Press <kbd style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:0.2rem 0.5rem;font-size:0.8rem">SPACE</kbd> or tap the screen</div>
+    <div id="round-counter" style="margin-top:0.75rem;color:var(--text-muted);font-size:0.85rem"></div>
+    <div class="progress-bar-wrap" style="margin-top:1rem">
+      <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div id="results-area" class="hidden" style="text-align:center;padding:2rem">
+    <h2 style="font-size:1.8rem;margin-bottom:0.5rem">Game Complete!</h2>
+    <div class="score-display" id="final-score"></div>
+    <p class="text-muted">Keypress Score</p>
+    <div class="results-grid" style="max-width:540px;margin:1.5rem auto">
+      <div class="result-card"><div class="rc-value" id="r-hits">0</div><div class="rc-label">Correct Presses</div></div>
+      <div class="result-card"><div class="rc-value" id="r-miss">0</div><div class="rc-label">Misses</div></div>
+      <div class="result-card"><div class="rc-value" id="r-false">0</div><div class="rc-label">False Presses</div></div>
+      <div class="result-card"><div class="rc-value" id="r-rt">—</div><div class="rc-label">Avg RT (ms)</div></div>
+    </div>
+    <div id="leaderboard-area" style="max-width:600px;margin:1.5rem auto;text-align:left"></div>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button class="btn btn-outline" onclick="location.reload()">Play Again</button>
+      <a href="/" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const GO_COUNT = 12, NOGO_COUNT = 8, PHASE_MS = 1200, GAP_MS = 500;
+let sequence=[], roundIdx=0, phaseActive=false, phaseStart=0, pressed=false;
+let hits=0, misses=0, falsePresses=0, rts=[], selectedDiff='average';
+
+function setDiff(btn){
+  document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('selected-diff'));
+  btn.classList.add('selected-diff');
+  selectedDiff=btn.dataset.d;
+}
+
+function startGame(){
+  sequence=[];
+  for(let i=0;i<GO_COUNT;i++) sequence.push('GO');
+  for(let i=0;i<NOGO_COUNT;i++) sequence.push('NOGO');
+  for(let i=sequence.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[sequence[i],sequence[j]]=[sequence[j],sequence[i]];}
+  while(sequence[0]==='NOGO'){const j=1+Math.floor(Math.random()*(sequence.length-1));[sequence[0],sequence[j]]=[sequence[j],sequence[i]];}
+  document.getElementById('instructions').classList.add('hidden');
+  document.getElementById('game-area').classList.remove('hidden');
+  document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();handlePress();}});
+  document.getElementById('game-area').addEventListener('click',e=>{if(e.target.tagName!=='BUTTON')handlePress();});
+  roundIdx=0; hits=0; misses=0; falsePresses=0; rts=[];
+  nextRound();
+}
+
+function handlePress(){
+  if(!phaseActive) return;
+  if(sequence[roundIdx]==='GO'){
+    if(!pressed){pressed=true;const rt=Date.now()-phaseStart;rts.push(rt);hits++;showFeedback('✓ '+rt+'ms','var(--success)');}
+  } else {
+    falsePresses++;showFeedback('✗ False press!','var(--danger)');
+  }
+}
+
+function showFeedback(msg,color){const el=document.getElementById('feedback');el.textContent=msg;el.style.color=color;}
+
+function nextRound(){
+  if(roundIdx>=sequence.length){endGame();return;}
+  pressed=false;phaseActive=false;
+  const phase=sequence[roundIdx];
+  const el=document.getElementById('phase-display');
+  el.textContent='';el.style.color='var(--text-muted)';el.style.borderColor='var(--border)';
+  document.getElementById('feedback').textContent='';
+  document.getElementById('round-counter').textContent='Round '+(roundIdx+1)+' / '+sequence.length;
+  document.getElementById('progress-bar').style.width=((roundIdx/sequence.length)*100)+'%';
+  setTimeout(()=>{
+    el.textContent=phase==='GO'?'PRESS!':'WAIT';
+    el.style.color=phase==='GO'?'var(--success)':'var(--danger)';
+    el.style.borderColor=phase==='GO'?'rgba(0,210,160,0.4)':'rgba(255,94,122,0.4)';
+    phaseActive=true;phaseStart=Date.now();
+    setTimeout(()=>{
+      phaseActive=false;
+      if(phase==='GO'&&!pressed){misses++;showFeedback('Too slow!','var(--danger)');}
+      roundIdx++;
+      setTimeout(nextRound,GAP_MS-100);
+    },PHASE_MS);
+  },GAP_MS+Math.random()*300);
+}
+
+function endGame(){
+  document.getElementById('game-area').classList.add('hidden');
+  document.getElementById('results-area').classList.remove('hidden');
+  const nogoCorrect=NOGO_COUNT-falsePresses;
+  const accuracy=(hits+nogoCorrect)/(GO_COUNT+NOGO_COUNT);
+  const avgRt=rts.length?Math.round(rts.reduce((a,b)=>a+b,0)/rts.length):800;
+  const speedBonus=Math.max(0,1-avgRt/900);
+  const score=Math.round(Math.min(100,accuracy*80+speedBonus*20));
+  document.getElementById('final-score').textContent=score+'%';
+  document.getElementById('r-hits').textContent=hits+' / '+GO_COUNT;
+  document.getElementById('r-miss').textContent=misses;
+  document.getElementById('r-false').textContent=falsePresses;
+  document.getElementById('r-rt').textContent=(rts.length?avgRt+'ms':'—');
+  fetch('/sim/save-score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:'keypress',score})}).catch(()=>{});
+  loadLeaderboard(score);
+}
+
+async function loadLeaderboard(score){
+  try{
+    const res=await fetch('/sim/bot/leaderboard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({score,difficulty:selectedDiff,game:'keypress',count:10})});
+    const data=await res.json();
+    document.getElementById('leaderboard-area').innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem"><h3 style="font-size:1rem;font-weight:700;margin-bottom:0.5rem">🏆 Ranked <span style="color:var(--accent)">#${data.user_rank}</span> of ${data.total_candidates} (top ${Math.round(100-data.percentile+100/data.total_candidates)}%)</h3>${data.leaderboard.slice(0,8).map(e=>`<div style="display:flex;align-items:center;gap:0.75rem;padding:0.4rem 0.6rem;border-radius:8px;background:${e.is_user?'rgba(77,159,255,0.1)':'transparent'};border:1px solid ${e.is_user?'rgba(77,159,255,0.3)':'transparent'};margin-bottom:0.25rem"><span style="width:22px;text-align:center;font-size:0.78rem;font-weight:700;color:${e.rank<=3?'var(--warning)':'var(--text-muted)'}">${e.rank}</span><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:800;flex-shrink:0">${e.avatar.slice(0,2)}</div><div style="flex:1;min-width:0"><div style="font-size:0.83rem;font-weight:${e.is_user?700:500}">${e.name}${e.is_user?' 👈':''}</div><div style="font-size:0.72rem;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.school}</div></div><span style="font-size:0.85rem;font-weight:700;color:${e.is_user?'var(--accent)':'var(--text)'}">${e.score}%</span></div>`).join('')}</div>`;
+  }catch(e){}
+}
+</script>
+{% endblock %}

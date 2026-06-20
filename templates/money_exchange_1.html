@@ -1,0 +1,681 @@
+{% extends "base.html" %}
+{% block title %}Money Exchange — Pymetrics Trust Game | AssessSim{% endblock %}
+
+{% block content %}
+<div class="game-page">
+  <!-- HEADER -->
+  <div class="game-header">
+    <div class="game-header-icon">🤝</div>
+    <div>
+      <h1 style="margin:0;font-size:1.6rem;font-weight:800;">Money Exchange Game</h1>
+      <p style="margin:0.25rem 0 0;color:var(--text-muted);font-size:0.9rem;">Pymetrics Trust Game — how much do you trust a stranger?</p>
+    </div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <div id="setupScreen">
+    <div class="instructions">
+      <strong>How it works</strong>
+      <ul style="margin:0.5rem 0 0 1.1rem;line-height:1.85;color:var(--text-muted);font-size:0.88rem;">
+        <li>You will play <strong>5 rounds</strong> with an anonymous partner.</li>
+        <li>Each round you receive <strong>$10</strong>. Decide how much to send to your partner (<strong>$0–$10</strong>).</li>
+        <li>Whatever you send gets <strong>tripled</strong> before your partner receives it.</li>
+        <li>Your partner then decides how much to <strong>send back</strong> to you.</li>
+        <li>After seeing what your partner returned, <strong>rate the fairness</strong> on a 1–5 scale.</li>
+        <li>There are no right or wrong answers — be yourself!</li>
+      </ul>
+    </div>
+
+    <div class="question-card" style="margin-top:1.5rem;">
+      <div style="margin-bottom:1.5rem;">
+        <label style="display:block;font-size:0.8rem;font-weight:700;color:var(--text-muted);margin-bottom:0.5rem;text-transform:uppercase;letter-spacing:0.06em;">Leaderboard Pool</label>
+        <select id="difficultySelect" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:0.6rem 0.9rem;color:var(--text);font-size:0.88rem;width:100%;outline:none;">
+          <option value="easy">Easy — Casual Practice</option>
+          <option value="average" selected>Average — Most Students</option>
+          <option value="above_average">Above Average — Target IB / PE</option>
+          <option value="cut_throat">Cut-Throat — Elite Programs</option>
+        </select>
+      </div>
+      <div class="notice" style="margin-bottom:1.5rem;">
+        <strong>Note:</strong> This game measures emotional and social traits — generosity, trust, and fairness sensitivity. There is no single "correct" way to play.
+      </div>
+      <button class="btn btn-primary" onclick="startGame()" style="width:100%;justify-content:center;font-size:1rem;padding:0.85rem;">Start Game</button>
+    </div>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="gameScreen" class="hidden">
+    <!-- Progress -->
+    <div style="margin-bottom:1.25rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+        <span style="font-size:0.8rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Round <span id="roundNumDisplay">1</span> of 5</span>
+        <span style="font-size:0.8rem;color:var(--text-muted);">Partner: <strong id="partnerNameDisplay" style="color:var(--accent);"></strong></span>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progressBarFill" style="width:0%;transition:width 0.4s;"></div>
+      </div>
+    </div>
+
+    <!-- PHASE 1: Send money -->
+    <div id="phaseSend">
+      <div class="question-card">
+        <div class="question-number">Round <span id="phaseSendRound">1</span></div>
+        <div class="question-text">You have received <strong>$10</strong>. How much will you send to <strong id="partnerNameSend"></strong>?</div>
+        <p style="color:var(--text-muted);font-size:0.85rem;margin-top:0.25rem;margin-bottom:1.5rem;">
+          Whatever you send will be <strong>tripled</strong> before your partner receives it.
+          You keep the rest.
+        </p>
+
+        <div style="margin-bottom:1.5rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+            <label style="font-size:0.85rem;font-weight:700;color:var(--text-muted);">Amount to send:</label>
+            <div style="font-size:1.5rem;font-weight:800;color:var(--accent);">$<span id="sendAmountDisplay">5</span></div>
+          </div>
+          <input type="range" id="sendSlider" min="0" max="10" step="1" value="5"
+            oninput="updateSendDisplay(this.value)"
+            style="width:100%;accent-color:var(--accent);height:6px;cursor:pointer;" />
+          <div style="display:flex;justify-content:space-between;font-size:0.73rem;color:var(--text-muted);margin-top:0.4rem;">
+            <span>$0 (send nothing)</span>
+            <span>$10 (send all)</span>
+          </div>
+        </div>
+
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:0.85rem 1rem;margin-bottom:1.5rem;font-size:0.85rem;line-height:1.6;">
+          <div style="display:flex;justify-content:space-between;"><span>You send:</span><strong id="calcSend">$5</strong></div>
+          <div style="display:flex;justify-content:space-between;"><span>You keep:</span><strong id="calcKeep">$5</strong></div>
+          <div style="display:flex;justify-content:space-between;"><span id="partnerNameCalc"></span> receives (×3):</div>
+          <div style="text-align:right;font-size:1.1rem;font-weight:800;color:var(--accent);" id="calcTripled">$15</div>
+        </div>
+
+        <button class="btn btn-primary" onclick="confirmSend()" style="width:100%;justify-content:center;">
+          Send $<span id="sendBtnAmount">5</span> →
+        </button>
+      </div>
+    </div>
+
+    <!-- PHASE 2: Partner responds -->
+    <div id="phasePartnerResponse" class="hidden">
+      <div class="question-card">
+        <div class="question-number">Round <span id="phaseRespRound">1</span> — Partner's Response</div>
+        <div style="text-align:center;padding:1.5rem 0 1rem;">
+          <div style="font-size:2.5rem;margin-bottom:0.5rem;" id="partnerRespEmoji">🤔</div>
+          <div style="font-size:0.9rem;color:var(--text-muted);" id="partnerThinkingText">
+            <strong id="partnerNameResp"></strong> is deciding how much to send back…
+          </div>
+        </div>
+        <div id="partnerDecisionArea" class="hidden">
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:1.25rem;">
+            <div style="font-size:0.85rem;line-height:1.8;">
+              <div style="display:flex;justify-content:space-between;"><span>You sent:</span><strong id="respSentAmt">—</strong></div>
+              <div style="display:flex;justify-content:space-between;"><span>Partner received (×3):</span><strong id="respTripled">—</strong></div>
+              <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);margin-top:0.5rem;padding-top:0.5rem;">
+                <span><strong id="partnerNameRespLine"></strong> sends back:</span>
+                <strong id="respReturnAmt" style="color:var(--success);font-size:1.1rem;">—</strong>
+              </div>
+              <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);margin-top:0.5rem;padding-top:0.5rem;">
+                <span>Your round total:</span>
+                <strong id="respRoundTotal" style="color:var(--accent);font-size:1.1rem;">—</strong>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-bottom:1.25rem;">
+            <label style="display:block;font-size:0.88rem;font-weight:700;margin-bottom:0.75rem;">How <strong>fair</strong> did this feel?</label>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;" id="fairnessButtons">
+              <button class="fairness-btn" onclick="selectFairness(1)" data-val="1">1<br><span>Very Unfair</span></button>
+              <button class="fairness-btn" onclick="selectFairness(2)" data-val="2">2<br><span>Unfair</span></button>
+              <button class="fairness-btn" onclick="selectFairness(3)" data-val="3">3<br><span>Neutral</span></button>
+              <button class="fairness-btn" onclick="selectFairness(4)" data-val="4">4<br><span>Fair</span></button>
+              <button class="fairness-btn" onclick="selectFairness(5)" data-val="5">5<br><span>Very Fair</span></button>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" onclick="nextRound()" id="nextRoundBtn" disabled style="width:100%;justify-content:center;">
+            Next Round →
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS SCREEN -->
+  <div id="resultsScreen" class="hidden">
+    <div style="text-align:center;margin-bottom:2rem;">
+      <div id="resultEmoji" style="font-size:3.5rem;margin-bottom:0.5rem;line-height:1.1;">🤝</div>
+      <h2 style="margin:0;font-size:1.75rem;font-weight:800;" id="resultTitle">Game Complete!</h2>
+      <p style="color:var(--text-muted);margin:0.4rem 0 0;" id="resultSubtitle">Here's a summary of your social behaviour</p>
+    </div>
+
+    <div class="results-grid" style="margin-bottom:1.5rem;">
+      <div class="result-card">
+        <div class="rc-value" id="rcScore" style="color:var(--accent);">—</div>
+        <div class="rc-label">Score / 100</div>
+      </div>
+      <div class="result-card">
+        <div class="rc-value" id="rcAvgSent">—</div>
+        <div class="rc-label">Avg Sent</div>
+      </div>
+      <div class="result-card">
+        <div class="rc-value" id="rcAvgReturn">—</div>
+        <div class="rc-label">Avg Return</div>
+      </div>
+      <div class="result-card">
+        <div class="rc-value" id="rcFairness">—</div>
+        <div class="rc-label">Avg Fairness</div>
+      </div>
+    </div>
+
+    <!-- Trait breakdown -->
+    <div class="question-card" style="margin-bottom:1.5rem;">
+      <h3 style="margin:0 0 1rem;font-size:1rem;font-weight:700;">Trait Profile</h3>
+      <div style="display:flex;flex-direction:column;gap:0.85rem;">
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:0.35rem;">
+            <span style="font-weight:600;">Generosity</span>
+            <span id="traitGenerosity" style="color:var(--accent);font-weight:700;">—</span>
+          </div>
+          <div class="progress-bar-wrap"><div class="progress-bar-fill" id="barGenerosity" style="width:0%;"></div></div>
+          <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.3rem;" id="descGenerosity"></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:0.35rem;">
+            <span style="font-weight:600;">Trust</span>
+            <span id="traitTrust" style="color:var(--accent);font-weight:700;">—</span>
+          </div>
+          <div class="progress-bar-wrap"><div class="progress-bar-fill" id="barTrust" style="width:0%;transition:width 0.6s 0.1s;"></div></div>
+          <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.3rem;" id="descTrust"></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:0.35rem;">
+            <span style="font-weight:600;">Fairness Sensitivity</span>
+            <span id="traitFairness" style="color:var(--accent);font-weight:700;">—</span>
+          </div>
+          <div class="progress-bar-wrap"><div class="progress-bar-fill" id="barFairness" style="width:0%;transition:width 0.6s 0.2s;"></div></div>
+          <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.3rem;" id="descFairness"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Round summary table -->
+    <div class="question-card" style="margin-bottom:1.5rem;overflow-x:auto;">
+      <h3 style="margin:0 0 1rem;font-size:1rem;font-weight:700;">Round-by-Round Summary</h3>
+      <table class="data-table" style="width:100%;border-collapse:collapse;font-size:0.83rem;">
+        <thead>
+          <tr>
+            <th style="text-align:left;padding:0.5rem 0.6rem;color:var(--text-muted);font-weight:600;border-bottom:1px solid var(--border);">Round</th>
+            <th style="text-align:right;padding:0.5rem 0.6rem;color:var(--text-muted);font-weight:600;border-bottom:1px solid var(--border);">Sent</th>
+            <th style="text-align:right;padding:0.5rem 0.6rem;color:var(--text-muted);font-weight:600;border-bottom:1px solid var(--border);">×3</th>
+            <th style="text-align:right;padding:0.5rem 0.6rem;color:var(--text-muted);font-weight:600;border-bottom:1px solid var(--border);">Returned</th>
+            <th style="text-align:right;padding:0.5rem 0.6rem;color:var(--text-muted);font-weight:600;border-bottom:1px solid var(--border);">Your Total</th>
+            <th style="text-align:right;padding:0.5rem 0.6rem;color:var(--text-muted);font-weight:600;border-bottom:1px solid var(--border);">Fairness</th>
+          </tr>
+        </thead>
+        <tbody id="roundSummaryBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Leaderboard -->
+    <div class="question-card" style="margin-bottom:1.5rem;">
+      <h3 style="margin:0 0 1rem;font-size:1rem;font-weight:700;">How You Compare</h3>
+      <div id="leaderboardContainer">
+        <div style="text-align:center;padding:2rem;color:var(--text-muted);font-size:0.88rem;">Loading leaderboard…</div>
+      </div>
+      <div id="leaderboardRankInfo" style="margin-top:1rem;padding:0.75rem 1rem;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:var(--radius);font-size:0.85rem;display:none;"></div>
+    </div>
+
+    <div style="display:flex;gap:0.75rem;flex-wrap:wrap;justify-content:center;">
+      <button class="btn btn-primary" onclick="playAgain()">▶ Play Again</button>
+      <a href="/" class="btn btn-outline">← Back to Home</a>
+    </div>
+  </div>
+</div>
+
+<style>
+.game-page { max-width: 660px; margin: 2rem auto; padding: 0 1rem 4rem; }
+.game-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.game-header-icon { font-size: 2.2rem; line-height: 1; }
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 0.75rem;
+}
+.result-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.1rem 0.75rem;
+  text-align: center;
+}
+.rc-value { font-size: 1.9rem; font-weight: 800; line-height: 1; }
+.rc-label { font-size: 0.73rem; color: var(--text-muted); margin-top: 0.4rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+
+/* Fairness buttons */
+.fairness-btn {
+  flex: 1;
+  min-width: 52px;
+  padding: 0.6rem 0.3rem;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.4;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  text-align: center;
+}
+.fairness-btn span { font-size: 0.65rem; font-weight: 500; color: var(--text-muted); display: block; }
+.fairness-btn:hover { border-color: var(--accent); background: rgba(99,102,241,0.1); }
+.fairness-btn.selected {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.fairness-btn.selected span { color: rgba(255,255,255,0.8); }
+
+/* Leaderboard */
+.lb-row {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.55rem 0.25rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+.lb-row:last-child { border-bottom: none; }
+.lb-row.is-user {
+  background: rgba(99,102,241,0.08);
+  border-radius: var(--radius);
+  padding-left: 0.5rem;
+  margin: 0.1rem -0.25rem;
+}
+.lb-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; font-weight: 700; color: #fff; flex-shrink: 0;
+}
+
+/* data-table */
+.data-table td { padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--border); }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table td:not(:first-child) { text-align: right; }
+
+/* Progress bar */
+.progress-bar-wrap { background: var(--bg3); border-radius: 99px; height: 7px; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.6s; }
+
+.notice {
+  background: rgba(245,158,11,0.1);
+  border: 1px solid rgba(245,158,11,0.3);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Constants ────────────────────────────────────────────────────────────────
+const PARTNER_NAMES = ['Alex', 'Jamie', 'Sam', 'Morgan'];
+const TOTAL_ROUNDS = 5;
+
+// ── State ────────────────────────────────────────────────────────────────────
+let partnerName = '';
+let currentRound = 1;
+let selectedFairness = null;
+let sendAmount = 5;
+let lbDifficulty = 'average';
+
+// Per-round data: { sent, tripled, returned, roundTotal, fairness }
+let rounds = [];
+
+// Current round temp vars
+let curSent = 0;
+let curTripled = 0;
+let curReturned = 0;
+let curRoundTotal = 0;
+
+// ── Setup ────────────────────────────────────────────────────────────────────
+function startGame() {
+  partnerName = PARTNER_NAMES[Math.floor(Math.random() * PARTNER_NAMES.length)];
+  lbDifficulty = document.getElementById('difficultySelect').value;
+  currentRound = 1;
+  rounds = [];
+  sendAmount = 5;
+  selectedFairness = null;
+
+  // Update partner name displays
+  document.querySelectorAll('#partnerNameDisplay, #partnerNameSend, #partnerNameResp, #partnerNameRespLine, #partnerNameCalc')
+    .forEach(el => { if (el) el.textContent = partnerName; });
+
+  document.getElementById('setupScreen').classList.add('hidden');
+  document.getElementById('resultsScreen').classList.add('hidden');
+  document.getElementById('gameScreen').classList.remove('hidden');
+
+  beginRound();
+}
+
+// ── Round flow ───────────────────────────────────────────────────────────────
+function beginRound() {
+  selectedFairness = null;
+  sendAmount = 5;
+
+  // Update round displays
+  document.getElementById('roundNumDisplay').textContent = currentRound;
+  document.getElementById('phaseSendRound').textContent = currentRound;
+  document.getElementById('progressBarFill').style.width = ((currentRound - 1) / TOTAL_ROUNDS * 100) + '%';
+
+  // Reset slider
+  const slider = document.getElementById('sendSlider');
+  slider.value = '5';
+  updateSendDisplay(5);
+
+  // Show send phase
+  document.getElementById('phaseSend').classList.remove('hidden');
+  document.getElementById('phasePartnerResponse').classList.add('hidden');
+  document.getElementById('partnerDecisionArea').classList.add('hidden');
+}
+
+function updateSendDisplay(val) {
+  sendAmount = parseInt(val, 10);
+  document.getElementById('sendAmountDisplay').textContent = sendAmount;
+  document.getElementById('calcSend').textContent = '$' + sendAmount;
+  document.getElementById('calcKeep').textContent = '$' + (10 - sendAmount);
+  document.getElementById('calcTripled').textContent = '$' + (sendAmount * 3);
+  document.getElementById('sendBtnAmount').textContent = sendAmount;
+  // update calc partner name
+  const el = document.getElementById('partnerNameCalc');
+  if (el) el.textContent = partnerName;
+}
+
+function confirmSend() {
+  curSent = sendAmount;
+  curTripled = curSent * 3;
+
+  // Show response phase
+  document.getElementById('phaseSend').classList.add('hidden');
+  document.getElementById('phasePartnerResponse').classList.remove('hidden');
+  document.getElementById('phaseRespRound').textContent = currentRound;
+  document.getElementById('partnerNameResp').textContent = partnerName;
+
+  // Thinking animation
+  document.getElementById('partnerRespEmoji').textContent = '🤔';
+  document.getElementById('partnerThinkingText').innerHTML = '<strong>' + partnerName + '</strong> is deciding how much to send back…';
+  document.getElementById('partnerDecisionArea').classList.add('hidden');
+
+  // Partner decides after a delay (simulate thinking)
+  setTimeout(partnerDecides, 1200 + Math.random() * 800);
+}
+
+function partnerDecides() {
+  // AI returns 40–60% of what they received, rounded to nearest dollar
+  const returnFraction = 0.40 + Math.random() * 0.20;
+  curReturned = Math.round(curTripled * returnFraction);
+  // Clamp to valid range
+  curReturned = Math.max(0, Math.min(curTripled, curReturned));
+  curRoundTotal = (10 - curSent) + curReturned;
+
+  // Update UI
+  document.getElementById('partnerRespEmoji').textContent = '💬';
+  document.getElementById('partnerThinkingText').innerHTML =
+    '<strong>' + partnerName + '</strong> has made their decision!';
+
+  document.getElementById('respSentAmt').textContent = '$' + curSent;
+  document.getElementById('respTripled').textContent = '$' + curTripled;
+  document.getElementById('respReturnAmt').textContent = '$' + curReturned;
+  document.getElementById('respRoundTotal').textContent = '$' + curRoundTotal;
+  document.getElementById('partnerNameRespLine').textContent = partnerName;
+
+  // Reset fairness selection
+  selectedFairness = null;
+  document.querySelectorAll('.fairness-btn').forEach(btn => btn.classList.remove('selected'));
+  document.getElementById('nextRoundBtn').disabled = true;
+
+  document.getElementById('partnerDecisionArea').classList.remove('hidden');
+}
+
+function selectFairness(val) {
+  selectedFairness = val;
+  document.querySelectorAll('.fairness-btn').forEach(btn => {
+    btn.classList.toggle('selected', parseInt(btn.dataset.val, 10) === val);
+  });
+  document.getElementById('nextRoundBtn').disabled = false;
+}
+
+function nextRound() {
+  if (selectedFairness === null) return;
+
+  // Record round
+  rounds.push({
+    round: currentRound,
+    sent: curSent,
+    tripled: curTripled,
+    returned: curReturned,
+    roundTotal: curRoundTotal,
+    fairness: selectedFairness
+  });
+
+  currentRound++;
+
+  if (currentRound > TOTAL_ROUNDS) {
+    document.getElementById('progressBarFill').style.width = '100%';
+    setTimeout(finishGame, 250);
+  } else {
+    beginRound();
+  }
+}
+
+// ── Scoring ──────────────────────────────────────────────────────────────────
+function computeScore() {
+  const avgSent = rounds.reduce((s, r) => s + r.sent, 0) / rounds.length;
+  const avgReturned = rounds.reduce((s, r) => s + r.returned, 0) / rounds.length;
+  const avgFairness = rounds.reduce((s, r) => s + r.fairness, 0) / rounds.length;
+
+  // Generosity: how much you sent out of 10
+  const generosityScore = Math.min(100, Math.round((avgSent / 10) * 100));
+
+  // Trust: correlated with how much you sent AND stayed consistent
+  // Consistently sending means trust
+  const sentValues = rounds.map(r => r.sent);
+  const sentMean = sentValues.reduce((a, b) => a + b, 0) / sentValues.length;
+  const sentVariance = sentValues.reduce((s, v) => s + Math.pow(v - sentMean, 2), 0) / sentValues.length;
+  const consistencyBonus = Math.max(0, 1 - sentVariance / 25);  // 25 = max variance (0-10 range)
+  const trustScore = Math.min(100, Math.round(((avgSent / 10) * 0.7 + consistencyBonus * 0.3) * 100));
+
+  // Fairness sensitivity: variance in fairness ratings relative to actual returns
+  // High sensitivity = ratings correlate strongly with return percentages
+  const returnPcts = rounds.map(r => r.tripled > 0 ? (r.returned / r.tripled) : 0.5);
+  const fairnessRatings = rounds.map(r => (r.fairness - 1) / 4);  // normalise 1-5 to 0-1
+  // Pearson-ish: check if return pct and fairness rating move together
+  const returnMean = returnPcts.reduce((a, b) => a + b, 0) / returnPcts.length;
+  const fairnessMean = fairnessRatings.reduce((a, b) => a + b, 0) / fairnessRatings.length;
+  let cov = 0, varR = 0, varF = 0;
+  for (let i = 0; i < rounds.length; i++) {
+    cov += (returnPcts[i] - returnMean) * (fairnessRatings[i] - fairnessMean);
+    varR += Math.pow(returnPcts[i] - returnMean, 2);
+    varF += Math.pow(fairnessRatings[i] - fairnessMean, 2);
+  }
+  const corr = (varR > 0 && varF > 0) ? cov / Math.sqrt(varR * varF) : 0;
+  const fairnessSensitivity = Math.min(100, Math.round(((corr + 1) / 2) * 100));  // map -1..1 to 0..100
+
+  // Overall score
+  const overallScore = Math.min(100, Math.round(
+    generosityScore * 0.4 + trustScore * 0.3 + fairnessSensitivity * 0.3
+  ));
+
+  return {
+    overallScore,
+    generosityScore,
+    trustScore,
+    fairnessSensitivity,
+    avgSent: Math.round(avgSent * 10) / 10,
+    avgReturned: Math.round(avgReturned * 10) / 10,
+    avgFairness: Math.round(avgFairness * 10) / 10
+  };
+}
+
+// ── Finish ───────────────────────────────────────────────────────────────────
+async function finishGame() {
+  document.getElementById('gameScreen').classList.add('hidden');
+  document.getElementById('resultsScreen').classList.remove('hidden');
+
+  const stats = computeScore();
+
+  // Header
+  if (stats.overallScore >= 80) {
+    document.getElementById('resultEmoji').textContent = '🌟';
+    document.getElementById('resultTitle').textContent = 'Highly Prosocial!';
+    document.getElementById('resultSubtitle').textContent = 'You showed strong generosity, trust, and fair-mindedness.';
+  } else if (stats.overallScore >= 60) {
+    document.getElementById('resultEmoji').textContent = '🤝';
+    document.getElementById('resultTitle').textContent = 'Balanced Cooperator';
+    document.getElementById('resultSubtitle').textContent = 'You balanced self-interest and cooperation well.';
+  } else if (stats.overallScore >= 40) {
+    document.getElementById('resultEmoji').textContent = '🧐';
+    document.getElementById('resultTitle').textContent = 'Cautious Strategist';
+    document.getElementById('resultSubtitle').textContent = 'You played it safe — pragmatic under uncertainty.';
+  } else {
+    document.getElementById('resultEmoji').textContent = '🔒';
+    document.getElementById('resultTitle').textContent = 'Risk-Averse';
+    document.getElementById('resultSubtitle').textContent = 'You were highly conservative — common in high-stakes roles.';
+  }
+
+  // Result cards
+  document.getElementById('rcScore').textContent = stats.overallScore;
+  document.getElementById('rcAvgSent').textContent = '$' + stats.avgSent;
+  document.getElementById('rcAvgReturn').textContent = '$' + stats.avgReturned;
+  document.getElementById('rcFairness').textContent = stats.avgFairness + '/5';
+
+  // Trait bars
+  setTrait('Generosity', stats.generosityScore, 'barGenerosity', 'traitGenerosity', 'descGenerosity',
+    ['Kept most of your money — highly risk-averse', 'Somewhat cautious with giving', 'Moderate generosity — balanced approach', 'Generous — comfortable sharing resources', 'Highly generous — prioritises collective good']);
+  setTrait('Trust', stats.trustScore, 'barTrust', 'traitTrust', 'descTrust',
+    ['Low trust in unknown partners', 'Cautious — trust must be earned', 'Moderate trust — situationally dependent', 'High trust — willing to take social risks', 'Very high interpersonal trust']);
+  setTrait('Fairness Sensitivity', stats.fairnessSensitivity, 'barFairness', 'traitFairness', 'descFairness',
+    ['Low sensitivity — outcomes don\'t affect your fairness judgement much', 'Somewhat sensitive to fairness norms', 'Moderate fairness sensitivity', 'High sensitivity — fairness ratings track outcomes well', 'Very high fairness sensitivity — strong justice orientation']);
+
+  // Round summary table
+  let tableHtml = '';
+  rounds.forEach(r => {
+    const stars = '★'.repeat(r.fairness) + '☆'.repeat(5 - r.fairness);
+    tableHtml += `
+      <tr>
+        <td>Round ${r.round}</td>
+        <td>$${r.sent}</td>
+        <td>$${r.tripled}</td>
+        <td style="color:var(--success);">$${r.returned}</td>
+        <td style="color:var(--accent);">$${r.roundTotal}</td>
+        <td style="color:var(--warning);letter-spacing:-1px;">${stars}</td>
+      </tr>
+    `;
+  });
+  document.getElementById('roundSummaryBody').innerHTML = tableHtml;
+
+  // Save score
+  try {
+    await fetch('/sim/save-score', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        game: 'money_exchange_1',
+        score: stats.overallScore,
+        details: {
+          avg_sent: stats.avgSent,
+          avg_returned: stats.avgReturned,
+          avg_fairness: stats.avgFairness,
+          generosity: stats.generosityScore,
+          trust: stats.trustScore,
+          fairness_sensitivity: stats.fairnessSensitivity
+        }
+      })
+    });
+  } catch (e) { /* swallow */ }
+
+  // Leaderboard
+  try {
+    const lbRes = await fetch('/sim/bot/leaderboard', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ score: stats.overallScore, difficulty: lbDifficulty, game: 'money_exchange_1', count: 10 })
+    });
+    if (lbRes.ok) {
+      const lbData = await lbRes.json();
+      renderLeaderboard(lbData);
+    } else {
+      showLbError();
+    }
+  } catch (e) {
+    showLbError();
+  }
+}
+
+function setTrait(label, score, barId, valId, descId, descTexts) {
+  document.getElementById(barId).style.width = score + '%';
+  document.getElementById(valId).textContent = score + '/100';
+  // Pick description based on quintile
+  const idx = Math.min(4, Math.floor(score / 20));
+  const el = document.getElementById(descId);
+  if (el) el.textContent = descTexts[idx] || '';
+}
+
+function showLbError() {
+  document.getElementById('leaderboardContainer').innerHTML =
+    '<div style="color:var(--text-muted);font-size:0.85rem;text-align:center;padding:1.5rem;">Leaderboard unavailable offline.</div>';
+}
+
+function renderLeaderboard(data) {
+  const container = document.getElementById('leaderboardContainer');
+  if (!data || !data.leaderboard || data.leaderboard.length === 0) {
+    container.innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem;text-align:center;padding:1.5rem;">No leaderboard data available.</div>';
+    return;
+  }
+
+  const avatarBgs = ['#6366f1','#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899','#14b8a6'];
+  let html = '';
+  data.leaderboard.forEach((entry, i) => {
+    const isUser = !!entry.is_user;
+    const bg = avatarBgs[i % avatarBgs.length];
+    let rankDisplay;
+    if (entry.rank === 1) rankDisplay = '🥇';
+    else if (entry.rank === 2) rankDisplay = '🥈';
+    else if (entry.rank === 3) rankDisplay = '🥉';
+    else rankDisplay = '#' + entry.rank;
+
+    const initials = entry.avatar
+      ? entry.avatar.toString().slice(0, 2)
+      : (entry.name || '?').slice(0, 2).toUpperCase();
+
+    html += `
+      <div class="lb-row${isUser ? ' is-user' : ''}">
+        <div style="font-size:0.95rem;min-width:30px;text-align:center;line-height:1;">${rankDisplay}</div>
+        <div class="lb-avatar" style="background:${bg};">${initials}</div>
+        <div style="flex:1;min-width:0;overflow:hidden;">
+          <div style="font-weight:${isUser ? '800' : '600'};font-size:0.85rem;color:${isUser ? 'var(--accent)' : 'var(--text)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            ${entry.name || 'Candidate'}${isUser ? ' <span style="font-size:0.7rem;opacity:0.7;">(You)</span>' : ''}
+          </div>
+          ${entry.school ? `<div style="font-size:0.73rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${entry.school}</div>` : ''}
+        </div>
+        <div style="font-weight:700;font-size:0.9rem;color:${isUser ? 'var(--accent)' : 'var(--text)'};">${entry.score}</div>
+      </div>
+    `;
+  });
+  container.innerHTML = html;
+
+  if (data.user_rank && data.total_candidates) {
+    const rankInfo = document.getElementById('leaderboardRankInfo');
+    const pctText = data.percentile != null ? ` — top <strong>${Math.round(100 - data.percentile)}%</strong> of candidates` : '';
+    rankInfo.innerHTML = `You ranked <strong>#${data.user_rank}</strong> out of <strong>${data.total_candidates}</strong> candidates${pctText}.`;
+    rankInfo.style.display = 'block';
+  }
+}
+
+// ── Play again ───────────────────────────────────────────────────────────────
+function playAgain() {
+  document.getElementById('resultsScreen').classList.add('hidden');
+  document.getElementById('setupScreen').classList.remove('hidden');
+}
+</script>
+{% endblock %}

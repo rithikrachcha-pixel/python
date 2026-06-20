@@ -323,6 +323,60 @@ def skim():
     return render_template('skim.html')
 
 
+@app.route('/game/tower')
+def tower():
+    """Render the Tower of Hanoi planning game."""
+    return render_template('tower.html')
+
+
+@app.route('/game/money-exchange-1')
+def money_exchange_1():
+    """Render the Trust / Money Exchange Game #1."""
+    return render_template('money_exchange_1.html')
+
+
+@app.route('/game/money-exchange-2')
+def money_exchange_2():
+    """Render the Dictator / Altruism Game #2."""
+    return render_template('money_exchange_2.html')
+
+
+@app.route('/game/keypress')
+def keypress():
+    """Render the Keypress reaction game."""
+    return render_template('keypress.html')
+
+
+@app.route('/game/hard-easy')
+def hard_easy():
+    """Render the Hard or Easy Task game."""
+    return render_template('hard_easy.html')
+
+
+@app.route('/game/arrows')
+def arrows():
+    """Render the Arrows direction game."""
+    return render_template('arrows.html')
+
+
+@app.route('/game/lengths')
+def lengths():
+    """Render the Lengths comparison game."""
+    return render_template('lengths.html')
+
+
+@app.route('/game/cards')
+def cards():
+    """Render the Iowa Gambling Task / Cards game."""
+    return render_template('cards.html')
+
+
+@app.route('/game/faces')
+def faces():
+    """Render the Faces emotion recognition game."""
+    return render_template('faces.html')
+
+
 
 @app.route('/dashboard')
 def dashboard():

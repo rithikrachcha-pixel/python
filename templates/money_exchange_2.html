@@ -1,0 +1,367 @@
+{% extends "base.html" %}
+{% block title %}Money Exchange #2 — Pymetrics | AssessSim{% endblock %}
+
+{% block content %}
+<div class="game-page">
+
+  <!-- ── INTRO SCREEN ─────────────────────────────────────────────────── -->
+  <div id="introScreen">
+    <div class="game-header">
+      <div class="game-header-icon">🤝</div>
+      <div>
+        <h1 style="font-size:1.75rem;font-weight:800;margin:0 0 0.3rem">Money Exchange Game #2</h1>
+        <div class="game-meta">
+          <span class="game-meta-item">Pymetrics</span>
+          <span class="game-meta-item">8 Rounds</span>
+          <span class="game-meta-item">Altruism · Generosity</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="instructions">
+      <h3 style="margin:0 0 0.75rem;font-size:1rem;font-weight:700">How to Play</h3>
+      <ul style="margin:0;padding-left:1.25rem;line-height:1.9;color:var(--text-muted);font-size:0.9rem">
+        <li>You will play <strong style="color:var(--text)">8 rounds</strong>. In each round you receive <strong style="color:var(--text)">$10</strong>.</li>
+        <li>Use the slider to decide how much to <strong style="color:var(--text)">give to a charity partner</strong>. You keep the rest.</li>
+        <li>There is no multiplier or payback — this purely measures your generosity.</li>
+        <li>There are no right or wrong answers; be honest about what you would actually do.</li>
+      </ul>
+    </div>
+
+    <div class="notice" style="margin-top:1rem">
+      <strong>What this measures:</strong> Altruism, prosocial behaviour, and resource allocation — traits assessed in Pymetrics' personality-based hiring screen.
+    </div>
+
+    <div style="margin-top:1.5rem;display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap">
+      <div>
+        <label style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);display:block;margin-bottom:0.35rem">Difficulty / Pool</label>
+        <select id="difficultySelect" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:0.55rem 0.9rem;color:var(--text);font-size:0.9rem;cursor:pointer">
+          <option value="easy">Easy</option>
+          <option value="average" selected>Average</option>
+          <option value="above_average">Above Average</option>
+          <option value="cut_throat">Cut-Throat</option>
+        </select>
+      </div>
+      <div style="margin-top:1.4rem">
+        <button class="btn btn-primary" onclick="startGame()" style="font-size:1rem;padding:0.65rem 2rem">Start Game</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── GAME SCREEN ──────────────────────────────────────────────────── -->
+  <div id="gameScreen" class="hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;margin-bottom:1.5rem">
+      <div>
+        <h2 style="margin:0;font-size:1.3rem;font-weight:800">Round <span id="roundNum">1</span> of 8</h2>
+        <p style="margin:0.2rem 0 0;color:var(--text-muted);font-size:0.85rem">Decide how much to give</p>
+      </div>
+      <div class="progress-bar-wrap" style="width:200px">
+        <div class="progress-bar-fill" id="roundProgress" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="question-card" style="max-width:560px;margin:0 auto">
+      <div style="text-align:center;margin-bottom:1.5rem">
+        <div style="font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:0.5rem">You have received</div>
+        <div style="font-size:3.5rem;font-weight:900;color:var(--accent);line-height:1">$10</div>
+      </div>
+
+      <div style="margin-bottom:1.75rem">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.6rem">
+          <label style="font-size:0.85rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.07em">Donate to charity partner</label>
+          <span id="donateLabel" style="font-size:1.5rem;font-weight:800;color:var(--success)">$5</span>
+        </div>
+        <input type="range" id="donateSlider" min="0" max="10" value="5" step="1"
+          oninput="updateSlider()"
+          style="width:100%;accent-color:var(--accent);cursor:pointer;height:6px" />
+        <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--text-muted);margin-top:0.3rem">
+          <span>$0 (keep all)</span>
+          <span>$10 (give all)</span>
+        </div>
+      </div>
+
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:0.9rem 1.1rem;display:flex;justify-content:space-between;margin-bottom:1.5rem;font-size:0.95rem">
+        <span style="color:var(--text-muted)">You keep: <strong id="keepAmt" style="color:var(--text)">$5</strong></span>
+        <span style="color:var(--text-muted)">Charity gets: <strong id="giveAmt" style="color:var(--success)">$5</strong></span>
+      </div>
+
+      <button class="btn btn-primary" onclick="submitRound()" style="width:100%;justify-content:center;font-size:1rem;padding:0.75rem">
+        Confirm &amp; Continue &#8594;
+      </button>
+    </div>
+
+    <!-- Per-round feedback -->
+    <div id="roundFeedback" class="hidden" style="max-width:560px;margin:1.25rem auto 0">
+      <div id="feedbackMsg" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem;text-align:center;font-size:0.95rem;color:var(--text-muted)"></div>
+    </div>
+  </div>
+
+  <!-- ── RESULTS SCREEN ───────────────────────────────────────────────── -->
+  <div id="resultsScreen" class="hidden">
+    <div class="game-header" style="margin-bottom:1.5rem">
+      <div class="game-header-icon">&#128202;</div>
+      <div>
+        <h1 style="font-size:1.6rem;font-weight:800;margin:0 0 0.2rem">Your Results</h1>
+        <p style="margin:0;color:var(--text-muted);font-size:0.9rem">Money Exchange Game #2 — Complete</p>
+      </div>
+    </div>
+
+    <div class="score-display" id="finalScoreDisplay" style="margin-bottom:1.5rem;text-align:center;padding:1.5rem;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg)"></div>
+
+    <div class="results-grid" style="margin-bottom:1.5rem">
+      <div class="result-card">
+        <div class="rc-value" id="res-avg" style="color:var(--success)">&#8212;</div>
+        <div class="rc-label">Avg Donation</div>
+      </div>
+      <div class="result-card">
+        <div class="rc-value" id="res-total">&#8212;</div>
+        <div class="rc-label">Total Given</div>
+      </div>
+      <div class="result-card">
+        <div class="rc-value" id="res-max">&#8212;</div>
+        <div class="rc-label">Most Generous Round</div>
+      </div>
+      <div class="result-card">
+        <div class="rc-value" id="res-zero">&#8212;</div>
+        <div class="rc-label">Rounds with $0 Given</div>
+      </div>
+    </div>
+
+    <!-- Per-round breakdown -->
+    <div style="margin-bottom:1.5rem">
+      <h3 style="font-size:1rem;font-weight:700;margin:0 0 0.75rem">Round-by-Round Breakdown</h3>
+      <div style="overflow-x:auto">
+        <table class="data-table" style="width:100%">
+          <thead>
+            <tr>
+              <th>Round</th>
+              <th>Donated</th>
+              <th>Kept</th>
+              <th>Generosity</th>
+            </tr>
+          </thead>
+          <tbody id="breakdownBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Altruism insight -->
+    <div class="notice" id="altruismInsight" style="margin-bottom:1.5rem"></div>
+
+    <!-- Leaderboard -->
+    <div id="leaderboardSection" class="hidden" style="margin-bottom:1.5rem">
+      <h3 style="font-size:1rem;font-weight:700;margin:0 0 0.75rem">Leaderboard &#8212; <span id="lbDiffLabel"></span></h3>
+      <div style="overflow-x:auto">
+        <table class="data-table" style="width:100%">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Candidate</th>
+              <th>School</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboardBody"></tbody>
+        </table>
+      </div>
+      <p style="margin:0.6rem 0 0;font-size:0.8rem;color:var(--text-muted)" id="lbMeta"></p>
+    </div>
+
+    <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="restartGame()">Play Again</button>
+      <a href="/" class="btn btn-outline">Back to Home</a>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+  // ── State ──────────────────────────────────────────────────────────────
+  var TOTAL_ROUNDS = 8;
+  var currentRound = 0;
+  var donations = [];
+  var finalScore = 0;
+
+  // ── Helpers ────────────────────────────────────────────────────────────
+  function show(id) { document.getElementById(id).classList.remove('hidden'); }
+  function hide(id) { document.getElementById(id).classList.add('hidden'); }
+
+  window.updateSlider = function() {
+    var val  = parseInt(document.getElementById('donateSlider').value, 10);
+    var keep = 10 - val;
+    document.getElementById('donateLabel').textContent = '$' + val;
+    document.getElementById('keepAmt').textContent     = '$' + keep;
+    document.getElementById('giveAmt').textContent     = '$' + val;
+    var col = val >= 7 ? 'var(--success)' : val >= 4 ? 'var(--accent)' : val >= 1 ? 'var(--warning)' : 'var(--danger)';
+    document.getElementById('donateLabel').style.color = col;
+  };
+
+  function setProgress() {
+    var pct = (currentRound / TOTAL_ROUNDS) * 100;
+    document.getElementById('roundProgress').style.width = pct + '%';
+    document.getElementById('roundNum').textContent = currentRound + 1;
+  }
+
+  // ── Game flow ──────────────────────────────────────────────────────────
+  window.startGame = function() {
+    currentRound = 0;
+    donations    = [];
+    hide('introScreen');
+    show('gameScreen');
+    loadRound();
+  };
+
+  function loadRound() {
+    hide('roundFeedback');
+    document.getElementById('donateSlider').value = '5';
+    updateSlider();
+    setProgress();
+  }
+
+  window.submitRound = function() {
+    var donated = parseInt(document.getElementById('donateSlider').value, 10);
+    var kept    = 10 - donated;
+    donations.push(donated);
+
+    var msg = '';
+    if (donated === 0)       msg = 'You kept all $10. Purely self-interested this round.';
+    else if (donated === 10) msg = 'You gave everything — maximum altruism!';
+    else if (donated >= 7)   msg = 'Very generous! You gave $' + donated + ' and kept $' + kept + '.';
+    else if (donated >= 4)   msg = 'Balanced choice — you gave $' + donated + ' and kept $' + kept + '.';
+    else                     msg = 'Conservative round — you gave $' + donated + ' and kept $' + kept + '.';
+
+    document.getElementById('feedbackMsg').textContent = msg;
+    show('roundFeedback');
+
+    currentRound++;
+
+    if (currentRound >= TOTAL_ROUNDS) {
+      setTimeout(showResults, 900);
+    } else {
+      setTimeout(loadRound, 850);
+    }
+  };
+
+  // ── Results ────────────────────────────────────────────────────────────
+  function showResults() {
+    hide('gameScreen');
+
+    var total = donations.reduce(function(a, b) { return a + b; }, 0);
+    var avg   = total / TOTAL_ROUNDS;
+    var maxD  = Math.max.apply(null, donations);
+    var zeros = donations.filter(function(d) { return d === 0; }).length;
+
+    finalScore = Math.min(100, Math.max(0, Math.round((avg / 10) * 100)));
+
+    document.getElementById('res-avg').textContent   = '$' + avg.toFixed(1);
+    document.getElementById('res-total').textContent = '$' + total;
+    document.getElementById('res-max').textContent   = '$' + maxD;
+    document.getElementById('res-zero').textContent  = zeros;
+
+    var scoreEl = document.getElementById('finalScoreDisplay');
+    scoreEl.innerHTML =
+      '<div style="font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:0.35rem">Altruism Score</div>' +
+      '<div style="font-size:3.5rem;font-weight:900;color:var(--accent);line-height:1.1">' + finalScore + '</div>' +
+      '<div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.25rem">out of 100</div>';
+
+    // Breakdown table
+    var tbody = document.getElementById('breakdownBody');
+    tbody.innerHTML = '';
+    donations.forEach(function(d, i) {
+      var pct      = Math.round(d / 10 * 100);
+      var barColor = pct >= 70 ? 'var(--success)' : pct >= 40 ? 'var(--accent)' : pct >= 10 ? 'var(--warning)' : 'var(--danger)';
+      tbody.innerHTML +=
+        '<tr>' +
+          '<td><strong>Round ' + (i + 1) + '</strong></td>' +
+          '<td style="color:var(--success)">$' + d + '</td>' +
+          '<td>$' + (10 - d) + '</td>' +
+          '<td>' +
+            '<div style="display:flex;align-items:center;gap:0.5rem">' +
+              '<div style="flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden">' +
+                '<div style="width:' + pct + '%;height:100%;background:' + barColor + ';border-radius:3px"></div>' +
+              '</div>' +
+              '<span style="font-size:0.78rem;color:var(--text-muted);min-width:2.5rem;text-align:right">' + pct + '%</span>' +
+            '</div>' +
+          '</td>' +
+        '</tr>';
+    });
+
+    // Altruism insight
+    var insightEl = document.getElementById('altruismInsight');
+    var insight   = '';
+    if (finalScore >= 80)      insight = '<strong>Highly Altruistic.</strong> You consistently prioritised others\' welfare. Banks like Goldman Sachs and J.P. Morgan note prosocial candidates for client-focused roles.';
+    else if (finalScore >= 60) insight = '<strong>Moderately Generous.</strong> You struck a reasonable balance between self-interest and giving — a common trait among high-performing analysts.';
+    else if (finalScore >= 35) insight = '<strong>Self-Preserving.</strong> You leaned toward keeping resources. This can reflect healthy pragmatism, but consider how you balance personal and team interests.';
+    else                       insight = '<strong>Highly Self-Interested.</strong> You rarely donated. Pymetrics flags very low altruism scores in roles requiring teamwork and client trust.';
+    insightEl.innerHTML = insight;
+
+    show('resultsScreen');
+
+    // Save score
+    fetch('/sim/save-score', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        game: 'money_exchange_2',
+        score: finalScore,
+        details: { donations: donations, avg: parseFloat(avg.toFixed(2)), total: total }
+      })
+    }).catch(function() {});
+
+    loadLeaderboard();
+  }
+
+  function loadLeaderboard() {
+    var difficulty  = document.getElementById('difficultySelect').value;
+    var diffLabels  = { easy: 'Easy', average: 'Average', above_average: 'Above Average', cut_throat: 'Cut-Throat' };
+    document.getElementById('lbDiffLabel').textContent = diffLabels[difficulty] || difficulty;
+
+    fetch('/sim/bot/leaderboard', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ score: finalScore, difficulty: difficulty, game: 'money_exchange_2', count: 10 })
+    }).then(function(res) {
+      if (!res.ok) return null;
+      return res.json();
+    }).then(function(data) {
+      if (!data || !data.leaderboard) return;
+
+      var tbody = document.getElementById('leaderboardBody');
+      tbody.innerHTML = '';
+      data.leaderboard.forEach(function(row) {
+        var you = row.is_user;
+        tbody.innerHTML +=
+          '<tr style="' + (you ? 'background:rgba(99,102,241,0.08);font-weight:700' : '') + '">' +
+            '<td>' + (you ? '&#9733; ' : '') + row.rank + '</td>' +
+            '<td>' +
+              (row.avatar ? '<span style="margin-right:0.35rem">' + row.avatar + '</span>' : '') +
+              row.name +
+              (you ? ' <span class="platform-tag" style="font-size:0.7rem">You</span>' : '') +
+            '</td>' +
+            '<td style="color:var(--text-muted)">' + (row.school || '&#8212;') + '</td>' +
+            '<td style="color:var(--accent);font-weight:700">' + row.score + '</td>' +
+          '</tr>';
+      });
+
+      if (data.user_rank) {
+        var pct  = data.percentile ? ' · top ' + (100 - data.percentile).toFixed(0) + '%' : '';
+        document.getElementById('lbMeta').textContent =
+          'Your rank: #' + data.user_rank + ' of ' + (data.total_candidates || '?') + ' candidates' + pct;
+      }
+
+      show('leaderboardSection');
+    }).catch(function() {});
+  }
+
+  window.restartGame = function() {
+    hide('resultsScreen');
+    hide('leaderboardSection');
+    document.getElementById('leaderboardBody').innerHTML = '';
+    show('introScreen');
+  };
+})();
+</script>
+{% endblock %}
