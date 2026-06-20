@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block title %}Stroop Task — AssessSim{% endblock %}
+{% block content %}
+<div class="game-page">
+  <div class="game-header">
+    <div class="game-header-icon" style="background:linear-gradient(135deg,#fd79a8,#e17055)">🎨</div>
+    <div>
+      <h1>Stroop Task</h1>
+      <p>Pymetrics — Cognitive Interference &amp; Processing Speed</p>
+    </div>
+  </div>
+  <div class="game-meta">
+    <div class="game-meta-item">🎨 <strong>40</strong>&nbsp;trials</div>
+    <div class="game-meta-item">⏱️ 2s per trial</div>
+    <div class="game-meta-item">🏦 Goldman Sachs · McKinsey · BCG</div>
+  </div>
+
+  <div id="instructions" class="instructions">
+    <h2>📋 Instructions</h2>
+    <ul>
+      <li>A color word (<strong>RED</strong>, <strong>BLUE</strong>, <strong>GREEN</strong>, <strong>YELLOW</strong>) appears in a colored ink.</li>
+      <li>Click the button that matches the <strong>INK COLOR</strong> — ignore what the word says.</li>
+      <li>Sometimes the word and ink match (easy). Sometimes they differ (hard — stay focused!).</li>
+      <li>You have <strong>2 seconds</strong> per trial. Too slow counts as wrong.</li>
+    </ul>
+    <div class="notice" style="margin-top:1rem">💡 <strong>Tip:</strong> Focus on the color of the ink, not the meaning of the word. The conflict is what makes this hard.</div>
+    <div style="margin-top:1.25rem">
+      <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--text-muted);margin-bottom:0.5rem;">⚔️ Competition difficulty</label>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn btn-sm diff-btn" data-d="easy" onclick="setDiff(this)" style="background:rgba(0,210,160,0.15);border:1px solid var(--success);color:var(--success)">Casual</button>
+        <button class="btn btn-sm diff-btn selected-diff" data-d="average" onclick="setDiff(this)" style="background:rgba(77,159,255,0.2);border:1px solid var(--accent);color:var(--accent)">Average</button>
+        <button class="btn btn-sm diff-btn" data-d="above_average" onclick="setDiff(this)" style="background:rgba(162,155,254,0.15);border:1px solid var(--accent2);color:var(--accent2)">Above Average</button>
+        <button class="btn btn-sm diff-btn" data-d="cut_throat" onclick="setDiff(this)" style="background:rgba(255,94,122,0.15);border:1px solid var(--danger);color:var(--danger)">Quant God 🔥</button>
+      </div>
+    </div>
+    <button class="btn btn-primary mt-2" onclick="startGame()">Start Game</button>
+  </div>
+
+  <div id="game-area" class="hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <div class="progress-bar-wrap" style="flex:1;margin-right:1rem;margin-bottom:0">
+        <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+      </div>
+      <div id="trial-counter" class="text-muted" style="font-size:0.85rem;white-space:nowrap"></div>
+    </div>
+
+    <div style="text-align:center;padding:1.5rem 0">
+      <div id="word-display" style="font-size:7rem;font-weight:900;line-height:1;min-height:9rem;display:flex;align-items:center;justify-content:center;letter-spacing:0.02em;transition:color 0.05s"></div>
+      <div id="feedback-display" style="font-size:1rem;font-weight:600;min-height:1.5rem;margin-top:0.75rem"></div>
+    </div>
+
+    <div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;margin-top:0.5rem">
+      <button class="btn" id="btn-RED" onclick="respond('RED')" style="background:#FF6B6B;color:#fff;font-weight:800;font-size:1rem;padding:0.75rem 1.5rem;border:none;min-width:90px">RED</button>
+      <button class="btn" id="btn-BLUE" onclick="respond('BLUE')" style="background:#4D9FFF;color:#fff;font-weight:800;font-size:1rem;padding:0.75rem 1.5rem;border:none;min-width:90px">BLUE</button>
+      <button class="btn" id="btn-GREEN" onclick="respond('GREEN')" style="background:#00D2A0;color:#fff;font-weight:800;font-size:1rem;padding:0.75rem 1.5rem;border:none;min-width:90px">GREEN</button>
+      <button class="btn" id="btn-YELLOW" onclick="respond('YELLOW')" style="background:#FDCB6E;color:#333;font-weight:800;font-size:1rem;padding:0.75rem 1.5rem;border:none;min-width:90px">YELLOW</button>
+    </div>
+  </div>
+
+  <div id="results-area" class="hidden" style="text-align:center;padding:2rem">
+    <h2 style="font-size:1.8rem;margin-bottom:0.5rem">Game Complete!</h2>
+    <div class="score-display" id="final-score"></div>
+    <p class="text-muted">Stroop Score</p>
+    <div class="results-grid" style="max-width:540px;margin:1.5rem auto">
+      <div class="result-card"><div class="rc-value" id="r-correct">0</div><div class="rc-label">Correct</div></div>
+      <div class="result-card"><div class="rc-value" id="r-cong">—</div><div class="rc-label">Congruent Acc</div></div>
+      <div class="result-card"><div class="rc-value" id="r-incong">—</div><div class="rc-label">Incongruent Acc</div></div>
+      <div class="result-card"><div class="rc-value" id="r-rt">—</div><div class="rc-label">Avg RT (ms)</div></div>
+    </div>
+    <div id="leaderboard-area" style="max-width:600px;margin:1.5rem auto;text-align:left"></div>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button class="btn btn-outline" onclick="location.reload()">Play Again</button>
+      <a href="/" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const TOTAL = 40, TRIAL_MS = 2000, ITI_MS = 500;
+const COLORS = ['RED','BLUE','GREEN','YELLOW'];
+const INK = {RED:'#FF6B6B',BLUE:'#4D9FFF',GREEN:'#00D2A0',YELLOW:'#FDCB6E'};
+
+let trials = [], trialIdx = 0, responded = false, trialStart = 0, trialTimer = null;
+let correct = 0, congCorrect = 0, congTotal = 0, incongCorrect = 0, incongTotal = 0, rts = [];
+let selectedDiff = 'average';
+
+function setDiff(btn) {
+  document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected-diff'));
+  btn.classList.add('selected-diff');
+  selectedDiff = btn.dataset.d;
+}
+
+function buildTrials() {
+  const arr = [];
+  for (let i = 0; i < 20; i++) {
+    const c = COLORS[i % 4];
+    arr.push({word: c, ink: c, congruent: true});
+  }
+  for (let i = 0; i < 20; i++) {
+    const word = COLORS[i % 4];
+    let ink;
+    do { ink = COLORS[Math.floor(Math.random() * 4)]; } while (ink === word);
+    arr.push({word, ink, congruent: false});
+  }
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function startGame() {
+  trials = buildTrials();
+  trialIdx = 0; correct = 0; congCorrect = 0; congTotal = 0; incongCorrect = 0; incongTotal = 0; rts = [];
+  document.getElementById('instructions').classList.add('hidden');
+  document.getElementById('game-area').classList.remove('hidden');
+  nextTrial();
+}
+
+function setButtonsDisabled(disabled) {
+  COLORS.forEach(c => { document.getElementById('btn-' + c).disabled = disabled; });
+}
+
+function nextTrial() {
+  if (trialIdx >= TOTAL) { endGame(); return; }
+  responded = false;
+  clearTimeout(trialTimer);
+  const t = trials[trialIdx];
+  const wordEl = document.getElementById('word-display');
+  const feedEl = document.getElementById('feedback-display');
+  wordEl.textContent = '';
+  feedEl.textContent = '';
+  setButtonsDisabled(true);
+  document.getElementById('trial-counter').textContent = (trialIdx + 1) + ' / ' + TOTAL;
+  document.getElementById('progress-bar').style.width = (trialIdx / TOTAL * 100) + '%';
+  setTimeout(() => {
+    wordEl.textContent = t.word;
+    wordEl.style.color = INK[t.ink];
+    setButtonsDisabled(false);
+    trialStart = Date.now();
+    trialTimer = setTimeout(() => {
+      if (!responded) { responded = true; handleResult(t, null); }
+    }, TRIAL_MS);
+  }, ITI_MS);
+}
+
+function respond(color) {
+  if (responded) return;
+  responded = true;
+  clearTimeout(trialTimer);
+  const rt = Date.now() - trialStart;
+  handleResult(trials[trialIdx], color, rt);
+}
+
+function handleResult(t, choice, rt) {
+  const isCorrect = choice === t.ink;
+  if (t.congruent) { congTotal++; if (isCorrect) congCorrect++; }
+  else { incongTotal++; if (isCorrect) incongCorrect++; }
+  if (isCorrect) { correct++; if (rt) rts.push(rt); }
+  const feedEl = document.getElementById('feedback-display');
+  if (choice === null) { feedEl.textContent = '⏱️ Too slow'; feedEl.style.color = 'var(--danger)'; }
+  else if (isCorrect) { feedEl.textContent = '✓ Correct' + (rt ? ' (' + rt + 'ms)' : ''); feedEl.style.color = 'var(--success)'; }
+  else { feedEl.textContent = '✗ Wrong — ink was ' + t.ink; feedEl.style.color = 'var(--danger)'; }
+  trialIdx++;
+  setTimeout(nextTrial, ITI_MS);
+}
+
+function endGame() {
+  document.getElementById('game-area').classList.add('hidden');
+  document.getElementById('results-area').classList.remove('hidden');
+  const avgRt = rts.length ? Math.round(rts.reduce((a, b) => a + b, 0) / rts.length) : 0;
+  const accuracy = correct / TOTAL;
+  const speedScore = avgRt ? Math.max(0, 1 - avgRt / 1400) : 0;
+  const score = Math.round(accuracy * 75 + speedScore * 25);
+  document.getElementById('final-score').textContent = score + '%';
+  document.getElementById('r-correct').textContent = correct + ' / ' + TOTAL;
+  document.getElementById('r-cong').textContent = congTotal ? Math.round(congCorrect / congTotal * 100) + '%' : '—';
+  document.getElementById('r-incong').textContent = incongTotal ? Math.round(incongCorrect / incongTotal * 100) + '%' : '—';
+  document.getElementById('r-rt').textContent = avgRt ? avgRt + 'ms' : '—';
+  fetch('/sim/save-score', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({game:'stroop', score})}).catch(() => {});
+  loadLeaderboard(score);
+}
+
+async function loadLeaderboard(score) {
+  try {
+    const res = await fetch('/sim/bot/leaderboard', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({score, difficulty: selectedDiff, game:'stroop', count:10})});
+    const data = await res.json();
+    document.getElementById('leaderboard-area').innerHTML = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem"><h3 style="font-size:1rem;font-weight:700;margin-bottom:0.5rem">🏆 Ranked <span style="color:var(--accent)">#${data.user_rank}</span> of ${data.total_candidates}</h3>${data.leaderboard.slice(0,8).map(e=>`<div style="display:flex;align-items:center;gap:0.75rem;padding:0.4rem 0.6rem;border-radius:8px;background:${e.is_user?'rgba(77,159,255,0.1)':'transparent'};border:1px solid ${e.is_user?'rgba(77,159,255,0.3)':'transparent'};margin-bottom:0.25rem"><span style="width:22px;text-align:center;font-size:0.78rem;font-weight:700;color:${e.rank<=3?'var(--warning)':'var(--text-muted)'}">${e.rank}</span><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:800;flex-shrink:0">${e.avatar.slice(0,2)}</div><div style="flex:1;min-width:0"><div style="font-size:0.83rem;font-weight:${e.is_user?700:500}">${e.name}${e.is_user?' 👈':''}</div><div style="font-size:0.72rem;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.school}</div></div><span style="font-size:0.85rem;font-weight:700;color:${e.is_user?'var(--accent)':'var(--text)'}">${e.score}%</span></div>`).join('')}</div>`;
+  } catch(e) {}
+}
+</script>
+{% endblock %}

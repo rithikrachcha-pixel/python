@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+{% block title %}Pattern Sequences — AssessSim{% endblock %}
+
+{% block content %}
+<div class="game-page">
+  <div class="game-header">
+    <div class="game-header-icon" style="background:linear-gradient(135deg,#00b894,#00cec9)">🔢</div>
+    <div>
+      <h1>Pattern Sequences</h1>
+      <p>Abstract/Inductive Reasoning &mdash; Pattern Recognition</p>
+    </div>
+  </div>
+
+  <div class="game-meta">
+    <div class="game-meta-item">🔢 <strong>15</strong>&nbsp;questions</div>
+    <div class="game-meta-item">⏱️ 25s each</div>
+    <div class="game-meta-item">🏦 McKinsey · Bain · Citadel</div>
+  </div>
+
+  <div id="instructions" class="instructions">
+    <h2>📋 Instructions</h2>
+    <ul>
+      <li>Each question shows a number sequence with the last term replaced by <strong>?</strong></li>
+      <li>Identify the rule and pick the correct next term from four options (A, B, C, D).</li>
+      <li>You have <strong>25 seconds</strong> per question — a timer bar shrinks in real time.</li>
+      <li>Clicking an answer immediately advances to the next question.</li>
+      <li>Answering in under 8 seconds earns a <strong>time bonus</strong>.</li>
+    </ul>
+    <div class="notice" style="margin-top:1rem">
+      💡 <strong>Tip:</strong> Look at differences between terms first, then ratios. Many sequences alternate between two sub-patterns — check odd and even positions separately.
+    </div>
+    <div style="margin-top:1.25rem">
+      <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--text-muted);margin-bottom:0.5rem;">⚔️ Competition difficulty</label>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn btn-sm diff-btn" data-d="easy" onclick="setDiff(this)" style="background:rgba(0,210,160,0.15);border:1px solid var(--success);color:var(--success)">Casual</button>
+        <button class="btn btn-sm diff-btn selected-diff" data-d="average" onclick="setDiff(this)" style="background:rgba(77,159,255,0.2);border:1px solid var(--accent);color:var(--accent)">Average</button>
+        <button class="btn btn-sm diff-btn" data-d="above_average" onclick="setDiff(this)" style="background:rgba(162,155,254,0.15);border:1px solid var(--accent2);color:var(--accent2)">Above Average</button>
+        <button class="btn btn-sm diff-btn" data-d="cut_throat" onclick="setDiff(this)" style="background:rgba(255,94,122,0.15);border:1px solid var(--danger);color:var(--danger)">Quant God 🔥</button>
+      </div>
+    </div>
+    <button class="btn btn-primary mt-2" onclick="startGame()">Start Game</button>
+  </div>
+
+  <div id="game-area" class="hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
+      <span id="q-counter" class="text-muted" style="font-size:0.85rem"></span>
+      <span id="time-label" style="font-size:0.85rem;font-weight:700"></span>
+    </div>
+    <div class="progress-bar-wrap" style="margin-bottom:1.5rem">
+      <div class="progress-bar-fill" id="time-bar" style="width:100%;background:var(--success);transition:width 0.25s linear"></div>
+    </div>
+
+    <div id="sequence-display" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2rem 1.5rem;text-align:center;margin-bottom:1.5rem">
+      <div id="sequence-text" style="font-size:2rem;font-weight:800;letter-spacing:0.05em;color:var(--text);font-family:monospace"></div>
+    </div>
+
+    <div id="options-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;max-width:480px;margin:0 auto"></div>
+
+    <div id="answer-feedback" style="text-align:center;font-size:1rem;font-weight:600;min-height:1.5rem;margin-top:1rem"></div>
+  </div>
+
+  <div id="results-area" class="hidden" style="text-align:center;padding:2rem">
+    <h2 style="font-size:1.8rem;margin-bottom:0.5rem">Game Complete!</h2>
+    <div class="score-display" id="final-score"></div>
+    <p class="text-muted">Pattern Sequences Score</p>
+    <div class="results-grid" style="max-width:560px;margin:1.5rem auto">
+      <div class="result-card"><div class="rc-value" id="r-correct">0</div><div class="rc-label">Correct</div></div>
+      <div class="result-card"><div class="rc-value" id="r-bonus">0</div><div class="rc-label">Time Bonus</div></div>
+      <div class="result-card"><div class="rc-value" id="r-accuracy">0%</div><div class="rc-label">Accuracy</div></div>
+      <div class="result-card"><div class="rc-value" id="r-avgtime">—</div><div class="rc-label">Avg Time</div></div>
+    </div>
+    <div id="leaderboard-area" style="max-width:600px;margin:1.5rem auto;text-align:left"></div>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button class="btn btn-outline" onclick="location.reload()">Play Again</button>
+      <a href="/" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const QUESTIONS = [
+  { seq: '3, 6, 9, 12, ?',          opts: [15, 16, 14, 18],   answer: 0 },
+  { seq: '2, 6, 18, 54, ?',         opts: [108, 162, 72, 144], answer: 1 },
+  { seq: '1, 2, 4, 5, 7, 8, ?',     opts: [10, 9, 11, 12],    answer: 0 },
+  { seq: '1, 4, 9, 16, ?',          opts: [25, 20, 24, 36],   answer: 0 },
+  { seq: '1, 1, 2, 3, 5, 8, ?',     opts: [13, 11, 12, 14],   answer: 0 },
+  { seq: '100, 91, 83, 76, ?',      opts: [70, 68, 72, 74],   answer: 0 },
+  { seq: '4, 12, 6, 18, 9, ?',      opts: [27, 18, 3, 36],    answer: 0 },
+  { seq: '2, 4, 8, 16, 32, ?',      opts: [64, 48, 56, 128],  answer: 0 },
+  { seq: '1, 9, 25, 49, ?',         opts: [81, 64, 100, 121], answer: 0 },
+  { seq: '81, 27, 9, 3, ?',         opts: [1, 2, 0, 3],       answer: 0 },
+  { seq: '2, 3, 5, 8, 12, ?',       opts: [17, 16, 18, 15],   answer: 0 },
+  { seq: '1, 2, 4, 6, 7, 10, 10, ?', opts: [14, 13, 12, 15],  answer: 0 },
+  { seq: '1, 8, 27, 64, ?',         opts: [125, 100, 216, 81], answer: 0 },
+  { seq: '50, 47, 43, 38, 32, ?',   opts: [25, 26, 27, 24],   answer: 0 },
+  { seq: '1, 3, 7, 13, 21, ?',      opts: [31, 29, 30, 33],   answer: 0 }
+];
+
+const LABELS = ['A', 'B', 'C', 'D'];
+const TIME_PER_Q = 25;
+const TIME_BONUS_THRESHOLD = 8;
+
+let qIdx = 0;
+let correct = 0;
+let timeBonus = 0;
+let times = [];
+let qStart = 0;
+let timerInterval = null;
+let answered = false;
+let selectedDiff = 'average';
+
+function setDiff(btn) {
+  document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected-diff'));
+  btn.classList.add('selected-diff');
+  selectedDiff = btn.dataset.d;
+}
+
+function startGame() {
+  document.getElementById('instructions').classList.add('hidden');
+  document.getElementById('game-area').classList.remove('hidden');
+  qIdx = 0; correct = 0; timeBonus = 0; times = [];
+  showQuestion();
+}
+
+function showQuestion() {
+  if (qIdx >= QUESTIONS.length) { endGame(); return; }
+  answered = false;
+  const q = QUESTIONS[qIdx];
+  document.getElementById('q-counter').textContent = 'Question ' + (qIdx + 1) + ' of ' + QUESTIONS.length;
+  document.getElementById('sequence-text').textContent = q.seq;
+  document.getElementById('answer-feedback').textContent = '';
+
+  const grid = document.getElementById('options-grid');
+  grid.innerHTML = '';
+  q.opts.forEach((val, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-outline';
+    btn.style.cssText = 'font-size:1.1rem;font-weight:700;padding:0.9rem;font-family:monospace';
+    btn.textContent = LABELS[i] + '  ' + val;
+    btn.onclick = () => pickAnswer(i, val);
+    grid.appendChild(btn);
+  });
+
+  clearInterval(timerInterval);
+  let elapsed = 0;
+  qStart = Date.now();
+  updateTimerBar(TIME_PER_Q);
+  timerInterval = setInterval(() => {
+    elapsed++;
+    const remaining = TIME_PER_Q - elapsed;
+    updateTimerBar(remaining);
+    if (remaining <= 0) {
+      clearInterval(timerInterval);
+      if (!answered) pickAnswer(-1, null);
+    }
+  }, 1000);
+}
+
+function updateTimerBar(remaining) {
+  const pct = Math.max(0, (remaining / TIME_PER_Q) * 100);
+  const bar = document.getElementById('time-bar');
+  bar.style.width = pct + '%';
+  bar.style.background = remaining <= 8 ? 'var(--danger)' : 'var(--success)';
+  document.getElementById('time-label').textContent = remaining > 0 ? remaining + 's' : '0s';
+}
+
+function pickAnswer(idx, val) {
+  if (answered) return;
+  answered = true;
+  clearInterval(timerInterval);
+
+  const elapsed = (Date.now() - qStart) / 1000;
+  times.push(elapsed);
+
+  const q = QUESTIONS[qIdx];
+  const isCorrect = idx === q.answer;
+  const inTime = elapsed < TIME_BONUS_THRESHOLD;
+
+  const feedback = document.getElementById('answer-feedback');
+  const btns = document.getElementById('options-grid').querySelectorAll('button');
+
+  if (idx === -1) {
+    feedback.textContent = '⏱️ Time up — correct was ' + LABELS[q.answer] + ' (' + q.opts[q.answer] + ')';
+    feedback.style.color = 'var(--danger)';
+  } else if (isCorrect) {
+    correct++;
+    if (inTime) timeBonus += 0.5;
+    btns[idx].style.background = 'rgba(0,210,160,0.2)';
+    btns[idx].style.borderColor = 'var(--success)';
+    btns[idx].style.color = 'var(--success)';
+    feedback.textContent = '✓ Correct' + (inTime ? ' +0.5 time bonus' : '');
+    feedback.style.color = 'var(--success)';
+  } else {
+    btns[idx].style.background = 'rgba(255,94,122,0.15)';
+    btns[idx].style.borderColor = 'var(--danger)';
+    btns[idx].style.color = 'var(--danger)';
+    if (btns[q.answer]) {
+      btns[q.answer].style.background = 'rgba(0,210,160,0.2)';
+      btns[q.answer].style.borderColor = 'var(--success)';
+      btns[q.answer].style.color = 'var(--success)';
+    }
+    feedback.textContent = '✗ Wrong — correct: ' + LABELS[q.answer] + ' (' + q.opts[q.answer] + ')';
+    feedback.style.color = 'var(--danger)';
+  }
+
+  qIdx++;
+  setTimeout(showQuestion, 400);
+}
+
+function endGame() {
+  document.getElementById('game-area').classList.add('hidden');
+  document.getElementById('results-area').classList.remove('hidden');
+
+  const accuracy = Math.round((correct / QUESTIONS.length) * 100);
+  const score = Math.round(Math.min(100, (correct / 15) * 75 + (timeBonus / 7.5) * 25));
+  const avgTime = times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : '—';
+
+  document.getElementById('final-score').textContent = score + '%';
+  document.getElementById('r-correct').textContent = correct + ' / ' + QUESTIONS.length;
+  document.getElementById('r-bonus').textContent = timeBonus.toFixed(1);
+  document.getElementById('r-accuracy').textContent = accuracy + '%';
+  document.getElementById('r-avgtime').textContent = avgTime !== '—' ? avgTime + 's' : '—';
+
+  fetch('/sim/save-score', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({game: 'patterns', score})
+  }).catch(() => {});
+
+  loadLeaderboard(score);
+}
+
+async function loadLeaderboard(score) {
+  try {
+    const res = await fetch('/sim/bot/leaderboard', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({score, difficulty: selectedDiff, game: 'patterns', count: 12})
+    });
+    const data = await res.json();
+    const lb = data.leaderboard;
+    let html = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.5rem">
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:0.25rem">🏆 Leaderboard</h3>
+      <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1rem">You ranked <strong style="color:var(--accent)">#${data.user_rank}</strong> out of ${data.total_candidates} — top <strong style="color:var(--accent)">${Math.round(100 - data.percentile + 100 / data.total_candidates)}%</strong></p>
+      <div style="display:flex;flex-direction:column;gap:0.4rem">`;
+    lb.slice(0, 8).forEach(e => {
+      const you = e.is_user;
+      html += `<div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0.75rem;border-radius:8px;background:${you ? 'rgba(77,159,255,0.12)' : 'rgba(255,255,255,0.02)'};border:1px solid ${you ? 'rgba(77,159,255,0.3)' : 'transparent'}">
+        <span style="width:22px;text-align:center;font-size:0.78rem;font-weight:700;color:${e.rank <= 3 ? 'var(--warning)' : 'var(--text-muted)'}">${e.rank}</span>
+        <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:800;flex-shrink:0">${e.avatar.slice(0, 2)}</div>
+        <div style="flex:1;min-width:0"><div style="font-size:0.85rem;font-weight:${you ? 700 : 500}">${e.name}${you ? ' 👈' : ''}</div><div style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.school}</div></div>
+        <span style="font-size:0.88rem;font-weight:700;color:${you ? 'var(--accent)' : 'var(--text)'}">${e.score}%</span>
+      </div>`;
+    });
+    html += `</div></div>`;
+    document.getElementById('leaderboard-area').innerHTML = html;
+  } catch (e) {}
+}
+</script>
+{% endblock %}

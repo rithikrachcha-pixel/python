@@ -1,33 +1,33 @@
 {% extends "base.html" %}
-{% block title %}Situational Judgment Test — AssessSim{% endblock %}
+{% block title %}Situational Judgement Test — AssessSim{% endblock %}
 
 {% block content %}
 <div class="game-page">
   <div class="game-header">
-    <div class="game-header-icon" style="background:#00B894">💼</div>
+    <div class="game-header-icon" style="background:linear-gradient(135deg,#636e72,#b2bec3)">💼</div>
     <div>
-      <h1>Situational Judgment Test</h1>
-      <p>Cappfinity &mdash; Professional Judgment &amp; Workplace Values</p>
+      <h1>Situational Judgement Test</h1>
+      <p>Situational Judgement &mdash; Workplace Decision Making</p>
     </div>
   </div>
 
   <div class="game-meta">
-    <div class="game-meta-item">📋 <strong>10</strong>&nbsp;scenarios</div>
-    <div class="game-meta-item">⏱️ <strong>30 min</strong></div>
-    <div class="game-meta-item">🎯 Best &amp; Worst response</div>
-    <div class="game-meta-item">💼 Workplace scenarios</div>
+    <div class="game-meta-item">💼 <strong>8</strong>&nbsp;scenarios</div>
+    <div class="game-meta-item">⏱️ 90s each</div>
+    <div class="game-meta-item">🏦 JP Morgan · KPMG · Deloitte · PwC</div>
   </div>
 
   <div id="instructions" class="instructions">
     <h2>📋 Instructions</h2>
     <ul>
-      <li>Read each workplace scenario carefully.</li>
-      <li>For each scenario, select the <strong>Most Effective</strong> and <strong>Least Effective</strong> response.</li>
-      <li>You must select <em>two different</em> options — one best, one worst.</li>
-      <li>Consider what a <strong>competent, professional employee</strong> would do — not just what sounds nice.</li>
+      <li>Read each workplace scenario and rank all <strong>4 response options</strong> from <strong>Most Effective (1)</strong> to <strong>Least Effective (4)</strong>.</li>
+      <li>Click options in order — your first click is ranked 1st, second click 2nd, and so on.</li>
+      <li>A rank badge appears on each option as you click. Hit <strong>Reset</strong> to clear your ranking and start the scenario over.</li>
+      <li>Once all 4 are ranked, click <strong>Confirm Ranking</strong> to lock in your answer and see the expert ranking.</li>
+      <li>You have <strong>90 seconds</strong> per scenario.</li>
     </ul>
     <div class="notice" style="margin-top:1rem">
-      💡 <strong>Tip:</strong> Cappfinity assesses "strengths" like curiosity, resilience, and collaboration. Avoid extremes — neither passive nor confrontational approaches score well.
+      💡 <strong>Tip:</strong> Prioritise responses that are transparent, proactive, and maintain professional relationships. Avoiding conflict entirely and going over people's heads both score poorly.
     </div>
     <div style="margin-top:1.25rem">
       <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--text-muted);margin-bottom:0.5rem;">⚔️ Competition difficulty</label>
@@ -38,29 +38,48 @@
         <button class="btn btn-sm diff-btn" data-d="cut_throat" onclick="setDiff(this)" style="background:rgba(255,94,122,0.15);border:1px solid var(--danger);color:var(--danger)">Quant God 🔥</button>
       </div>
     </div>
-    <button class="btn btn-primary mt-2" onclick="startGame()">Start Test (30 min timer)</button>
+    <button class="btn btn-primary mt-2" onclick="startGame()">Start Test</button>
   </div>
 
   <div id="game-area" class="hidden">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-      <div class="progress-bar-wrap" style="flex:1;margin-right:1rem;margin-bottom:0"><div class="progress-bar-fill" id="progress-bar" style="width:0%"></div></div>
-      <div class="timer" id="timer">30:00</div>
-    </div>
-    <div id="question-area"></div>
-    <div class="question-nav">
-      <button id="prev-btn" class="btn btn-outline btn-sm" onclick="navigate(-1)">← Previous</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
       <span id="q-counter" class="text-muted" style="font-size:0.85rem"></span>
-      <button id="next-btn" class="btn btn-primary btn-sm" onclick="navigate(1)">Next →</button>
+      <span id="time-label" style="font-size:0.85rem;font-weight:700"></span>
     </div>
-    <div style="text-align:center;margin-top:1.5rem"><button class="btn btn-success" onclick="submitTest()">Submit Test</button></div>
+    <div class="progress-bar-wrap" style="margin-bottom:1.5rem">
+      <div class="progress-bar-fill" id="time-bar" style="width:100%;background:var(--success);transition:width 1s linear"></div>
+    </div>
+
+    <div id="scenario-card" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.25rem">
+      <div id="scenario-title" style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:0.6rem"></div>
+      <div id="scenario-text" style="font-size:0.93rem;line-height:1.7;color:var(--text)"></div>
+    </div>
+
+    <p style="font-size:0.83rem;color:var(--text-muted);margin-bottom:0.75rem">Click options in order from <strong style="color:var(--success)">Most Effective</strong> to <strong style="color:var(--danger)">Least Effective</strong>:</p>
+
+    <div id="options-list" style="display:flex;flex-direction:column;gap:0.6rem"></div>
+
+    <div style="display:flex;gap:0.75rem;margin-top:1.25rem;align-items:center">
+      <button id="confirm-btn" class="btn btn-primary" onclick="confirmRanking()" style="display:none">Confirm Ranking</button>
+      <button class="btn btn-outline btn-sm" onclick="resetRanking()">Reset</button>
+    </div>
+
+    <div id="feedback-panel" style="display:none;margin-top:1.25rem;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem">
+      <div id="feedback-content"></div>
+    </div>
   </div>
 
   <div id="results-area" class="hidden" style="text-align:center;padding:2rem">
     <h2 style="font-size:1.8rem;margin-bottom:0.5rem">SJT Complete!</h2>
     <div class="score-display" id="final-score"></div>
-    <p class="text-muted">Score (2 pts per full correct, 1 pt per partial)</p>
+    <p class="text-muted">Situational Judgement Score</p>
+    <div class="results-grid" style="max-width:560px;margin:1.5rem auto">
+      <div class="result-card"><div class="rc-value" id="r-pts">0/32</div><div class="rc-label">Total Points</div></div>
+      <div class="result-card"><div class="rc-value" id="r-perfect">0</div><div class="rc-label">Perfect Rankings</div></div>
+      <div class="result-card"><div class="rc-value" id="r-match">0%</div><div class="rc-label">Avg Match</div></div>
+      <div class="result-card"><div class="rc-value" id="r-profile">—</div><div class="rc-label">Profile</div></div>
+    </div>
     <div id="leaderboard-area" style="max-width:600px;margin:1.5rem auto;text-align:left"></div>
-    <div id="review-area" style="max-width:700px;margin:1.5rem auto;text-align:left"></div>
     <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
       <button class="btn btn-outline" onclick="location.reload()">Retake</button>
       <a href="/" class="btn btn-primary">Back to Home</a>
@@ -71,124 +90,317 @@
 
 {% block scripts %}
 <script>
-const scenarios = [
-  { scenario: "You are a first-year analyst on a team. Your manager asks you to prepare a client presentation for tomorrow. After completing a draft, you notice your manager has included some data in their original brief that appears to be outdated by 6 months. The presentation is due in 3 hours.", options: ["Update the data yourself using the most recent sources you can find, and flag the changes to your manager with an explanation.", "Use the data as given — your manager knows the client and you don't want to overstep.", "Email your manager immediately highlighting the potential issue, ask for guidance, and prepare a version with updated data to present as an alternative.", "Delay the presentation and spend the full 3 hours trying to find the exact latest figures from internal systems.", "Tell the client directly during the presentation that some data may be outdated."], best: 2, worst: 4, explanation: "Option C is best: raises the issue promptly, offers a solution, and respects hierarchy. Option E is worst: going directly to the client undermines your manager and damages the firm's credibility." },
-  { scenario: "You are working remotely on an important project with a tight deadline. A colleague messages you asking for urgent help with a separate task — it will take about an hour. Your deadline is in 4 hours and you estimate you need at least 3 hours to finish your own work.", options: ["Ignore the message and focus entirely on your deadline.", "Help your colleague immediately — they asked first.", "Respond promptly, explain your situation, offer to help after your deadline, and suggest another colleague who might assist sooner.", "Agree to help, work on both simultaneously, and hope to finish everything in time.", "Tell your manager about the conflict so they can make the decision for you."], best: 2, worst: 1, explanation: "Option C demonstrates time management, communication, and helpfulness. Option B is worst: it sacrifices your own priority without communication." },
-  { scenario: "During a team meeting, a senior colleague makes an error in their analysis that you notice — it could lead to a significant misallocation of resources. The meeting continues with decisions being made based on this flawed analysis.", options: ["Stay silent — it's not your place to challenge a senior colleague in public.", "Interrupt immediately and loudly correct the error in front of everyone.", "Make a note and raise it with your manager privately after the meeting.", "Politely speak up during the meeting: 'I just want to double-check one figure — I may be missing something, but I calculated X differently.'", "Send a follow-up email to all meeting attendees correcting the error."], best: 3, worst: 1, explanation: "Option D is best: respectful, timely, and constructive. Option B is worst: confrontational, embarrassing, and damages team dynamics." },
-  { scenario: "You have been assigned a project you find deeply uninteresting, but it is important to the team. You are three days in and finding it very difficult to stay motivated. Your work quality has started to slip slightly.", options: ["Push through — motivation is irrelevant, professionalism means finishing regardless.", "Ask your manager to reassign the project to someone who finds it more engaging.", "Break the project into small goals, reward yourself for each milestone, and remind yourself of its importance to the team.", "Do the minimum required to technically complete the project on time.", "Tell a colleague you find the project boring and see if they want to swap.", "Speak with your manager, acknowledge the work quality issue, and discuss strategies to improve your engagement."], best: 5, worst: 3, explanation: "Option F is best: self-aware, professional, and proactive about improvement. Option D is worst: deliberately minimising effort is neither professional nor helpful to the team." },
-  { scenario: "You are the only analyst who knows how to use a critical software tool your team relies on. You have been asked to document the process, but documentation takes time away from billable project work. Your performance review weights billable hours heavily.", options: ["Prioritise billable work entirely — documentation can wait indefinitely.", "Document the process fully in your own time (evenings/weekends) to avoid affecting billable hours.", "Raise the conflict with your manager, explain the long-term team risk of being a single point of failure, and agree on a schedule that balances documentation with billable time.", "Create only minimal documentation — just enough to say you've done it.", "Teach a colleague verbally instead of writing anything down."], best: 2, worst: 0, explanation: "Option C is best: communicates the business risk and finds a balanced solution. Option A is worst: ignores a real team dependency risk and is short-sighted." },
-  { scenario: "A client sends you an aggressive email complaining about the quality of work delivered by your team — some complaints are valid, others are unfair. Your manager is travelling and unreachable for 4 hours.", options: ["Forward the email to your manager and wait 4 hours before responding.", "Reply defensively, addressing each of the client's points.", "Acknowledge the email promptly, thank the client for their feedback, confirm you are reviewing the concerns and will respond in full within the hour, then brief your manager as soon as they're reachable.", "Escalate immediately to your manager's manager.", "Call the client to discuss the complaints verbally without involving your manager."], best: 2, worst: 3, explanation: "Option C is best: buys time professionally, keeps the client engaged. Option D is worst: unnecessary escalation over your manager's head." },
-  { scenario: "You are midway through an internship and realise you have been working on a task using the wrong methodology for two weeks. Starting again would take another week. You are not sure if anyone else knows.", options: ["Quietly restart using the correct method and hope nobody notices the delay.", "Inform your manager immediately, explain what happened, and present a plan for correcting the work.", "Submit the work knowing it uses the wrong method — the outcome might still be acceptable.", "Ask a colleague if they think anyone will notice, and decide based on their response.", "Ask to extend the deadline and restart without explaining why."], best: 1, worst: 2, explanation: "Option B is best: honest, proactive, and solution-oriented. Option C is worst: knowingly submitting flawed work is professionally dishonest." },
-  { scenario: "You notice a colleague consistently taking credit for the team's ideas in group meetings. It's affecting team morale and several people have mentioned it to you privately. The colleague is well-regarded by management.", options: ["Raise a formal complaint with HR immediately.", "Do nothing — it's not your problem and getting involved could harm your reputation.", "Speak privately and constructively with the colleague, sharing your observations and impact on the team.", "Bring it up in the next team meeting in front of everyone.", "Mention it to your manager in a one-to-one as a team dynamic concern, framing it as a process issue rather than a personal attack."], best: 4, worst: 3, explanation: "Option E is best: professional, addresses the structural issue without drama. Option D is worst: public confrontation." },
-  { scenario: "You receive feedback from a client that your written communication style is 'too technical and hard to follow'. You strongly believe your level of technical detail is appropriate and necessary.", options: ["Continue writing as you have — the client simply needs to raise their technical literacy.", "Adjust your writing style for this client while maintaining technical rigour — add plain-language summaries, define jargon, and ask for specific feedback on what is unclear.", "Ask your manager to handle all written communication with this client.", "Send the client a simpler version of all future documents but include the detailed version as an appendix.", "Tell the client that the technical detail is required and cannot be removed."], best: 1, worst: 0, explanation: "Option B is best: adapts to the client's needs while preserving quality. Option A is worst: dismissing client feedback is unprofessional." },
-  { scenario: "It is 10pm before a major deliverable is due. You have finished your section and it is good work. A teammate messages saying they are significantly behind and the whole submission may be incomplete without help.", options: ["It's their problem — you finished your part on time.", "Offer to help for an hour, then review your own work to ensure your contribution is still strong.", "Take over their section entirely and do it yourself.", "Tell your manager straight away so they're not surprised.", "Stay up all night helping without telling anyone, even if the quality suffers."], best: 1, worst: 4, explanation: "Option B is best: collaborative, bounded, and responsible. Option E is worst: sacrificing sleep and quality without communication leads to worse outcomes for everyone." }
+const SCENARIOS = [
+  {
+    title: 'Scenario 1 — Deadline Pressure',
+    text: "You're an analyst working late on a financial model. You spot a formula error that will distort key outputs, but fixing it properly would take around 2 hours. The client report is due in 30 minutes and your manager has already left for the evening.",
+    options: [
+      'A) Submit the report with the error and hope nobody notices.',
+      'B) Tell your manager immediately via phone, explain the trade-off, and ask how to proceed.',
+      'C) Apply a quick patch to limit the damage and add a clear caveat note in the appendix.',
+      'D) Call a trusted colleague to help you fix it properly within the 30 minutes.'
+    ],
+    expert: [1, 3, 2, 0]
+  },
+  {
+    title: 'Scenario 2 — Client Conflict',
+    text: "A client is unhappy with your team's analysis and is being rude and dismissive toward you on a call. Your manager is on the same call but has not intervened.",
+    options: [
+      'A) Apologise profusely and offer to redo the entire analysis immediately.',
+      'B) Stay calm, acknowledge the client\'s concerns, and ask them to clarify their specific issues.',
+      'C) Escalate to your manager mid-call by asking them directly to take over.',
+      'D) Push back firmly, using data to defend your analysis point by point.'
+    ],
+    expert: [1, 3, 0, 2]
+  },
+  {
+    title: 'Scenario 3 — Senior Conflict',
+    text: "Your VP gives you instructions on how to structure a deliverable that directly contradict what your direct manager told you earlier in the week. Both believe their approach is correct.",
+    options: [
+      'A) Follow the VP\'s instructions since they outrank your manager.',
+      'B) Proactively ask both your manager and VP to align before you proceed.',
+      'C) Produce both versions separately and let them decide.',
+      'D) Follow your manager\'s instructions and inform the VP afterwards.'
+    ],
+    expert: [1, 0, 3, 2]
+  },
+  {
+    title: 'Scenario 4 — Confidentiality',
+    text: "At lunch you overhear a colleague from your team loudly discussing confidential client deal information with someone you do not recognise. They are in a public restaurant.",
+    options: [
+      'A) Confront them immediately and loudly in the restaurant.',
+      'B) Report the incident to compliance first thing the next morning.',
+      'C) Discreetly ask your colleague to stop, then follow up with compliance later that day.',
+      'D) Ignore it — it is not directly your responsibility.'
+    ],
+    expert: [2, 1, 0, 3]
+  },
+  {
+    title: 'Scenario 5 — Workload',
+    text: "You have three urgent deliverables from three different managers, all due tomorrow morning. You realistically cannot complete all three to a high standard without working through the night.",
+    options: [
+      'A) Stay all night and attempt all three, regardless of quality.',
+      'B) Assess business impact, prioritise accordingly, and communicate your plan to all three managers.',
+      'C) Ask each manager to negotiate the priorities directly with each other.',
+      'D) Start with whichever task feels easiest and work down from there.'
+    ],
+    expert: [1, 2, 0, 3]
+  },
+  {
+    title: 'Scenario 6 — Credit',
+    text: "In a team meeting, a colleague presents an idea and framework you developed and takes full credit for it in front of senior leadership. You are also in the room.",
+    options: [
+      'A) Interrupt the meeting and correct the record in front of everyone.',
+      'B) Speak privately with the colleague after the meeting to address it directly.',
+      'C) Send an email to your manager after the meeting to ensure your contribution is on record.',
+      'D) Say nothing — it is not worth the conflict.'
+    ],
+    expert: [1, 2, 0, 3]
+  },
+  {
+    title: 'Scenario 7 — Ethical Concern',
+    text: "While preparing slides for a client presentation, you notice your manager appears to have inflated a key performance metric. You are not certain whether this is intentional or an error.",
+    options: [
+      'A) Quietly alter the numbers back to what you believe is correct without telling anyone.',
+      'B) Raise the discrepancy privately with your manager first, in a non-accusatory way.',
+      'C) Go directly to compliance or a senior partner without speaking to your manager.',
+      'D) Say nothing — you may be misunderstanding the methodology.'
+    ],
+    expert: [1, 2, 3, 0]
+  },
+  {
+    title: 'Scenario 8 — New Information',
+    text: "Midway through a major consulting project, you come across credible third-party research that directly contradicts your team's core thesis. The final report is due in one week.",
+    options: [
+      'A) Share it immediately with the full team in the next group meeting.',
+      'B) Hold onto it until the project is delivered — raising it now would cause too much disruption.',
+      'C) Only surface it if the client asks questions that cannot be answered otherwise.',
+      'D) Discuss it privately with a senior colleague first to assess its implications, then share with the team.'
+    ],
+    expert: [3, 0, 2, 1]
+  }
 ];
 
-  let selectedDiff = 'average', currentQ = 0;
-  let answers = new Array(scenarios.length).fill(null).map(() => ({ best: null, worst: null }));
-  let timerInterval = null, secondsLeft = 30 * 60;
+const RANK_LABELS = ['1st', '2nd', '3rd', '4th'];
+const RANK_COLORS = ['var(--success)', '#00cec9', 'var(--warning)', 'var(--danger)'];
+const TIME_PER_Q = 90;
 
-  function startGame() {
-    document.getElementById('instructions').classList.add('hidden');
-    document.getElementById('game-area').classList.remove('hidden');
-    renderQuestion(0); startTimer();
+let sIdx = 0;
+let playerRanking = [];
+let totalPts = 0;
+let perfectCount = 0;
+let matchPcts = [];
+let timerInterval = null;
+let confirmed = false;
+let selectedDiff = 'average';
+
+function setDiff(btn) {
+  document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected-diff'));
+  btn.classList.add('selected-diff');
+  selectedDiff = btn.dataset.d;
+}
+
+function startGame() {
+  document.getElementById('instructions').classList.add('hidden');
+  document.getElementById('game-area').classList.remove('hidden');
+  sIdx = 0; totalPts = 0; perfectCount = 0; matchPcts = [];
+  showScenario();
+}
+
+function showScenario() {
+  if (sIdx >= SCENARIOS.length) { endGame(); return; }
+  confirmed = false;
+  playerRanking = [];
+  const s = SCENARIOS[sIdx];
+
+  document.getElementById('q-counter').textContent = 'Scenario ' + (sIdx + 1) + ' of ' + SCENARIOS.length;
+  document.getElementById('scenario-title').textContent = s.title;
+  document.getElementById('scenario-text').textContent = s.text;
+  document.getElementById('feedback-panel').style.display = 'none';
+  document.getElementById('confirm-btn').style.display = 'none';
+
+  renderOptions();
+  startTimer();
+}
+
+function renderOptions() {
+  const s = SCENARIOS[sIdx];
+  const list = document.getElementById('options-list');
+  list.innerHTML = '';
+  s.options.forEach((text, i) => {
+    const rankPos = playerRanking.indexOf(i);
+    const ranked = rankPos !== -1;
+    const btn = document.createElement('button');
+    btn.id = 'opt-' + i;
+    btn.style.cssText = `width:100%;text-align:left;padding:0.85rem 1rem;border-radius:var(--radius);border:1px solid ${ranked ? RANK_COLORS[rankPos] : 'var(--border)'};background:${ranked ? 'rgba(255,255,255,0.04)' : 'var(--bg2)'};color:var(--text);font-size:0.88rem;line-height:1.55;cursor:pointer;display:flex;align-items:flex-start;gap:0.75rem;transition:border-color 0.15s`;
+    const badge = document.createElement('span');
+    badge.style.cssText = `flex-shrink:0;min-width:42px;font-size:0.72rem;font-weight:800;padding:0.2rem 0.45rem;border-radius:4px;text-align:center;background:${ranked ? RANK_COLORS[rankPos] : 'var(--bg3)'};color:${ranked ? '#fff' : 'var(--text-muted)'}`;
+    badge.textContent = ranked ? RANK_LABELS[rankPos] : '—';
+    const span = document.createElement('span');
+    span.textContent = text;
+    btn.appendChild(badge);
+    btn.appendChild(span);
+    if (!confirmed) btn.onclick = () => clickOption(i);
+    list.appendChild(btn);
+  });
+}
+
+function clickOption(i) {
+  if (confirmed) return;
+  const pos = playerRanking.indexOf(i);
+  if (pos !== -1) return;
+  playerRanking.push(i);
+  renderOptions();
+  if (playerRanking.length === SCENARIOS[sIdx].options.length) {
+    document.getElementById('confirm-btn').style.display = 'inline-flex';
   }
+}
 
-  function startTimer() {
-    timerInterval = setInterval(() => {
-      secondsLeft--;
-      const m = Math.floor(secondsLeft / 60).toString().padStart(2,'0');
-      const s = (secondsLeft % 60).toString().padStart(2,'0');
-      const el = document.getElementById('timer');
-      el.textContent = `${m}:${s}`;
-      if (secondsLeft <= 60) el.classList.add('urgent');
-      if (secondsLeft <= 0) { clearInterval(timerInterval); submitTest(); }
-    }, 1000);
-  }
+function resetRanking() {
+  if (confirmed) return;
+  playerRanking = [];
+  document.getElementById('confirm-btn').style.display = 'none';
+  renderOptions();
+}
 
-  function renderQuestion(idx) {
-    currentQ = idx;
-    const q = scenarios[idx]; const saved = answers[idx];
-    document.getElementById('q-counter').textContent = `Scenario ${idx+1} of ${scenarios.length}`;
-    document.getElementById('progress-bar').style.width = ((idx+1)/scenarios.length*100) + '%';
-    document.getElementById('prev-btn').disabled = idx === 0;
-    document.getElementById('next-btn').disabled = idx === scenarios.length - 1;
-    let html = `<div class="question-card">
-      <div class="question-number">Scenario ${idx+1}</div>
-      <div class="question-text" style="background:var(--bg3);border-left:3px solid #00B894;padding:1rem;border-radius:0 var(--radius) var(--radius) 0;margin-bottom:1rem;font-size:0.92rem;line-height:1.7">${q.scenario}</div>
-      <p class="sjt-instruction">Select the <strong style="color:var(--success)">Most Effective</strong> and <strong style="color:var(--danger)">Least Effective</strong> response:</p>
-      <div class="sjt-options">`;
-    q.options.forEach((opt, i) => {
-      let cls = '', badge = String.fromCharCode(65 + i);
-      if (saved.best === i) { cls = 'best'; badge = '✓ Best'; }
-      else if (saved.worst === i) { cls = 'worst'; badge = '✗ Worst'; }
-      html += `<button class="sjt-option ${cls}" onclick="sjtSelect(${idx},${i},this)"><span class="sjt-rank-badge">${badge}</span>${opt}</button>`;
-    });
-    html += `</div></div>`;
-    document.getElementById('question-area').innerHTML = html;
-  }
+function confirmRanking() {
+  if (confirmed || playerRanking.length < SCENARIOS[sIdx].options.length) return;
+  confirmed = true;
+  clearInterval(timerInterval);
+  document.getElementById('confirm-btn').style.display = 'none';
 
-  function sjtSelect(qIdx, optIdx, el) {
-    const saved = answers[qIdx];
-    const letters = 'ABCDEFGHIJ';
-    if (saved.best === optIdx) { saved.best = null; el.classList.remove('best'); el.querySelector('.sjt-rank-badge').textContent = letters[optIdx]; }
-    else if (saved.worst === optIdx) { saved.worst = null; el.classList.remove('worst'); el.querySelector('.sjt-rank-badge').textContent = letters[optIdx]; }
-    else if (saved.best === null) { saved.best = optIdx; el.classList.add('best'); el.querySelector('.sjt-rank-badge').textContent = '✓ Best'; }
-    else if (saved.worst === null && saved.best !== optIdx) { saved.worst = optIdx; el.classList.add('worst'); el.querySelector('.sjt-rank-badge').textContent = '✗ Worst'; }
-  }
+  const s = SCENARIOS[sIdx];
+  let scenarioPts = 0;
+  let exactMatches = 0;
+  const colors = [];
 
-  function navigate(dir) { const next = currentQ + dir; if (next >= 0 && next < scenarios.length) renderQuestion(next); }
+  playerRanking.forEach((optIdx, rankPos) => {
+    const expertRankPos = s.expert.indexOf(optIdx);
+    const diff = Math.abs(rankPos - expertRankPos);
+    let pts = 0;
+    let color = 'var(--danger)';
+    if (diff === 0) { pts = 2; color = 'var(--success)'; exactMatches++; }
+    else if (diff === 1) { pts = 1; color = 'var(--warning)'; }
+    scenarioPts += pts;
+    colors.push(color);
+  });
 
-  function submitTest() {
-    clearInterval(timerInterval);
-    document.getElementById('game-area').classList.add('hidden');
-    document.getElementById('results-area').classList.remove('hidden');
-    let score = 0; const maxScore = scenarios.length * 2; let reviewHtml = '';
-    scenarios.forEach((q, i) => {
-      const a = answers[i];
-      const bestCorrect = a.best === q.best, worstCorrect = a.worst === q.worst;
-      const pts = (bestCorrect ? 1 : 0) + (worstCorrect ? 1 : 0); score += pts;
-      reviewHtml += `<div class="question-card" style="margin-bottom:1rem">
-        <div class="question-number" style="color:${pts===2?'var(--success)':pts===1?'var(--warning)':'var(--danger)'}">Scenario ${i+1} — ${pts}/2 points</div>
-        <div style="font-size:0.85rem;background:var(--bg3);padding:0.75rem;border-radius:var(--radius);margin-bottom:0.75rem">${q.scenario}</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;font-size:0.82rem">
-          <div><div style="color:var(--text-muted)">Your Best:</div><strong style="color:${bestCorrect?'var(--success)':'var(--danger)'}">${a.best !== null ? q.options[a.best] : 'Not selected'}</strong></div>
-          <div><div style="color:var(--text-muted)">Your Worst:</div><strong style="color:${worstCorrect?'var(--success)':'var(--danger)'}">${a.worst !== null ? q.options[a.worst] : 'Not selected'}</strong></div>`;
-      if (!bestCorrect) reviewHtml += `<div><div style="color:var(--text-muted)">Correct Best:</div><strong style="color:var(--success)">${q.options[q.best]}</strong></div>`;
-      if (!worstCorrect) reviewHtml += `<div><div style="color:var(--text-muted)">Correct Worst:</div><strong style="color:var(--success)">${q.options[q.worst]}</strong></div>`;
-      reviewHtml += `</div><div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.5rem">💡 ${q.explanation}</div></div>`;
-    });
-    document.getElementById('final-score').textContent = `${score} / ${maxScore}`;
-    document.getElementById('review-area').innerHTML = reviewHtml;
-    loadLeaderboard(Math.round((score / maxScore) * 100), 'sjt');
-  }
+  totalPts += scenarioPts;
+  if (exactMatches === s.options.length) perfectCount++;
+  const matchPct = Math.round((scenarioPts / (s.options.length * 2)) * 100);
+  matchPcts.push(matchPct);
 
-  function setDiff(btn) {
-    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected-diff'));
-    btn.classList.add('selected-diff'); selectedDiff = btn.dataset.d;
-  }
+  let feedHtml = `<div style="font-size:0.88rem;font-weight:700;margin-bottom:0.75rem;color:${scenarioPts >= s.options.length * 2 ? 'var(--success)' : scenarioPts >= s.options.length ? 'var(--warning)' : 'var(--danger)'}">You scored ${scenarioPts}/${s.options.length * 2} on this scenario</div>`;
+  feedHtml += `<div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.6rem">Your ranking vs expert consensus:</div>`;
+  feedHtml += `<div style="display:grid;gap:0.4rem">`;
+  playerRanking.forEach((optIdx, rankPos) => {
+    const expertRankPos = s.expert.indexOf(optIdx);
+    const diff = Math.abs(rankPos - expertRankPos);
+    const color = colors[rankPos];
+    const icon = diff === 0 ? '✓' : diff === 1 ? '~' : '✗';
+    feedHtml += `<div style="display:flex;align-items:flex-start;gap:0.6rem;padding:0.45rem 0.65rem;border-radius:6px;background:var(--bg3);border-left:3px solid ${color}">
+      <span style="font-size:0.7rem;font-weight:800;color:${color};flex-shrink:0;padding-top:0.1rem">${icon} ${RANK_LABELS[rankPos]}</span>
+      <span style="font-size:0.82rem;color:var(--text);line-height:1.4">${s.options[optIdx]}</span>
+      <span style="margin-left:auto;font-size:0.72rem;color:var(--text-muted);flex-shrink:0;white-space:nowrap">Expert: ${RANK_LABELS[expertRankPos]}</span>
+    </div>`;
+  });
+  feedHtml += `</div>`;
+  feedHtml += `<div style="margin-top:0.75rem;font-size:0.8rem;color:var(--text-muted)"><strong>Expert order:</strong> ${s.expert.map((i, rank) => RANK_LABELS[rank] + ' → ' + s.options[i].split(')')[0] + ')').join(' · ')}</div>`;
 
-  async function loadLeaderboard(userScore, gameName) {
+  document.getElementById('feedback-content').innerHTML = feedHtml;
+  document.getElementById('feedback-panel').style.display = 'block';
+
+  const isLast = sIdx >= SCENARIOS.length - 1;
+  const nextBtn = document.createElement('button');
+  nextBtn.className = 'btn btn-primary';
+  nextBtn.style.marginTop = '1rem';
+  nextBtn.textContent = isLast ? 'See Results' : 'Next Scenario →';
+  nextBtn.onclick = () => { sIdx++; showScenario(); };
+  document.getElementById('feedback-panel').appendChild(nextBtn);
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+  let elapsed = 0;
+  updateTimerBar(TIME_PER_Q);
+  timerInterval = setInterval(() => {
+    elapsed++;
+    const remaining = TIME_PER_Q - elapsed;
+    updateTimerBar(remaining);
+    if (remaining <= 0) {
+      clearInterval(timerInterval);
+      if (!confirmed) {
+        if (playerRanking.length < SCENARIOS[sIdx].options.length) {
+          const all = SCENARIOS[sIdx].options.map((_, i) => i);
+          all.forEach(i => { if (!playerRanking.includes(i)) playerRanking.push(i); });
+        }
+        confirmRanking();
+      }
+    }
+  }, 1000);
+}
+
+function updateTimerBar(remaining) {
+  const pct = Math.max(0, (remaining / TIME_PER_Q) * 100);
+  const bar = document.getElementById('time-bar');
+  bar.style.width = pct + '%';
+  bar.style.background = remaining <= 15 ? 'var(--danger)' : 'var(--success)';
+  document.getElementById('time-label').textContent = remaining > 0 ? remaining + 's' : '0s';
+}
+
+function endGame() {
+  clearInterval(timerInterval);
+  document.getElementById('game-area').classList.add('hidden');
+  document.getElementById('results-area').classList.remove('hidden');
+
+  const maxPts = SCENARIOS.length * SCENARIOS[0].options.length * 2;
+  const score = Math.round((totalPts / maxPts) * 100);
+  const avgMatch = matchPcts.length ? Math.round(matchPcts.reduce((a, b) => a + b, 0) / matchPcts.length) : 0;
+  let profile = 'Needs Work';
+  if (score >= 85) profile = 'Strategic Thinker';
+  else if (score >= 65) profile = 'Good Judgment';
+  else if (score >= 45) profile = 'Developing';
+
+  document.getElementById('final-score').textContent = score + '%';
+  document.getElementById('r-pts').textContent = totalPts + ' / ' + maxPts;
+  document.getElementById('r-perfect').textContent = perfectCount;
+  document.getElementById('r-match').textContent = avgMatch + '%';
+  document.getElementById('r-profile').textContent = profile;
+
+  fetch('/sim/save-score', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({game: 'sjt', score})
+  }).catch(() => {});
+
+  loadLeaderboard(score);
+}
+
+async function loadLeaderboard(score) {
+  try {
     const res = await fetch('/sim/bot/leaderboard', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({score: userScore, difficulty: selectedDiff, game: gameName, count: 12})
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({score, difficulty: selectedDiff, game: 'sjt', count: 12})
     });
-    const data = await res.json(); const lb = data.leaderboard;
+    const data = await res.json();
+    const lb = data.leaderboard;
     let html = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.5rem">
       <h3 style="font-size:1rem;font-weight:700;margin-bottom:0.25rem">🏆 Leaderboard</h3>
-      <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1rem">You ranked <strong style="color:var(--accent)">#${data.user_rank}</strong> out of ${data.total_candidates} — top <strong style="color:var(--accent)">${Math.round(100-data.percentile+100/data.total_candidates)}%</strong></p>
+      <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1rem">You ranked <strong style="color:var(--accent)">#${data.user_rank}</strong> out of ${data.total_candidates} — top <strong style="color:var(--accent)">${Math.round(100 - data.percentile + 100 / data.total_candidates)}%</strong></p>
       <div style="display:flex;flex-direction:column;gap:0.4rem">`;
-    lb.slice(0,8).forEach(e => {
+    lb.slice(0, 8).forEach(e => {
       const you = e.is_user;
-      html += `<div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0.75rem;border-radius:8px;background:${you?'rgba(77,159,255,0.12)':'rgba(255,255,255,0.02)'};border:1px solid ${you?'rgba(77,159,255,0.3)':'transparent'}">
-        <span style="width:22px;text-align:center;font-size:0.78rem;font-weight:700;color:${e.rank<=3?'var(--warning)':'var(--text-muted)'}">${e.rank}</span>
-        <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:800;flex-shrink:0">${e.avatar.slice(0,2)}</div>
-        <div style="flex:1;min-width:0"><div style="font-size:0.85rem;font-weight:${you?700:500}">${e.name}${you?' 👈':''}</div><div style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.school}</div></div>
-        <span style="font-size:0.88rem;font-weight:700;color:${you?'var(--accent)':'var(--text)'}">${e.score}%</span>
+      html += `<div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0.75rem;border-radius:8px;background:${you ? 'rgba(77,159,255,0.12)' : 'rgba(255,255,255,0.02)'};border:1px solid ${you ? 'rgba(77,159,255,0.3)' : 'transparent'}">
+        <span style="width:22px;text-align:center;font-size:0.78rem;font-weight:700;color:${e.rank <= 3 ? 'var(--warning)' : 'var(--text-muted)'}">${e.rank}</span>
+        <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:800;flex-shrink:0">${e.avatar.slice(0, 2)}</div>
+        <div style="flex:1;min-width:0"><div style="font-size:0.85rem;font-weight:${you ? 700 : 500}">${e.name}${you ? ' 👈' : ''}</div><div style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.school}</div></div>
+        <span style="font-size:0.88rem;font-weight:700;color:${you ? 'var(--accent)' : 'var(--text)'}">${e.score}%</span>
       </div>`;
     });
     html += `</div></div>`;
     document.getElementById('leaderboard-area').innerHTML = html;
-  }
+  } catch (e) {}
+}
 </script>
 {% endblock %}
