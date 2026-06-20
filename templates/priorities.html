@@ -1,0 +1,455 @@
+{% extends "base.html" %}
+{% block title %}Priorities &amp; Preferences — AssessSim{% endblock %}
+{% block content %}
+<div class="game-page">
+  <div class="game-header">
+    <div class="game-header-icon" style="background:linear-gradient(135deg,#fdcb6e,#e17055)">🌟</div>
+    <div>
+      <h1>Priorities &amp; Preferences</h1>
+      <p>Citi Plum — Priorities, Preferences &amp; Personality</p>
+    </div>
+  </div>
+  <div class="game-meta">
+    <div class="game-meta-item">🌟 <strong>20</strong>&nbsp;rounds</div>
+    <div class="game-meta-item">🏦 Citi · Goldman Sachs · Barclays</div>
+    <div class="game-meta-item">No time limit</div>
+  </div>
+
+  <div id="instructions" class="instructions">
+    <h2>📋 Instructions</h2>
+    <ul>
+      <li>Each round shows <strong>3 work-related statements</strong>.</li>
+      <li><strong>First click</strong> marks one statement as <span style="color:var(--success);font-weight:700">✓ Most like me</span>.</li>
+      <li><strong>Second click</strong> marks a <em>different</em> statement as <span style="color:var(--danger);font-weight:700">✗ Least like me</span>.</li>
+      <li>The third statement is left neutral.</li>
+      <li>Click <strong>Next</strong> once both are selected to proceed.</li>
+    </ul>
+    <div class="notice" style="margin-top:1rem">
+      💡 <strong>There are no right or wrong answers.</strong> This is a personality exercise — your goal is to reflect genuinely on which statements describe how you naturally work. Your responses reveal your working style and map to the <strong>Plum Talent framework</strong> used by Citi and other banks.
+    </div>
+    <button class="btn btn-primary mt-2" onclick="startGame()">Start Assessment</button>
+  </div>
+
+  <div id="game-area" class="hidden">
+    <div class="progress-bar-wrap" style="margin-bottom:1.25rem">
+      <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <span id="round-counter" class="text-muted" style="font-size:0.85rem"></span>
+    </div>
+    <div id="round-area"></div>
+    <div style="margin-top:1.5rem;text-align:center">
+      <button id="next-btn" class="btn btn-primary" onclick="nextRound()" disabled style="opacity:0.4;cursor:not-allowed">Next Round →</button>
+    </div>
+  </div>
+
+  <div id="results-area" class="hidden" style="max-width:680px;margin:0 auto;padding:2rem">
+    <h2 style="font-size:1.8rem;margin-bottom:0.25rem;text-align:center">Your Plum Profile</h2>
+    <p class="text-muted" style="text-align:center;margin-bottom:1.5rem">Based on your choices across 20 rounds</p>
+
+    <div id="top-talents-area" style="margin-bottom:1.5rem"></div>
+
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.5rem">
+      <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:1rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em">All Talent Scores</h3>
+      <div id="talent-bars-area"></div>
+    </div>
+
+    <div id="finance-fit-area" style="margin-bottom:1.5rem"></div>
+
+    <div class="notice" style="text-align:center;margin-bottom:1.5rem">
+      Personality assessments don't have a single competitive score — your profile is shown above.
+    </div>
+
+    <div id="leaderboard-area" style="margin-bottom:1.5rem;text-align:left"></div>
+
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button class="btn btn-outline" onclick="location.reload()">Redo Assessment</button>
+      <a href="/" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const TALENTS = ['Adaptation','Communication','Conflict Resolution','Decision Making','Embracing Diversity','Execution','Innovation','Managing Others','Persuasion','Teamwork'];
+
+const TALENT_COLORS = {
+  'Adaptation':         '#00D2A0',
+  'Communication':      '#4D9FFF',
+  'Conflict Resolution':'#a29bfe',
+  'Decision Making':    '#FDCB6E',
+  'Embracing Diversity':'#fd79a8',
+  'Execution':          '#e17055',
+  'Innovation':         '#74b9ff',
+  'Managing Others':    '#6c5ce7',
+  'Persuasion':         '#FF6B6B',
+  'Teamwork':           '#55efc4'
+};
+
+const ROUNDS = [
+  {stmts:[
+    {text:'I adjust easily when plans change at short notice.',talent:'Adaptation'},
+    {text:'I enjoy persuading others to see things my way.',talent:'Persuasion'},
+    {text:'I set clear goals and track my progress methodically.',talent:'Execution'}
+  ]},
+  {stmts:[
+    {text:'I often come up with creative solutions no one else has considered.',talent:'Innovation'},
+    {text:'I work well with people from different cultural backgrounds.',talent:'Embracing Diversity'},
+    {text:'I keep others informed and communicate ideas clearly.',talent:'Communication'}
+  ]},
+  {stmts:[
+    {text:'I take the lead when a group needs direction.',talent:'Managing Others'},
+    {text:'I stay effective under pressure and uncertainty.',talent:'Adaptation'},
+    {text:'I bring people together when conflicts arise.',talent:'Conflict Resolution'}
+  ]},
+  {stmts:[
+    {text:'I make decisions quickly even when information is incomplete.',talent:'Decision Making'},
+    {text:'I contribute fully as a member of a team.',talent:'Teamwork'},
+    {text:'I find innovative ways to approach old problems.',talent:'Innovation'}
+  ]},
+  {stmts:[
+    {text:'I motivate my colleagues to reach their potential.',talent:'Managing Others'},
+    {text:'I weigh options carefully before committing to a course of action.',talent:'Decision Making'},
+    {text:'I am good at expressing complex ideas in simple terms.',talent:'Communication'}
+  ]},
+  {stmts:[
+    {text:'I build consensus in a group even when opinions differ strongly.',talent:'Conflict Resolution'},
+    {text:'I prioritise tasks effectively to meet deadlines.',talent:'Execution'},
+    {text:'I naturally consider the needs of everyone in a group.',talent:'Embracing Diversity'}
+  ]},
+  {stmts:[
+    {text:'I push through obstacles to get results.',talent:'Execution'},
+    {text:'I connect well with new people in social situations.',talent:'Communication'},
+    {text:'I adapt my working style to suit different situations.',talent:'Adaptation'}
+  ]},
+  {stmts:[
+    {text:'I encourage teammates to share ideas openly.',talent:'Teamwork'},
+    {text:'I find it easy to champion a cause to senior stakeholders.',talent:'Persuasion'},
+    {text:'I create an inclusive environment where everyone feels valued.',talent:'Embracing Diversity'}
+  ]},
+  {stmts:[
+    {text:'I thrive when I can experiment with new approaches.',talent:'Innovation'},
+    {text:'I resolve disagreements by helping parties understand each other.',talent:'Conflict Resolution'},
+    {text:'I keep the team aligned and focused on shared objectives.',talent:'Managing Others'}
+  ]},
+  {stmts:[
+    {text:'I trust my instincts when making high-stakes decisions.',talent:'Decision Making'},
+    {text:'I put the team\'s success above personal recognition.',talent:'Teamwork'},
+    {text:'I remain productive even when my role or goals shift unexpectedly.',talent:'Adaptation'}
+  ]},
+  {stmts:[
+    {text:'I can read a room and tailor my message to the audience.',talent:'Communication'},
+    {text:'I enjoy negotiating and getting people on board with my ideas.',talent:'Persuasion'},
+    {text:'I challenge conventional thinking to drive improvement.',talent:'Innovation'}
+  ]},
+  {stmts:[
+    {text:'I monitor outcomes and adjust my approach if results are off track.',talent:'Execution'},
+    {text:'I appreciate diverse viewpoints and learn from them.',talent:'Embracing Diversity'},
+    {text:'I step in to de-escalate tension when it arises.',talent:'Conflict Resolution'}
+  ]},
+  {stmts:[
+    {text:'I coach and develop the people around me.',talent:'Managing Others'},
+    {text:'I make well-reasoned decisions under time pressure.',talent:'Decision Making'},
+    {text:'I support team members when they are struggling.',talent:'Teamwork'}
+  ]},
+  {stmts:[
+    {text:'I remain calm and steady when circumstances change rapidly.',talent:'Adaptation'},
+    {text:'I inspire others through my passion and vision.',talent:'Persuasion'},
+    {text:'I set ambitious goals and hold myself accountable.',talent:'Execution'}
+  ]},
+  {stmts:[
+    {text:'I create space for people with different perspectives to be heard.',talent:'Embracing Diversity'},
+    {text:'I solve problems in ways that others have not tried before.',talent:'Innovation'},
+    {text:'I keep communication clear and constructive during conflict.',talent:'Conflict Resolution'}
+  ]},
+  {stmts:[
+    {text:'I coordinate effectively with colleagues across different functions.',talent:'Teamwork'},
+    {text:'I clearly explain my reasoning when I make a decision.',talent:'Decision Making'},
+    {text:'I hold difficult conversations when they are needed.',talent:'Managing Others'}
+  ]},
+  {stmts:[
+    {text:'I pivot quickly when a strategy is not working.',talent:'Adaptation'},
+    {text:'I network effectively and build strong professional relationships.',talent:'Communication'},
+    {text:'I get buy-in from stakeholders who were initially opposed.',talent:'Persuasion'}
+  ]},
+  {stmts:[
+    {text:'I break big problems into manageable steps and execute them.',talent:'Execution'},
+    {text:'I look for unexpected connections between ideas.',talent:'Innovation'},
+    {text:'I make others feel comfortable sharing concerns or disagreements.',talent:'Conflict Resolution'}
+  ]},
+  {stmts:[
+    {text:'I celebrate the team\'s achievements rather than only my own.',talent:'Teamwork'},
+    {text:'I actively seek to understand other cultures and backgrounds.',talent:'Embracing Diversity'},
+    {text:'I delegate confidently and check in at the right moments.',talent:'Managing Others'}
+  ]},
+  {stmts:[
+    {text:'I commit to a decision once I have enough information.',talent:'Decision Making'},
+    {text:'I stay flexible and do not get attached to a particular plan.',talent:'Adaptation'},
+    {text:'I can articulate a compelling argument quickly under pressure.',talent:'Persuasion'}
+  ]}
+];
+
+const TOTAL_ROUNDS = ROUNDS.length;
+let roundIdx = 0;
+let mostIdx = null;
+let leastIdx = null;
+let talentScores = {};
+
+TALENTS.forEach(t => { talentScores[t] = 0; });
+
+function startGame() {
+  document.getElementById('instructions').classList.add('hidden');
+  document.getElementById('game-area').classList.remove('hidden');
+  showRound();
+}
+
+function showRound() {
+  mostIdx = null;
+  leastIdx = null;
+
+  const r = ROUNDS[roundIdx];
+  document.getElementById('round-counter').textContent = `Round ${roundIdx + 1} of ${TOTAL_ROUNDS}`;
+  document.getElementById('progress-bar').style.width = ((roundIdx / TOTAL_ROUNDS) * 100) + '%';
+
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.disabled = true;
+  nextBtn.style.opacity = '0.4';
+  nextBtn.style.cursor = 'not-allowed';
+
+  let html = `<div style="display:flex;flex-direction:column;gap:0.75rem">`;
+  r.stmts.forEach((s, i) => {
+    html += `<div class="prio-stmt" data-idx="${i}" onclick="selectStmt(${i})"
+      style="padding:1.1rem 1.25rem;background:var(--bg2);border:2px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:border-color 0.15s,background 0.15s;display:flex;align-items:center;gap:1rem">
+      <div class="prio-badge" data-idx="${i}" style="width:28px;height:28px;border-radius:50%;background:var(--bg3);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;flex-shrink:0;transition:all 0.15s;color:var(--text-muted)">
+        ${'ABC'[i]}
+      </div>
+      <span style="font-size:0.95rem;line-height:1.5">${s.text}</span>
+    </div>`;
+  });
+  html += `</div>
+  <div style="margin-top:1rem;font-size:0.8rem;color:var(--text-muted);text-align:center">
+    <span id="select-hint">Click a statement to mark it as <strong style="color:var(--success)">Most like me</strong></span>
+  </div>`;
+  document.getElementById('round-area').innerHTML = html;
+}
+
+function selectStmt(idx) {
+  if (mostIdx === null) {
+    mostIdx = idx;
+    applyStmtStyle(idx, 'most');
+    document.getElementById('select-hint').innerHTML = `Now click a <em>different</em> statement to mark it as <strong style="color:var(--danger)">Least like me</strong>`;
+    return;
+  }
+  if (idx === mostIdx) {
+    mostIdx = null;
+    leastIdx = null;
+    resetAllStmtStyles();
+    document.getElementById('select-hint').innerHTML = `Click a statement to mark it as <strong style="color:var(--success)">Most like me</strong>`;
+    return;
+  }
+  if (leastIdx === null) {
+    leastIdx = idx;
+    applyStmtStyle(idx, 'least');
+    const remaining = [0, 1, 2].find(i => i !== mostIdx && i !== leastIdx);
+    applyStmtStyle(remaining, 'neutral');
+    document.getElementById('select-hint').innerHTML = `<span style="color:var(--success)">✓ Most</span> and <span style="color:var(--danger)">✗ Least</span> selected — click <strong>Next Round</strong> to continue.`;
+    const nextBtn = document.getElementById('next-btn');
+    nextBtn.disabled = false;
+    nextBtn.style.opacity = '1';
+    nextBtn.style.cursor = 'pointer';
+    return;
+  }
+  if (idx === leastIdx) {
+    leastIdx = null;
+    const prev = [0, 1, 2].find(i => i !== mostIdx && i !== idx);
+    resetStmtStyle(prev);
+    resetStmtStyle(idx);
+    document.getElementById('select-hint').innerHTML = `Now click a <em>different</em> statement to mark it as <strong style="color:var(--danger)">Least like me</strong>`;
+    const nextBtn = document.getElementById('next-btn');
+    nextBtn.disabled = true;
+    nextBtn.style.opacity = '0.4';
+    nextBtn.style.cursor = 'not-allowed';
+    return;
+  }
+  const old = leastIdx;
+  leastIdx = idx;
+  resetStmtStyle(old);
+  const prevNeutral = [0, 1, 2].find(i => i !== mostIdx && i !== old);
+  if (prevNeutral !== undefined) resetStmtStyle(prevNeutral);
+  applyStmtStyle(idx, 'least');
+  const remaining = [0, 1, 2].find(i => i !== mostIdx && i !== leastIdx);
+  if (remaining !== undefined) applyStmtStyle(remaining, 'neutral');
+}
+
+function applyStmtStyle(idx, type) {
+  const el = document.querySelector(`.prio-stmt[data-idx="${idx}"]`);
+  const badge = document.querySelector(`.prio-badge[data-idx="${idx}"]`);
+  if (!el || !badge) return;
+  if (type === 'most') {
+    el.style.borderColor = 'var(--success)';
+    el.style.background = 'rgba(0,210,160,0.08)';
+    badge.style.background = 'var(--success)';
+    badge.style.borderColor = 'var(--success)';
+    badge.style.color = '#000';
+    badge.textContent = '✓';
+  } else if (type === 'least') {
+    el.style.borderColor = 'var(--danger)';
+    el.style.background = 'rgba(255,107,107,0.08)';
+    badge.style.background = 'var(--danger)';
+    badge.style.borderColor = 'var(--danger)';
+    badge.style.color = '#fff';
+    badge.textContent = '✗';
+  } else {
+    el.style.borderColor = 'var(--border)';
+    el.style.background = 'rgba(255,255,255,0.03)';
+    badge.style.background = 'var(--bg3)';
+    badge.style.borderColor = 'var(--border)';
+    badge.style.color = 'var(--text-muted)';
+    badge.textContent = '—';
+  }
+}
+
+function resetStmtStyle(idx) {
+  const el = document.querySelector(`.prio-stmt[data-idx="${idx}"]`);
+  const badge = document.querySelector(`.prio-badge[data-idx="${idx}"]`);
+  if (!el || !badge) return;
+  el.style.borderColor = 'var(--border)';
+  el.style.background = 'var(--bg2)';
+  badge.style.background = 'var(--bg3)';
+  badge.style.borderColor = 'var(--border)';
+  badge.style.color = 'var(--text-muted)';
+  badge.textContent = 'ABC'[idx];
+}
+
+function resetAllStmtStyles() {
+  [0, 1, 2].forEach(i => resetStmtStyle(i));
+}
+
+function nextRound() {
+  if (mostIdx === null || leastIdx === null) return;
+  const r = ROUNDS[roundIdx];
+  talentScores[r.stmts[mostIdx].talent] += 2;
+  talentScores[r.stmts[leastIdx].talent] -= 1;
+
+  roundIdx++;
+  if (roundIdx >= TOTAL_ROUNDS) {
+    showResults();
+  } else {
+    showRound();
+  }
+}
+
+function showResults() {
+  document.getElementById('game-area').classList.add('hidden');
+  document.getElementById('results-area').classList.remove('hidden');
+
+  const sorted = TALENTS.slice().sort((a, b) => talentScores[b] - talentScores[a]);
+  const top3 = sorted.slice(0, 3);
+
+  const medals = ['🥇','🥈','🥉'];
+  let topHtml = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:0.5rem">`;
+  top3.forEach((t, i) => {
+    topHtml += `<div style="background:var(--bg2);border:2px solid ${TALENT_COLORS[t]};border-radius:var(--radius-lg);padding:1.25rem;text-align:center">
+      <div style="font-size:1.8rem;margin-bottom:0.4rem">${medals[i]}</div>
+      <div style="font-size:0.8rem;font-weight:700;color:${TALENT_COLORS[t]};text-transform:uppercase;letter-spacing:0.05em">${t}</div>
+      <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.25rem">Score: ${talentScores[t]}</div>
+    </div>`;
+  });
+  topHtml += `</div>`;
+  document.getElementById('top-talents-area').innerHTML = topHtml;
+
+  const maxScore = Math.max(...TALENTS.map(t => talentScores[t]));
+  const minScore = Math.min(...TALENTS.map(t => talentScores[t]));
+  const range = maxScore - minScore || 1;
+
+  let barsHtml = '';
+  sorted.forEach(t => {
+    const pct = Math.round(((talentScores[t] - minScore) / range) * 100);
+    barsHtml += `<div style="margin-bottom:0.6rem">
+      <div style="display:flex;justify-content:space-between;font-size:0.82rem;margin-bottom:0.25rem">
+        <span style="font-weight:600;color:${top3.includes(t) ? TALENT_COLORS[t] : 'var(--text)'}">${t}${top3.indexOf(t) >= 0 ? ' ' + medals[top3.indexOf(t)] : ''}</span>
+        <span style="color:var(--text-muted)">${talentScores[t] >= 0 ? '+' : ''}${talentScores[t]}</span>
+      </div>
+      <div style="height:6px;background:var(--bg3);border-radius:3px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${TALENT_COLORS[t]};border-radius:3px;transition:width 0.6s ease"></div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('talent-bars-area').innerHTML = barsHtml;
+
+  const fit = getFinanceFit(top3);
+  document.getElementById('finance-fit-area').innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem">
+      <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:0.5rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em">Finance Fit</h3>
+      <div style="font-size:1.15rem;font-weight:700;color:var(--accent);margin-bottom:0.4rem">${fit.role}</div>
+      <p style="font-size:0.88rem;color:var(--text-muted);line-height:1.55">${fit.description}</p>
+    </div>`;
+
+  const score = 85;
+  fetch('/sim/save-score', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({game: 'priorities', score, details: {top3}})
+  }).catch(() => {});
+
+  loadLeaderboard(score);
+}
+
+function getFinanceFit(top3) {
+  const has = t => top3.includes(t);
+
+  if (has('Innovation') && has('Decision Making')) {
+    return {role: 'Quant / Strategy', description: 'Your combination of creative thinking and decisive action suits quantitative research, strategy consulting, or proprietary trading roles where novel approaches and rapid judgement are valued.'};
+  }
+  if (has('Execution') && has('Teamwork')) {
+    return {role: 'Operations / Investment Banking Division', description: 'Your drive to deliver results alongside strong team orientation aligns well with IBD, operations, or project management roles that require reliable execution within collaborative teams.'};
+  }
+  if (has('Communication') && has('Persuasion')) {
+    return {role: 'Sales & Trading / Client Coverage', description: 'Your ability to articulate ideas and win people over positions you well for client-facing roles in sales, trading, or relationship management where influence and clarity drive results.'};
+  }
+  if (has('Managing Others') && has('Conflict Resolution')) {
+    return {role: 'Management / Leadership Track', description: 'Your aptitude for guiding teams and navigating difficult dynamics makes you a strong candidate for leadership development programmes and management-track positions.'};
+  }
+  if (has('Adaptation') && has('Innovation')) {
+    return {role: 'Fintech / Change Management', description: 'Your flexibility and creative thinking suit fast-moving environments such as fintech, transformation programmes, or innovation-focused divisions within banks.'};
+  }
+  if (has('Embracing Diversity') && has('Teamwork')) {
+    return {role: 'Global Markets / International Coverage', description: 'Your inclusive mindset and collaborative nature position you well for globally diverse teams in international markets, emerging markets, or multinational client coverage.'};
+  }
+  if (has('Decision Making') && has('Execution')) {
+    return {role: 'Private Equity / Asset Management', description: 'Your decisiveness and delivery focus are strong assets in investment decision-making environments such as private equity, asset management, or credit roles.'};
+  }
+  if (has('Conflict Resolution') && has('Communication')) {
+    return {role: 'Compliance / Risk Advisory', description: 'Your ability to navigate difficult conversations and communicate clearly suits risk, compliance, or regulatory advisory roles where judgement and stakeholder management are essential.'};
+  }
+  return {role: 'Generalist Finance Track', description: 'Your well-rounded talent profile suits a generalist rotational programme, giving you exposure to multiple divisions before specialising. Consider structured analyst programmes at bulge-bracket banks.'};
+}
+
+async function loadLeaderboard(score) {
+  try {
+    const res = await fetch('/sim/bot/leaderboard', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({score, difficulty: 'average', game: 'priorities', count: 10})
+    });
+    const data = await res.json();
+    let html = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem">
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:0.25rem">🏆 Completion Board</h3>
+      <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1rem">Others who completed this assessment</p>
+      <div style="display:flex;flex-direction:column;gap:0.4rem">`;
+    data.leaderboard.slice(0, 8).forEach(e => {
+      const you = e.is_user;
+      html += `<div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0.75rem;border-radius:8px;background:${you ? 'rgba(77,159,255,0.12)' : 'rgba(255,255,255,0.02)'};border:1px solid ${you ? 'rgba(77,159,255,0.3)' : 'transparent'}">
+        <span style="width:22px;text-align:center;font-size:0.78rem;font-weight:700;color:${e.rank <= 3 ? 'var(--warning)' : 'var(--text-muted)'}">${e.rank}</span>
+        <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#fdcb6e,#e17055);display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:800;flex-shrink:0">${e.avatar.slice(0, 2)}</div>
+        <div style="flex:1;min-width:0"><div style="font-size:0.85rem;font-weight:${you ? 700 : 500}">${e.name}${you ? ' 👈' : ''}</div><div style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.school}</div></div>
+        <span style="font-size:0.78rem;color:var(--text-muted)">Completed</span>
+      </div>`;
+    });
+    html += `</div></div>`;
+    document.getElementById('leaderboard-area').innerHTML = html;
+  } catch (e) {}
+}
+</script>
+{% endblock %}

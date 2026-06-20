@@ -1,0 +1,336 @@
+{% extends "base.html" %}
+{% block title %}Visual Matrix Reasoning — AssessSim{% endblock %}
+{% block content %}
+<div class="game-page">
+  <div class="game-header">
+    <div class="game-header-icon" style="background:linear-gradient(135deg,#e17055,#d63031)">🧩</div>
+    <div>
+      <h1>Visual Matrix Reasoning</h1>
+      <p>Plum / Raven's — Visual Pattern Recognition</p>
+    </div>
+  </div>
+  <div class="game-meta">
+    <div class="game-meta-item">🧩 <strong>12</strong>&nbsp;questions</div>
+    <div class="game-meta-item">⏱️ 30s each</div>
+    <div class="game-meta-item">🏦 Citi · HSBC · Accenture</div>
+  </div>
+
+  <div id="instructions" class="instructions">
+    <h2>📋 Instructions</h2>
+    <ul>
+      <li>Each question shows a <strong>3×3 grid</strong> of cells. The bottom-right cell is missing (<strong>?</strong>).</li>
+      <li>Identify the visual rule governing the grid — it may involve <strong>colour, shape, count, size, or position</strong>.</li>
+      <li>Click the answer option that correctly fills the <strong>?</strong> cell.</li>
+      <li>You have <strong>30 seconds</strong> per question. The timer bar turns red at 8 seconds.</li>
+      <li>Immediate feedback is shown after each answer — the game auto-advances after 700ms.</li>
+    </ul>
+    <div class="notice" style="margin-top:1rem">💡 <strong>Tip:</strong> Check rows and columns separately first. The rule often applies across both dimensions simultaneously.</div>
+    <div style="margin-top:1.25rem">
+      <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--text-muted);margin-bottom:0.5rem;">⚔️ Competition difficulty</label>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn btn-sm diff-btn" data-d="easy" onclick="setDiff(this)" style="background:rgba(0,210,160,0.15);border:1px solid var(--success);color:var(--success)">Casual</button>
+        <button class="btn btn-sm diff-btn selected-diff" data-d="average" onclick="setDiff(this)" style="background:rgba(77,159,255,0.2);border:1px solid var(--accent);color:var(--accent)">Average</button>
+        <button class="btn btn-sm diff-btn" data-d="above_average" onclick="setDiff(this)" style="background:rgba(162,155,254,0.15);border:1px solid var(--accent2);color:var(--accent2)">Above Average</button>
+        <button class="btn btn-sm diff-btn" data-d="cut_throat" onclick="setDiff(this)" style="background:rgba(255,94,122,0.15);border:1px solid var(--danger);color:var(--danger)">Quant God 🔥</button>
+      </div>
+    </div>
+    <button class="btn btn-primary mt-2" onclick="startGame()">Start Game</button>
+  </div>
+
+  <div id="game-area" class="hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
+      <div id="q-counter" class="text-muted" style="font-size:0.85rem"></div>
+      <div id="timer-text" style="font-size:0.95rem;font-weight:700;color:var(--text-muted)">30s</div>
+    </div>
+    <div class="progress-bar-wrap" style="margin-bottom:1.25rem">
+      <div id="timer-bar" class="progress-bar-fill" style="width:100%;transition:width 0.25s linear,background 0.3s"></div>
+    </div>
+
+    <div id="question-area" style="text-align:center"></div>
+
+    <div id="feedback-banner" style="min-height:2rem;margin-top:1rem;font-size:1rem;font-weight:700;text-align:center;transition:opacity 0.2s;opacity:0"></div>
+  </div>
+
+  <div id="results-area" class="hidden" style="text-align:center;padding:2rem">
+    <h2 style="font-size:1.8rem;margin-bottom:0.5rem">Test Complete!</h2>
+    <div class="score-display" id="final-score"></div>
+    <p class="text-muted">Matrix Score</p>
+    <div class="results-grid" style="max-width:560px;margin:1.5rem auto">
+      <div class="result-card"><div class="rc-value" id="r-correct">0</div><div class="rc-label">Correct</div></div>
+      <div class="result-card"><div class="rc-value" id="r-bonus">0</div><div class="rc-label">Time Bonus</div></div>
+      <div class="result-card"><div class="rc-value" id="r-accuracy">0%</div><div class="rc-label">Accuracy</div></div>
+      <div class="result-card"><div class="rc-value" id="r-avgtime">—</div><div class="rc-label">Avg Time</div></div>
+    </div>
+    <div id="leaderboard-area" style="max-width:600px;margin:1.5rem auto;text-align:left"></div>
+    <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+      <button class="btn btn-outline" onclick="location.reload()">Play Again</button>
+      <a href="/" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function C(sym, color, count=1, size='2rem') {
+  const s = `<span style="color:${color};font-size:${size};line-height:1.2">${sym}</span>`;
+  if (count === 1) return s;
+  return `<div style="display:flex;gap:3px;flex-wrap:wrap;justify-content:center;align-items:center;max-width:80px">${Array(count).fill(s).join('')}</div>`;
+}
+
+const R='#FF6B6B', B='#4D9FFF', G='#00D2A0', Y='#FDCB6E', P='#a29bfe', GR='#636e72';
+
+const QUESTIONS = [
+  {
+    cells:[C('●',R,1),C('●',R,2),C('●',R,3), C('■',B,1),C('■',B,2),C('■',B,3), C('▲',G,1),C('▲',G,2),null],
+    options:[C('▲',G,3),C('▲',G,2),C('▲',R,3),C('▲',G,1)],
+    correct:0
+  },
+  {
+    cells:[C('●',R),C('■',R),C('▲',R), C('●',B),C('■',B),C('▲',B), C('●',G),C('■',G),null],
+    options:[C('▲',G),C('▲',B),C('●',G),C('▲',R)],
+    correct:0
+  },
+  {
+    cells:[C('●',R),C('●',GR),C('●',GR), C('●',GR),C('●',R),C('●',GR), C('●',GR),C('●',GR),null],
+    options:[C('●',R),C('●',GR),C('■',R),C('▲',R)],
+    correct:0
+  },
+  {
+    cells:[C('→','#fff'),C('↓','#fff'),C('←','#fff'), C('↑','#fff'),C('→','#fff'),C('↓','#fff'), C('←','#fff'),C('↑','#fff'),null],
+    options:[C('→','#fff'),C('↑','#fff'),C('↓','#fff'),C('←','#fff')],
+    correct:0
+  },
+  {
+    cells:[C('■',R),C('■',GR),C('■',R), C('■',GR),C('■',R),C('■',GR), C('■',R),C('■',GR),null],
+    options:[C('■',R),C('■',GR),C('●',R),C('▲',R)],
+    correct:0
+  },
+  {
+    cells:[C('●',B,3),C('●',B,1),C('●',B,2), C('■',P,1),C('■',P,2),C('■',P,3), C('▲',Y,2),C('▲',Y,3),null],
+    options:[C('▲',Y,1),C('▲',Y,2),C('▲',Y,3),C('▲',B,1)],
+    correct:0
+  },
+  {
+    cells:[C('●',R,1,'1.2rem'),C('●',R,1,'2rem'),C('●',R,1,'2.8rem'), C('■',B,1,'1.2rem'),C('■',B,1,'2rem'),C('■',B,1,'2.8rem'), C('▲',G,1,'1.2rem'),C('▲',G,1,'2rem'),null],
+    options:[C('▲',G,1,'2.8rem'),C('▲',G,1,'2rem'),C('▲',G,1,'1.2rem'),C('▲',R,1,'2.8rem')],
+    correct:0
+  },
+  {
+    cells:[C('●',R),C('●',B),C('●',G), C('●',G),C('●',R),C('●',B), C('●',B),C('●',G),null],
+    options:[C('●',R),C('●',G),C('●',B),C('■',R)],
+    correct:0
+  },
+  {
+    cells:[C('●',P),C('■',P),C('▲',P), C('▲',P),C('●',P),C('■',P), C('■',P),C('▲',P),null],
+    options:[C('●',P),C('■',P),C('▲',P),C('◆',P)],
+    correct:0
+  },
+  {
+    cells:[C('●',Y,1),C('■',Y,1),C('▲',Y,1), C('●',Y,2),C('■',Y,2),C('▲',Y,2), C('●',Y,3),C('■',Y,3),null],
+    options:[C('▲',Y,3),C('▲',Y,2),C('■',Y,3),C('▲',R,3)],
+    correct:0
+  },
+  {
+    cells:[C('◆',G,1),C('◆',G,2),C('◆',G,3), C('◆',G,2),C('◆',G,3),C('◆',G,1), C('◆',G,3),C('◆',G,1),null],
+    options:[C('◆',G,2),C('◆',G,1),C('◆',G,3),C('◆',R,2)],
+    correct:0
+  },
+  {
+    cells:[C('●',R),C('■',R),C('▲',R), C('■',R),C('▲',R),C('●',R), C('▲',R),C('●',R),null],
+    options:[C('■',R),C('▲',R),C('●',R),C('■',B)],
+    correct:0
+  }
+];
+
+const TOTAL = QUESTIONS.length;
+const TIME_PER_Q = 30;
+
+let qIdx = 0;
+let correct = 0;
+let timeBonus = 0;
+let timeTaken = [];
+let timerInterval = null;
+let secondsLeft = TIME_PER_Q;
+let answered = false;
+let selectedDiff = 'average';
+
+function setDiff(btn) {
+  document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected-diff'));
+  btn.classList.add('selected-diff');
+  selectedDiff = btn.dataset.d;
+}
+
+function startGame() {
+  document.getElementById('instructions').classList.add('hidden');
+  document.getElementById('game-area').classList.remove('hidden');
+  showQuestion();
+}
+
+function cellBox(html, isQuestion) {
+  const bg = isQuestion ? 'rgba(77,159,255,0.08)' : 'var(--bg3)';
+  const border = isQuestion ? '2px dashed rgba(77,159,255,0.5)' : '1px solid var(--border)';
+  return `<div style="width:90px;height:90px;background:${bg};border:${border};border-radius:8px;display:flex;align-items:center;justify-content:center;">${html}</div>`;
+}
+
+function showQuestion() {
+  answered = false;
+  secondsLeft = TIME_PER_Q;
+  clearInterval(timerInterval);
+
+  const q = QUESTIONS[qIdx];
+  document.getElementById('q-counter').textContent = `Question ${qIdx + 1} of ${TOTAL}`;
+  document.getElementById('feedback-banner').style.opacity = '0';
+
+  const timerBar = document.getElementById('timer-bar');
+  timerBar.style.background = 'var(--accent)';
+  timerBar.style.width = '100%';
+  document.getElementById('timer-text').textContent = TIME_PER_Q + 's';
+
+  let gridHtml = `<div style="display:inline-grid;grid-template-columns:repeat(3,90px);gap:4px;margin-bottom:1.5rem">`;
+  q.cells.forEach((cell, i) => {
+    if (cell === null) {
+      gridHtml += cellBox(`<span style="font-size:2rem;color:var(--text-muted);font-weight:700">?</span>`, true);
+    } else {
+      gridHtml += cellBox(cell, false);
+    }
+  });
+  gridHtml += `</div>`;
+
+  let optHtml = `<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:0.5rem">`;
+  const labels = ['A','B','C','D'];
+  q.options.forEach((opt, i) => {
+    optHtml += `<div onclick="selectAnswer(${i})" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px">
+      <div class="matrix-option" data-idx="${i}" style="width:90px;height:90px;background:var(--bg3);border:2px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;transition:border-color 0.15s,background 0.15s">${opt}</div>
+      <span style="font-size:0.78rem;font-weight:600;color:var(--text-muted)">${labels[i]}</span>
+    </div>`;
+  });
+  optHtml += `</div>`;
+
+  document.getElementById('question-area').innerHTML = gridHtml + optHtml;
+
+  const startTime = Date.now();
+
+  timerInterval = setInterval(() => {
+    secondsLeft--;
+    const pct = (secondsLeft / TIME_PER_Q) * 100;
+    timerBar.style.width = pct + '%';
+    document.getElementById('timer-text').textContent = secondsLeft + 's';
+    if (secondsLeft <= 8) {
+      timerBar.style.background = 'var(--danger)';
+      document.getElementById('timer-text').style.color = 'var(--danger)';
+    }
+    if (secondsLeft <= 0) {
+      clearInterval(timerInterval);
+      if (!answered) handleAnswer(-1, startTime);
+    }
+  }, 1000);
+
+  document.getElementById('question-area')._startTime = startTime;
+}
+
+function selectAnswer(idx) {
+  if (answered) return;
+  const startTime = document.getElementById('question-area')._startTime;
+  handleAnswer(idx, startTime);
+}
+
+function handleAnswer(idx, startTime) {
+  answered = true;
+  clearInterval(timerInterval);
+
+  const q = QUESTIONS[qIdx];
+  const elapsed = (Date.now() - startTime) / 1000;
+  timeTaken.push(elapsed);
+
+  const isCorrect = idx === q.correct;
+  if (isCorrect) {
+    correct++;
+    if (elapsed < 10) timeBonus += 0.5;
+  }
+
+  const opts = document.querySelectorAll('.matrix-option');
+  opts.forEach((el, i) => {
+    if (i === q.correct) {
+      el.style.borderColor = 'var(--success)';
+      el.style.background = 'rgba(0,210,160,0.15)';
+    } else if (i === idx && idx !== q.correct) {
+      el.style.borderColor = 'var(--danger)';
+      el.style.background = 'rgba(255,107,107,0.15)';
+    }
+  });
+
+  const banner = document.getElementById('feedback-banner');
+  if (idx === -1) {
+    banner.textContent = '⏱️ Time\'s up!';
+    banner.style.color = 'var(--danger)';
+  } else if (isCorrect) {
+    banner.textContent = '✓ Correct!';
+    banner.style.color = 'var(--success)';
+  } else {
+    banner.textContent = `✗ Incorrect — the answer was ${['A','B','C','D'][q.correct]}`;
+    banner.style.color = 'var(--danger)';
+  }
+  banner.style.opacity = '1';
+
+  setTimeout(() => {
+    qIdx++;
+    if (qIdx >= TOTAL) {
+      endGame();
+    } else {
+      document.getElementById('timer-text').style.color = 'var(--text-muted)';
+      showQuestion();
+    }
+  }, 700);
+}
+
+function endGame() {
+  document.getElementById('game-area').classList.add('hidden');
+  document.getElementById('results-area').classList.remove('hidden');
+
+  const accuracy = Math.round((correct / TOTAL) * 100);
+  const avgTime = timeTaken.length ? (timeTaken.reduce((a, b) => a + b, 0) / timeTaken.length).toFixed(1) : '—';
+  const score = Math.round(Math.min(100, (correct / TOTAL) * 72 + (timeBonus / 6) * 28));
+
+  document.getElementById('final-score').textContent = score + '%';
+  document.getElementById('r-correct').textContent = correct + ' / ' + TOTAL;
+  document.getElementById('r-bonus').textContent = '+' + timeBonus.toFixed(1);
+  document.getElementById('r-accuracy').textContent = accuracy + '%';
+  document.getElementById('r-avgtime').textContent = avgTime !== '—' ? avgTime + 's' : '—';
+
+  fetch('/sim/save-score', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({game: 'matrix', score})
+  }).catch(() => {});
+
+  loadLeaderboard(score);
+}
+
+async function loadLeaderboard(score) {
+  try {
+    const res = await fetch('/sim/bot/leaderboard', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({score, difficulty: selectedDiff, game: 'matrix', count: 10})
+    });
+    const data = await res.json();
+    let html = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem">
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:0.25rem">🏆 Leaderboard</h3>
+      <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1rem">You ranked <strong style="color:var(--accent)">#${data.user_rank}</strong> out of ${data.total_candidates}</p>
+      <div style="display:flex;flex-direction:column;gap:0.4rem">`;
+    data.leaderboard.slice(0, 8).forEach(e => {
+      const you = e.is_user;
+      html += `<div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0.75rem;border-radius:8px;background:${you ? 'rgba(77,159,255,0.12)' : 'rgba(255,255,255,0.02)'};border:1px solid ${you ? 'rgba(77,159,255,0.3)' : 'transparent'}">
+        <span style="width:22px;text-align:center;font-size:0.78rem;font-weight:700;color:${e.rank <= 3 ? 'var(--warning)' : 'var(--text-muted)'}">${e.rank}</span>
+        <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:800;flex-shrink:0">${e.avatar.slice(0, 2)}</div>
+        <div style="flex:1;min-width:0"><div style="font-size:0.85rem;font-weight:${you ? 700 : 500}">${e.name}${you ? ' 👈' : ''}</div><div style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.school}</div></div>
+        <span style="font-size:0.88rem;font-weight:700;color:${you ? 'var(--accent)' : 'var(--text)'}">${e.score}%</span>
+      </div>`;
+    });
+    html += `</div></div>`;
+    document.getElementById('leaderboard-area').innerHTML = html;
+  } catch (e) {}
+}
+</script>
+{% endblock %}

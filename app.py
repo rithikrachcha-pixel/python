@@ -394,6 +394,12 @@ def verbal(): return render_template('verbal.html')
 @app.route('/game/sjt')
 def sjt(): return render_template('sjt.html')
 
+@app.route('/game/matrix')
+def matrix(): return render_template('matrix.html')
+
+@app.route('/game/priorities')
+def priorities(): return render_template('priorities.html')
+
 
 @app.route('/dashboard')
 def dashboard():
