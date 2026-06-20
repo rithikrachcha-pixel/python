@@ -4,31 +4,31 @@
 {% block content %}
 <div class="game-page">
   <div class="game-header">
-    <div class="game-header-icon" style="background:#A29BFE">📝</div>
+    <div class="game-header-icon" style="background:linear-gradient(135deg,#fdcb6e,#e17055)">📝</div>
     <div>
       <h1>Verbal Reasoning</h1>
-      <p>SHL Style &mdash; Critical Reading &amp; Comprehension</p>
+      <p>SHL-Style &mdash; Verbal Reasoning &amp; Critical Thinking</p>
     </div>
   </div>
 
   <div class="game-meta">
-    <div class="game-meta-item">📋 <strong>12</strong>&nbsp;questions</div>
-    <div class="game-meta-item">⏱️ <strong>17 min</strong>&nbsp;timer</div>
-    <div class="game-meta-item">✅ True / False / Cannot Say</div>
-    <div class="game-meta-item">📖 4 passages</div>
+    <div class="game-meta-item">📝 <strong>12</strong>&nbsp;questions</div>
+    <div class="game-meta-item">⏱️ <strong>60s</strong>&nbsp;each</div>
+    <div class="game-meta-item">🏦 Barclays · KPMG · Oliver Wyman</div>
   </div>
 
   <div id="instructions" class="instructions">
     <h2>📋 Instructions</h2>
     <ul>
-      <li>Read each passage, then decide if the statement is <strong>True</strong>, <strong>False</strong>, or <strong>Cannot Say</strong>.</li>
+      <li>Read each passage carefully, then decide if the statement is <strong>True</strong>, <strong>False</strong>, or <strong>Cannot Say</strong>.</li>
       <li><strong>True</strong> — the statement follows logically from the passage.</li>
       <li><strong>False</strong> — the statement contradicts the passage.</li>
-      <li><strong>Cannot Say</strong> — you cannot determine truth/falsity from the passage alone.</li>
+      <li><strong>Cannot Say</strong> — you cannot determine truth or falsity from the passage alone.</li>
       <li>Base your answer <em>only</em> on the text — do not use outside knowledge.</li>
+      <li>You have <strong>60 seconds</strong> per question. Answering within 20 seconds earns a time bonus.</li>
     </ul>
     <div class="notice" style="margin-top:1rem">
-      💡 <strong>Tip:</strong> "Cannot Say" is very common in SHL tests. If the passage neither confirms nor denies a statement, Cannot Say is correct — even if it seems obvious.
+      💡 <strong>Tip:</strong> "Cannot Say" is very common in SHL tests. If the passage neither confirms nor denies, Cannot Say is correct — even when the statement seems obviously true from general knowledge.
     </div>
     <div style="margin-top:1.25rem">
       <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--text-muted);margin-bottom:0.5rem;">⚔️ Competition difficulty</label>
@@ -39,33 +39,26 @@
         <button class="btn btn-sm diff-btn" data-d="cut_throat" onclick="setDiff(this)" style="background:rgba(255,94,122,0.15);border:1px solid var(--danger);color:var(--danger)">Quant God 🔥</button>
       </div>
     </div>
-    <button class="btn btn-primary mt-2" onclick="startGame()">Start Test (17 min timer)</button>
+    <button class="btn btn-primary mt-2" onclick="startGame()">Start Test</button>
   </div>
 
   <div id="game-area" class="hidden">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-      <div class="progress-bar-wrap" style="flex:1;margin-right:1rem;margin-bottom:0">
-        <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
-      </div>
-      <div class="timer" id="timer">17:00</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+      <span id="q-counter" class="text-muted" style="font-size:0.85rem"></span>
+      <span id="q-timer-label" style="font-size:0.85rem;font-weight:700;color:var(--accent)"></span>
+    </div>
+    <div class="progress-bar-wrap" style="margin-bottom:1.25rem">
+      <div class="progress-bar-fill" id="timer-bar" style="width:100%;background:linear-gradient(90deg,#fdcb6e,#e17055);transition:width 1s linear"></div>
     </div>
     <div id="question-area"></div>
-    <div class="question-nav">
-      <button id="prev-btn" class="btn btn-outline btn-sm" onclick="navigate(-1)">← Previous</button>
-      <span id="q-counter" class="text-muted" style="font-size:0.85rem"></span>
-      <button id="next-btn" class="btn btn-primary btn-sm" onclick="navigate(1)">Next →</button>
-    </div>
-    <div style="text-align:center;margin-top:1.5rem">
-      <button class="btn btn-success" onclick="submitTest()">Submit Test</button>
-    </div>
   </div>
 
   <div id="results-area" class="hidden" style="text-align:center;padding:2rem">
     <h2 style="font-size:1.8rem;margin-bottom:0.5rem">Test Complete!</h2>
     <div class="score-display" id="final-score"></div>
-    <p class="text-muted">Correct Answers</p>
+    <p class="text-muted">Final Score</p>
+    <div class="results-grid" id="result-cards" style="max-width:600px;margin:1.5rem auto"></div>
     <div id="leaderboard-area" style="max-width:600px;margin:1.5rem auto;text-align:left"></div>
-    <div id="review-area" style="max-width:700px;margin:1.5rem auto;text-align:left"></div>
     <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
       <button class="btn btn-outline" onclick="location.reload()">Retake</button>
       <a href="/" class="btn btn-primary">Back to Home</a>
@@ -75,213 +68,250 @@
 {% endblock %}
 
 {% block scripts %}
+<style>
+.passage-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-lg); padding:1.25rem 1.5rem; line-height:1.75; font-size:0.9rem; margin-bottom:1.25rem; color:var(--text); }
+.passage-label { font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted); margin-bottom:0.5rem; }
+.statement-box { font-size:1rem; font-weight:600; padding:0.9rem 1rem; background:var(--bg3); border-left:3px solid var(--accent); border-radius:6px; margin-bottom:1.25rem; line-height:1.5; }
+.tfc-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.75rem; }
+.tfc-btn { padding:1rem 0.5rem; border-radius:10px; border:2px solid var(--border); background:var(--bg2); color:var(--text); font-size:0.92rem; font-weight:700; cursor:pointer; text-align:center; transition:border-color 0.15s,background 0.15s; }
+.tfc-btn.true-btn:hover  { border-color:var(--success); background:rgba(0,210,160,0.08); }
+.tfc-btn.false-btn:hover { border-color:var(--danger); background:rgba(255,94,122,0.08); }
+.tfc-btn.cs-btn:hover    { border-color:var(--warning); background:rgba(253,203,110,0.08); }
+.tfc-btn.correct  { border-color:var(--success) !important; background:rgba(0,210,160,0.14) !important; }
+.tfc-btn.wrong    { border-color:var(--danger) !important; background:rgba(255,94,122,0.1) !important; }
+</style>
 <script>
-const questions = [
+const passages = [
   {
-    passage: "Agile methodology has transformed modern software development by emphasising iterative delivery and cross-functional collaboration. Unlike traditional waterfall approaches, Agile breaks projects into short sprints — typically two weeks — allowing teams to incorporate feedback continuously. Studies suggest that organisations adopting Agile see a 37% reduction in time-to-market on average. However, Agile is not universally effective; highly regulated industries such as aerospace and pharmaceuticals often require rigorous upfront documentation that Agile practices can undermine.",
-    statement: "Traditional waterfall methodology is faster than Agile for most projects.",
-    answer: "False",
-    explanation: "The passage states Agile reduces time-to-market by 37%, indicating waterfall is slower — not faster."
+    title: "ESG Investing",
+    text: "Environmental, Social, and Governance (ESG) criteria have become increasingly central to institutional investment decisions. A 2023 survey of fund managers found that 74% now incorporate ESG metrics into their portfolio screening processes. However, critics argue that ESG ratings from different providers often diverge significantly, with correlation between major rating agencies averaging just 0.54. Some firms have responded by developing proprietary ESG scoring methodologies. Despite growing adoption, a definitive link between high ESG scores and superior financial returns has not been established in peer-reviewed literature, though several studies suggest a modest positive correlation in developed markets."
   },
   {
-    passage: "Agile methodology has transformed modern software development by emphasising iterative delivery and cross-functional collaboration. Unlike traditional waterfall approaches, Agile breaks projects into short sprints — typically two weeks — allowing teams to incorporate feedback continuously. Studies suggest that organisations adopting Agile see a 37% reduction in time-to-market on average. However, Agile is not universally effective; highly regulated industries such as aerospace and pharmaceuticals often require rigorous upfront documentation that Agile practices can undermine.",
-    statement: "Agile methodology may be less suitable for the pharmaceutical industry.",
-    answer: "True",
-    explanation: "The passage explicitly states pharmaceutical industries require rigorous upfront documentation that Agile can undermine."
+    title: "Remote Working in Financial Services",
+    text: "Following the pandemic, many financial institutions adopted hybrid working models. A recent industry report found that firms offering flexible working arrangements saw a 23% reduction in staff turnover compared to those requiring full office attendance. However, senior bankers at several bulge-bracket firms have expressed concerns that remote work may impede junior staff development and deal-making culture. JPMorgan and Goldman Sachs have both publicly emphasised the importance of in-office presence, particularly for junior employees. The long-term impact of hybrid models on productivity within investment banking remains contested."
   },
   {
-    passage: "Agile methodology has transformed modern software development by emphasising iterative delivery and cross-functional collaboration. Unlike traditional waterfall approaches, Agile breaks projects into short sprints — typically two weeks — allowing teams to incorporate feedback continuously. Studies suggest that organisations adopting Agile see a 37% reduction in time-to-market on average. However, Agile is not universally effective; highly regulated industries such as aerospace and pharmaceuticals often require rigorous upfront documentation that Agile practices can undermine.",
-    statement: "The majority of software companies globally have adopted Agile.",
-    answer: "Cannot Say",
-    explanation: "The passage says Agile has 'transformed' development but gives no data on global adoption rates."
+    title: "Algorithmic Trading",
+    text: "Algorithmic trading now accounts for the majority of equity volume on major exchanges, with some estimates placing it at over 70% of US equity trades. High-frequency trading (HFT) firms rely on co-location services — placing their servers physically close to exchange matching engines — to achieve latency advantages measured in microseconds. Regulators have introduced circuit breakers and other safeguards following concerns that algorithmic strategies may amplify market volatility during stress events. Not all algorithmic strategies are high-frequency; systematic long-only funds and quantitative hedge funds also employ algorithmic execution without competing on speed."
   },
   {
-    passage: "Carbon capture and storage (CCS) technology involves capturing CO₂ emissions from industrial sources and storing them underground. Proponents argue that CCS is essential for meeting net-zero targets, particularly for hard-to-abate sectors like cement and steel production. Critics, however, contend that CCS is prohibitively expensive — currently costing between $50–$100 per tonne of CO₂ — and that investment would be better directed at renewable energy. The International Energy Agency estimates that CCS could contribute up to 15% of required emission reductions by 2050.",
-    statement: "CCS technology is currently cost-free for industrial operators.",
-    answer: "False",
-    explanation: "The passage explicitly states CCS currently costs $50–$100 per tonne of CO₂."
-  },
-  {
-    passage: "Carbon capture and storage (CCS) technology involves capturing CO₂ emissions from industrial sources and storing them underground. Proponents argue that CCS is essential for meeting net-zero targets, particularly for hard-to-abate sectors like cement and steel production. Critics, however, contend that CCS is prohibitively expensive — currently costing between $50–$100 per tonne of CO₂ — and that investment would be better directed at renewable energy. The International Energy Agency estimates that CCS could contribute up to 15% of required emission reductions by 2050.",
-    statement: "Without CCS, net-zero targets cannot be achieved in the cement and steel industries.",
-    answer: "Cannot Say",
-    explanation: "The passage says proponents argue CCS is 'essential' — but does not confirm this as fact. Cannot Say."
-  },
-  {
-    passage: "Carbon capture and storage (CCS) technology involves capturing CO₂ emissions from industrial sources and storing them underground. Proponents argue that CCS is essential for meeting net-zero targets, particularly for hard-to-abate sectors like cement and steel production. Critics, however, contend that CCS is prohibitively expensive — currently costing between $50–$100 per tonne of CO₂ — and that investment would be better directed at renewable energy. The International Energy Agency estimates that CCS could contribute up to 15% of required emission reductions by 2050.",
-    statement: "The IEA believes CCS will play some role in reducing emissions by 2050.",
-    answer: "True",
-    explanation: "The passage states the IEA 'estimates CCS could contribute up to 15% of required emission reductions by 2050'."
-  },
-  {
-    passage: "Remote work adoption accelerated dramatically during the COVID-19 pandemic, with many companies maintaining hybrid arrangements permanently. Research from Stanford University found that remote workers were 13% more productive than their office-based counterparts, though this effect was partially offset by feelings of isolation reported by 24% of remote employees. Not all roles are suited to remote work; positions requiring physical presence, real-time collaboration, or access to specialised equipment remain predominantly office-based. Companies implementing hybrid models report challenges in maintaining a unified corporate culture.",
-    statement: "All employees working remotely report higher productivity.",
-    answer: "False",
-    explanation: "The 13% productivity gain was an average — not universal — and isolation was reported by 24%, suggesting varied experiences."
-  },
-  {
-    passage: "Remote work adoption accelerated dramatically during the COVID-19 pandemic, with many companies maintaining hybrid arrangements permanently. Research from Stanford University found that remote workers were 13% more productive than their office-based counterparts, though this effect was partially offset by feelings of isolation reported by 24% of remote employees. Not all roles are suited to remote work; positions requiring physical presence, real-time collaboration, or access to specialised equipment remain predominantly office-based. Companies implementing hybrid models report challenges in maintaining a unified corporate culture.",
-    statement: "Stanford University conducted research into the productivity of remote workers.",
-    answer: "True",
-    explanation: "The passage directly states 'Research from Stanford University found that remote workers were 13% more productive'."
-  },
-  {
-    passage: "Remote work adoption accelerated dramatically during the COVID-19 pandemic, with many companies maintaining hybrid arrangements permanently. Research from Stanford University found that remote workers were 13% more productive than their office-based counterparts, though this effect was partially offset by feelings of isolation reported by 24% of remote employees. Not all roles are suited to remote work; positions requiring physical presence, real-time collaboration, or access to specialised equipment remain predominantly office-based. Companies implementing hybrid models report challenges in maintaining a unified corporate culture.",
-    statement: "Hybrid working models have been shown to resolve corporate culture challenges.",
-    answer: "False",
-    explanation: "The passage states hybrid models 'report challenges in maintaining a unified corporate culture' — implying problems persist."
-  },
-  {
-    passage: "Quantitative easing (QE) is a monetary policy tool whereby central banks purchase government bonds and other financial assets to inject money into the economy. First widely used during the 2008 global financial crisis, QE aims to lower interest rates and stimulate lending. Critics argue that QE primarily benefits asset owners — inflating stock and property prices — while doing little for those without assets. Supporters counter that without QE, credit markets could have frozen entirely in 2008, precipitating a deeper depression. The long-term effects of extended QE on inflation remain a subject of active academic debate.",
-    statement: "QE was first used as a monetary policy tool in the 2008 global financial crisis.",
-    answer: "Cannot Say",
-    explanation: "The passage says QE was 'first widely used' in 2008 — not that it was first used ever. Cannot Say."
-  },
-  {
-    passage: "Quantitative easing (QE) is a monetary policy tool whereby central banks purchase government bonds and other financial assets to inject money into the economy. First widely used during the 2008 global financial crisis, QE aims to lower interest rates and stimulate lending. Critics argue that QE primarily benefits asset owners — inflating stock and property prices — while doing little for those without assets. Supporters counter that without QE, credit markets could have frozen entirely in 2008, precipitating a deeper depression. The long-term effects of extended QE on inflation remain a subject of active academic debate.",
-    statement: "According to critics, QE disproportionately benefits wealthier individuals.",
-    answer: "True",
-    explanation: "Critics argue QE 'primarily benefits asset owners' by inflating asset prices while doing little for those without assets — implying a wealth disparity."
-  },
-  {
-    passage: "Quantitative easing (QE) is a monetary policy tool whereby central banks purchase government bonds and other financial assets to inject money into the economy. First widely used during the 2008 global financial crisis, QE aims to lower interest rates and stimulate lending. Critics argue that QE primarily benefits asset owners — inflating stock and property prices — while doing little for those without assets. Supporters counter that without QE, credit markets could have frozen entirely in 2008, precipitating a deeper depression. The long-term effects of extended QE on inflation remain a subject of active academic debate.",
-    statement: "Academic consensus holds that prolonged QE definitively causes inflation.",
-    answer: "False",
-    explanation: "The passage states the long-term effects 'remain a subject of active academic debate' — indicating no definitive consensus."
+    title: "Private Equity Returns",
+    text: "Private equity funds have historically delivered returns above those of public equity markets, with a Cambridge Associates study showing buyout funds outperforming the S&P 500 by approximately 3 percentage points annually over a 20-year horizon. However, these returns are heavily skewed by top-quartile performers, and the median private equity fund has not consistently outperformed public markets after fees. Investors in private equity typically face illiquidity periods of seven to ten years. The industry has seen significant capital inflows in recent years, with some analysts suggesting that increased competition for assets may compress future returns."
   }
 ];
 
-  let selectedDiff = 'average';
-  let currentQ = 0;
-  let answers = new Array(questions.length).fill(null);
-  let timerInterval = null;
-  let secondsLeft = 17 * 60;
-  const OPTIONS = ["True", "False", "Cannot Say"];
+const questions = [
+  { passageIdx: 0, statement: "All major fund managers now use ESG criteria in their investment decisions.", answer: "False",      explanation: "74% of fund managers surveyed incorporate ESG — not all. 'All' is too absolute." },
+  { passageIdx: 0, statement: "ESG ratings from different providers sometimes differ from one another.",   answer: "True",       explanation: "The passage states ESG ratings from different providers 'often diverge significantly', confirming they differ." },
+  { passageIdx: 0, statement: "High ESG scores lead to better financial returns.",                         answer: "Cannot Say", explanation: "A definitive link 'has not been established'; only a modest correlation is suggested. Cannot confirm as fact." },
+  { passageIdx: 1, statement: "Hybrid working reduces employee turnover in financial firms.",               answer: "True",       explanation: "The passage states firms offering flexible arrangements saw a 23% reduction in staff turnover." },
+  { passageIdx: 1, statement: "JPMorgan and Goldman Sachs require all employees to work in the office five days a week.", answer: "Cannot Say", explanation: "The passage says they 'emphasised the importance of in-office presence' — not that they mandated five days." },
+  { passageIdx: 1, statement: "Remote work is harmful to junior banker development.",                       answer: "Cannot Say", explanation: "Senior bankers 'expressed concerns' — this is an opinion, not an established finding from the passage." },
+  { passageIdx: 2, statement: "All algorithmic trading relies on high-frequency strategies.",               answer: "False",      explanation: "The passage explicitly states that systematic long-only and quant hedge funds use algorithmic execution without competing on speed." },
+  { passageIdx: 2, statement: "Co-location provides HFT firms with a speed advantage.",                    answer: "True",       explanation: "The passage states co-location is used to 'achieve latency advantages measured in microseconds'." },
+  { passageIdx: 2, statement: "Algorithmic trading has been proven to cause market crashes.",               answer: "Cannot Say", explanation: "Regulators have concerns that algorithms 'may amplify' volatility — not that crashes have been proven." },
+  { passageIdx: 3, statement: "Private equity funds always outperform public equity markets.",              answer: "False",      explanation: "The passage states the median fund 'has not consistently outperformed public markets after fees'." },
+  { passageIdx: 3, statement: "Private equity investors may be unable to access their capital for several years.", answer: "True", explanation: "The passage states investors 'typically face illiquidity periods of seven to ten years'." },
+  { passageIdx: 3, statement: "Future private equity returns will be lower than historical returns.",       answer: "Cannot Say", explanation: "'Some analysts suggest' compression is possible — this is speculation in the passage, not a stated fact." }
+];
 
-  function startGame() {
-    document.getElementById('instructions').classList.add('hidden');
-    document.getElementById('game-area').classList.remove('hidden');
-    renderQuestion(0);
-    startTimer();
+const QUESTION_TIME = 60;
+const OPTIONS = ["True", "False", "Cannot Say"];
+let selectedDiff = 'average';
+let currentQ = 0;
+let correctCount = 0;
+let timeBonus = 0;
+let trueCorrect = 0, falseCorrect = 0, csCorrect = 0;
+let questionStartTime = 0;
+let timerInterval = null;
+let answered = false;
+
+function setDiff(btn) {
+  document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected-diff'));
+  btn.classList.add('selected-diff');
+  selectedDiff = btn.dataset.d;
+}
+
+function startGame() {
+  document.getElementById('instructions').classList.add('hidden');
+  document.getElementById('game-area').classList.remove('hidden');
+  showQuestion(0);
+}
+
+function showQuestion(idx) {
+  currentQ = idx;
+  answered = false;
+  questionStartTime = Date.now();
+  const q = questions[idx];
+  const p = passages[q.passageIdx];
+
+  document.getElementById('q-counter').textContent = `Q${idx + 1} of ${questions.length} — ${p.title}`;
+  document.getElementById('q-timer-label').textContent = `${QUESTION_TIME}s`;
+
+  document.getElementById('question-area').innerHTML = `
+    <div class="question-card">
+      <div class="passage-label">Passage: ${p.title}</div>
+      <div class="passage-card">${p.text}</div>
+      <div class="passage-label" style="margin-bottom:0.4rem">Statement</div>
+      <div class="statement-box">"${q.statement}"</div>
+      <div class="tfc-grid">
+        <button class="tfc-btn true-btn"  id="btn-0" onclick="selectAnswer(0)">✅ TRUE</button>
+        <button class="tfc-btn false-btn" id="btn-1" onclick="selectAnswer(1)">✗ FALSE</button>
+        <button class="tfc-btn cs-btn"    id="btn-2" onclick="selectAnswer(2)">❓ CANNOT SAY</button>
+      </div>
+      <div id="feedback-row" style="display:none;margin-top:1rem;padding:0.75rem 1rem;border-radius:8px;font-size:0.85rem"></div>
+    </div>`;
+
+  startQuestionTimer();
+}
+
+function startQuestionTimer() {
+  clearInterval(timerInterval);
+  let remaining = QUESTION_TIME;
+  const bar = document.getElementById('timer-bar');
+  const label = document.getElementById('q-timer-label');
+  bar.style.transition = 'none';
+  bar.style.width = '100%';
+  bar.style.background = 'linear-gradient(90deg,#fdcb6e,#e17055)';
+  requestAnimationFrame(() => {
+    bar.style.transition = 'width 1s linear';
+  });
+
+  timerInterval = setInterval(() => {
+    remaining--;
+    label.textContent = `${remaining}s`;
+    bar.style.width = ((remaining / QUESTION_TIME) * 100) + '%';
+    if (remaining <= 15) bar.style.background = 'var(--danger)';
+    else if (remaining <= 25) bar.style.background = 'var(--warning)';
+    if (remaining <= 0) {
+      clearInterval(timerInterval);
+      if (!answered) timeoutQuestion();
+    }
+  }, 1000);
+}
+
+function timeoutQuestion() {
+  answered = true;
+  const q = questions[currentQ];
+  const correctIdx = OPTIONS.indexOf(q.answer);
+  document.querySelectorAll('.tfc-btn').forEach(b => b.disabled = true);
+  document.getElementById(`btn-${correctIdx}`).classList.add('correct');
+  showFeedback(false, q, true);
+  setTimeout(advanceQuestion, 2000);
+}
+
+function selectAnswer(optIdx) {
+  if (answered) return;
+  answered = true;
+  clearInterval(timerInterval);
+
+  const q = questions[currentQ];
+  const elapsed = (Date.now() - questionStartTime) / 1000;
+  const chosen = OPTIONS[optIdx];
+  const isCorrect = chosen === q.answer;
+  const correctIdx = OPTIONS.indexOf(q.answer);
+
+  if (isCorrect) {
+    correctCount++;
+    if (elapsed < 20) timeBonus += 0.5;
+    if (q.answer === 'True') trueCorrect++;
+    else if (q.answer === 'False') falseCorrect++;
+    else csCorrect++;
   }
 
-  function startTimer() {
-    timerInterval = setInterval(() => {
-      secondsLeft--;
-      const m = Math.floor(secondsLeft / 60).toString().padStart(2,'0');
-      const s = (secondsLeft % 60).toString().padStart(2,'0');
-      const el = document.getElementById('timer');
-      el.textContent = `${m}:${s}`;
-      if (secondsLeft <= 60) el.classList.add('urgent');
-      if (secondsLeft <= 0) { clearInterval(timerInterval); submitTest(); }
-    }, 1000);
+  document.querySelectorAll('.tfc-btn').forEach(b => b.disabled = true);
+  document.getElementById(`btn-${optIdx}`).classList.add(isCorrect ? 'correct' : 'wrong');
+  if (!isCorrect) document.getElementById(`btn-${correctIdx}`).classList.add('correct');
+
+  showFeedback(isCorrect, q, false);
+  setTimeout(advanceQuestion, 1800);
+}
+
+function showFeedback(isCorrect, q, timeout) {
+  const fb = document.getElementById('feedback-row');
+  fb.style.display = 'block';
+  if (timeout) {
+    fb.style.background = 'rgba(255,94,122,0.1)';
+    fb.style.border = '1px solid rgba(255,94,122,0.3)';
+    fb.innerHTML = `⏰ <strong>Time's up!</strong> The answer was <strong>${q.answer}</strong>. ${q.explanation}`;
+  } else if (isCorrect) {
+    fb.style.background = 'rgba(0,210,160,0.1)';
+    fb.style.border = '1px solid rgba(0,210,160,0.3)';
+    fb.innerHTML = `✅ <strong>Correct!</strong> ${q.explanation}`;
+  } else {
+    fb.style.background = 'rgba(255,94,122,0.1)';
+    fb.style.border = '1px solid rgba(255,94,122,0.3)';
+    fb.innerHTML = `✗ <strong>Incorrect.</strong> The answer was <strong>${q.answer}</strong>. ${q.explanation}`;
   }
+}
 
-  function renderQuestion(idx) {
-    currentQ = idx;
-    const q = questions[idx];
-    document.getElementById('q-counter').textContent = `Question ${idx+1} of ${questions.length}`;
-    document.getElementById('progress-bar').style.width = ((idx+1)/questions.length*100) + '%';
-    document.getElementById('prev-btn').disabled = idx === 0;
-    document.getElementById('next-btn').disabled = idx === questions.length - 1;
+function advanceQuestion() {
+  if (currentQ < questions.length - 1) {
+    showQuestion(currentQ + 1);
+  } else {
+    showResults();
+  }
+}
 
-    let html = `<div class="question-card">
-      <div class="question-number">Question ${idx+1}</div>
-      <div class="passage-box">${q.passage}</div>
-      <div class="question-text"><strong>Statement:</strong> "${q.statement}"</div>
-      <ul class="options-list">`;
+function showResults() {
+  clearInterval(timerInterval);
+  document.getElementById('game-area').classList.add('hidden');
+  document.getElementById('results-area').classList.remove('hidden');
 
-    OPTIONS.forEach((opt, i) => {
-      const sel = answers[idx] === i ? 'selected' : '';
-      const colours = ['var(--success)', 'var(--danger)', 'var(--warning)'];
-      html += `<li><button class="option-btn ${sel}" onclick="selectAnswer(${idx},${i},this)" style="${sel ? 'border-color:'+colours[i] : ''}">
-        <span class="option-letter" style="background:${colours[i]};color:#000">${opt[0]}</span>${opt}
-      </button></li>`;
+  const tb = Math.min(6, timeBonus);
+  const finalScore = Math.min(100, Math.round(correctCount * 7.5 + tb * 1.5));
+
+  document.getElementById('final-score').textContent = finalScore;
+
+  const trueTotal = questions.filter(q => q.answer === 'True').length;
+  const falseTotal = questions.filter(q => q.answer === 'False').length;
+  const csTotal = questions.filter(q => q.answer === 'Cannot Say').length;
+
+  document.getElementById('result-cards').innerHTML = `
+    <div class="result-card"><div class="rc-value">${correctCount}/12</div><div class="rc-label">Correct</div></div>
+    <div class="result-card"><div class="rc-value">${trueCorrect}/${trueTotal}</div><div class="rc-label">True Correct</div></div>
+    <div class="result-card"><div class="rc-value">${falseCorrect}/${falseTotal}</div><div class="rc-label">False Correct</div></div>
+    <div class="result-card"><div class="rc-value">${csCorrect}/${csTotal}</div><div class="rc-label">Cannot Say</div></div>`;
+
+  saveScore(finalScore);
+  loadLeaderboard(finalScore);
+}
+
+async function saveScore(score) {
+  try {
+    await fetch('/sim/save-score', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({game: 'verbal', score: score, details: {correct: correctCount, timeBonus: timeBonus}})
     });
-    html += `</ul></div>`;
-    document.getElementById('question-area').innerHTML = html;
-  }
+  } catch(e) {}
+}
 
-  function selectAnswer(qIdx, optIdx, btn) {
-    answers[qIdx] = optIdx;
-    document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
-  }
-
-  function navigate(dir) {
-    const next = currentQ + dir;
-    if (next >= 0 && next < questions.length) renderQuestion(next);
-  }
-
-  function submitTest() {
-    clearInterval(timerInterval);
-    document.getElementById('game-area').classList.add('hidden');
-    document.getElementById('results-area').classList.remove('hidden');
-
-    let score = 0;
-    let reviewHtml = '';
-
-    questions.forEach((q, i) => {
-      const userAnsIdx = answers[i];
-      const userAns = userAnsIdx !== null ? OPTIONS[userAnsIdx] : null;
-      const correct = userAns === q.answer;
-      if (correct) score++;
-
-      reviewHtml += `<div class="question-card" style="margin-bottom:1rem">
-        <div class="question-number" style="color:${correct?'var(--success)':'var(--danger)'}">
-          Q${i+1} — ${correct ? '✅ Correct' : '✗ Incorrect'}
-        </div>
-        <div class="passage-box" style="font-size:0.8rem">${q.passage}</div>
-        <div style="font-size:0.88rem;margin-bottom:0.5rem"><strong>Statement:</strong> "${q.statement}"</div>
-        <div style="font-size:0.85rem">
-          <span style="color:var(--text-muted)">Your answer: </span>
-          <strong style="color:${correct?'var(--success)':'var(--danger)'}">${userAns || 'Not answered'}</strong>
-        </div>`;
-      if (!correct) {
-        reviewHtml += `<div style="font-size:0.85rem;margin-top:0.2rem">
-          <span style="color:var(--text-muted)">Correct: </span>
-          <strong style="color:var(--success)">${q.answer}</strong>
-        </div>`;
-      }
-      reviewHtml += `<div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.3rem">💡 ${q.explanation}</div></div>`;
-    });
-
-    document.getElementById('final-score').textContent = `${score} / ${questions.length}`;
-    document.getElementById('review-area').innerHTML = reviewHtml;
-
-    const verbalScore = Math.round((score / questions.length) * 100);
-    loadLeaderboard(verbalScore, 'verbal');
-  }
-
-  function setDiff(btn) {
-    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected-diff'));
-    btn.classList.add('selected-diff');
-    selectedDiff = btn.dataset.d;
-  }
-
-  async function loadLeaderboard(userScore, gameName) {
+async function loadLeaderboard(userScore) {
+  try {
     const res = await fetch('/sim/bot/leaderboard', {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({score: userScore, difficulty: selectedDiff, game: gameName, count: 12})
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({score: userScore, difficulty: selectedDiff, game: 'verbal', count: 12})
     });
     const data = await res.json();
     const lb = data.leaderboard;
     let html = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.5rem">
       <h3 style="font-size:1rem;font-weight:700;margin-bottom:0.25rem">🏆 Leaderboard</h3>
-      <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1rem">You ranked <strong style="color:var(--accent)">#${data.user_rank}</strong> out of ${data.total_candidates} — top <strong style="color:var(--accent)">${Math.round(100-data.percentile+100/data.total_candidates)}%</strong></p>
+      <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1rem">You ranked <strong style="color:var(--accent)">#${data.user_rank}</strong> out of ${data.total_candidates} &mdash; top <strong style="color:var(--accent)">${Math.round(100 - data.percentile + 100 / data.total_candidates)}%</strong></p>
       <div style="display:flex;flex-direction:column;gap:0.4rem">`;
-    lb.slice(0,8).forEach(e => {
+    lb.slice(0, 8).forEach(e => {
       const you = e.is_user;
-      html += `<div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0.75rem;border-radius:8px;background:${you?'rgba(77,159,255,0.12)':'rgba(255,255,255,0.02)'};border:1px solid ${you?'rgba(77,159,255,0.3)':'transparent'}">
-        <span style="width:22px;text-align:center;font-size:0.78rem;font-weight:700;color:${e.rank<=3?'var(--warning)':'var(--text-muted)'}">${e.rank}</span>
-        <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:800;flex-shrink:0">${e.avatar.slice(0,2)}</div>
-        <div style="flex:1;min-width:0"><div style="font-size:0.85rem;font-weight:${you?700:500}">${e.name}${you?' 👈':''}</div><div style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.school}</div></div>
-        <span style="font-size:0.88rem;font-weight:700;color:${you?'var(--accent)':'var(--text)'}">${e.score}%</span>
+      html += `<div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0.75rem;border-radius:8px;background:${you ? 'rgba(77,159,255,0.12)' : 'rgba(255,255,255,0.02)'};border:1px solid ${you ? 'rgba(77,159,255,0.3)' : 'transparent'}">
+        <span style="width:22px;text-align:center;font-size:0.78rem;font-weight:700;color:${e.rank <= 3 ? 'var(--warning)' : 'var(--text-muted)'}">${e.rank}</span>
+        <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:800;flex-shrink:0">${e.avatar.slice(0, 2)}</div>
+        <div style="flex:1;min-width:0"><div style="font-size:0.85rem;font-weight:${you ? 700 : 500}">${e.name}${you ? ' 👈' : ''}</div><div style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.school}</div></div>
+        <span style="font-size:0.88rem;font-weight:700;color:${you ? 'var(--accent)' : 'var(--text)'}">${e.score}%</span>
       </div>`;
     });
     html += `</div></div>`;
     document.getElementById('leaderboard-area').innerHTML = html;
-  }
+  } catch(e) {}
+}
 </script>
 {% endblock %}
