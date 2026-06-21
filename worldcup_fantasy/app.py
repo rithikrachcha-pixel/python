@@ -125,7 +125,7 @@ def make_league_code():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
 
-# ─── Pages ────────────────────────────────────────────────────────────────────
+# ─── Pages ───────────────────────────────────────────────────────────────────────────────
 
 @app.route("/")
 def index():
@@ -152,7 +152,6 @@ def register():
     user = db_exec("SELECT id FROM users WHERE username=?", (username,)).fetchone()
     session["user_id"] = user["id"]
     session["username"] = username
-    # New user: squad not locked, go to team-builder
     return jsonify({"ok": True, "redirect": "/team-builder"})
 
 
@@ -166,7 +165,6 @@ def login():
         return jsonify({"error": "Invalid username or password"}), 401
     session["user_id"] = user["id"]
     session["username"] = user["username"]
-    # Redirect based on squad status
     redirect_url = "/dashboard" if user["squad_locked"] else "/team-builder"
     return jsonify({"ok": True, "redirect": redirect_url})
 
@@ -229,7 +227,7 @@ def league_detail(code):
                            league=dict(league))
 
 
-# ─── Data APIs ────────────────────────────────────────────────────────────────
+# ─── Data APIs ─────────────────────────────────────────────────────────────────────────────
 
 @app.route("/api/players")
 def api_players():
@@ -300,7 +298,6 @@ def api_squad():
             "players": squad,
         })
 
-    # POST: save squad
     if user["squad_locked"]:
         return jsonify({"error": "Your squad is already locked for the tournament"}), 403
 
@@ -447,7 +444,7 @@ def api_tournament():
     return jsonify([dict(r) for r in rows])
 
 
-# ─── League APIs ──────────────────────────────────────────────────────────────
+# ─── League APIs ──────────────────────────────────────────────────────────────────────────────
 
 @app.route("/api/leagues/create", methods=["POST"])
 @login_required
@@ -575,7 +572,7 @@ def api_my_leagues():
     return jsonify([dict(r) for r in rows])
 
 
-# ─── Admin ────────────────────────────────────────────────────────────────────
+# ─── Admin ─────────────────────────────────────────────────────────────────────────────────
 
 def _require_admin():
     if request.headers.get("X-Admin-Token") != ADMIN_TOKEN:
