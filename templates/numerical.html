@@ -400,7 +400,7 @@ function showResults() {
   const tb = Math.min(5, timeBonus);
   const finalScore = Math.min(100, correct * 9 + Math.round(tb * 2));
 
-  document.getElementById('final-score').textContent = finalScore;
+  document.getElementById('final-score').textContent = finalScore + '%';
 
   const sectionCounts = {};
   questions.forEach(q => { sectionCounts[q.section] = (sectionCounts[q.section] || 0) + 1; });

@@ -88,7 +88,7 @@ const CASES = [
     questions:[
       {q:'What is the annual saving from branch consolidation?',opts:['£3.2m','£3.4m','£3.6m','£4.0m'],ans:2,exp:'20 merged branches × £180k = £3.6m'},
       {q:'What is the annual saving from process automation?',opts:['£10.5m','£12.75m','£14.0m','£15.2m'],ans:1,exp:'£85m × 15% = £12.75m'},
-      {q:'What is the total annual saving across all four levers?',opts:['£22.55m','£23.4m','£24.3m','£25.1m'],ans:0,exp:'3.6+12.75+(42×0.12)+(3×0.95) = 3.6+12.75+5.04+2.85 = £24.24m ≈ £22.55m (accounting for partial)'},
+      {q:'What is the total annual saving across all four levers?',opts:['£22.55m','£23.4m','£24.3m','£25.1m'],ans:2,exp:'3.6+12.75+(42×0.12)+(3×0.95) = 3.6+12.75+5.04+2.85 = £24.24m ≈ £24.3m.'},
       {q:'What is the total one-time implementation cost?',opts:['£12.3m','£13.0m','£13.8m','£14.5m'],ans:2,exp:'4.0+6.5+0.5+2.8 = £13.8m'},
       {q:'Approximately how many years until the initiative breaks even on implementation costs?',opts:['Less than 1 year','~1 year','~2 years','More than 3 years'],ans:0,exp:'Annual savings ~£24m, implementation cost £13.8m → payback ~0.6 years'},
     ]
@@ -110,7 +110,7 @@ const CASES = [
       {q:'Which region has the highest monthly delivery cost?',opts:['North','South','East','West'],ans:1,exp:'North: 2400×8.4=£20,160. South: 3800×6.9=£26,220. East: 1950×9.2=£17,940. West: 2700×7.5=£20,250. South highest.'},
       {q:'How many deliveries fail each month in the South region?',opts:['285','320','342','380'],ans:2,exp:'3800 × (1−0.91) = 3800 × 0.09 = 342 failed deliveries'},
       {q:'What is the monthly redelivery cost for the South region?',opts:['£13,650','£15,390','£15,900','£16,400'],ans:1,exp:'342 × £45 = £15,390'},
-      {q:'Which regions qualify for the premium client 97%+ on-time SLA?',opts:['East only','North and East','East and West','All four'],ans:1,exp:'North 96%, South 91%, East 98%, West 93%. Only East meets 97%+. North at 96% just misses — North and East closest, but only East strictly qualifies.'},
+      {q:'Which regions qualify for the premium client 97%+ on-time SLA?',opts:['East only','North and East','East and West','All four'],ans:0,exp:'North 96%, South 91%, East 98%, West 93%. Only East meets or exceeds 97%.'},
     ]
   },
 ];
