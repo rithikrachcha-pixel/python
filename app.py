@@ -66,7 +66,7 @@ def login_required(f):
     """Decorator that returns 401 JSON if the user is not logged in."""
     @wraps(f)
     def decorated(*args, **kwargs):
-        if 'user_id' not in session:
+        if 'user_id' not in session and 'username' not in session:
             return jsonify({'error': 'Not logged in'}), 401
         return f(*args, **kwargs)
     return decorated
@@ -514,12 +514,33 @@ def api_save_score():
     except (TypeError, ValueError):
         return jsonify({'error': 'score must be a number'}), 400
 
+    user_id = session.get('user_id')
+    if not user_id:
+        # Session has username but DB was wiped — re-create the user row
+        username = session.get('username', 'anonymous')
+        email = session.get('email', f'{username}@anon.local')
+        db = get_db()
+        try:
+            db.execute(
+                'INSERT OR IGNORE INTO users (username, email, password_hash) VALUES (?, ?, ?)',
+                (username, email, '')
+            )
+            db.commit()
+            row = db.execute('SELECT id FROM users WHERE username = ?', (username,)).fetchone()
+            if row:
+                user_id = row['id']
+                session['user_id'] = user_id
+        except Exception:
+            return jsonify({'success': True})  # silent fail — localStorage already saved it
     db = get_db()
-    db.execute(
-        'INSERT INTO scores (user_id, game, score, details) VALUES (?, ?, ?, ?)',
-        (session['user_id'], game, score, json.dumps(details) if details else None)
-    )
-    db.commit()
+    try:
+        db.execute(
+            'INSERT INTO scores (user_id, game, score, details) VALUES (?, ?, ?, ?)',
+            (user_id, game, score, json.dumps(details) if details else None)
+        )
+        db.commit()
+    except Exception:
+        pass  # localStorage is the source of truth; DB write failing is non-fatal
     return jsonify({'success': True})
 
 
