@@ -435,6 +435,10 @@ function partnerDecides() {
   document.getElementById('nextRoundBtn').disabled = true;
 
   document.getElementById('partnerDecisionArea').classList.remove('hidden');
+  // Scroll into view so mobile users see the fairness buttons without scrolling
+  setTimeout(() => {
+    document.getElementById('partnerDecisionArea').scrollIntoView({behavior:'smooth', block:'nearest'});
+  }, 80);
 }
 
 function selectFairness(val) {

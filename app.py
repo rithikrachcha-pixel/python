@@ -435,6 +435,7 @@ def api_register():
     user = db.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
     session['user_id'] = user['id']
     session['username'] = user['username']
+    session['email'] = user['email']
     payload = {'id': user['id'], 'username': user['username'], 'email': user['email']}
     return jsonify({'user': payload})
 
@@ -456,6 +457,7 @@ def api_login():
 
     session['user_id'] = user['id']
     session['username'] = user['username']
+    session['email'] = user['email']
     payload = {'id': user['id'], 'username': user['username'], 'email': user['email']}
     return jsonify({'user': payload})
 
@@ -470,11 +472,21 @@ def api_logout():
 @app.route('/sim/me')
 def api_me():
     """Return the currently logged-in user, or 401 if not logged in."""
-    if 'user_id' not in session:
+    if 'user_id' not in session and 'username' not in session:
         return jsonify({'error': 'Not logged in'}), 401
     db = get_db()
-    user = db.execute('SELECT id, username, email FROM users WHERE id = ?',
-                      (session['user_id'],)).fetchone()
+    user = None
+    if 'user_id' in session:
+        user = db.execute('SELECT id, username, email FROM users WHERE id = ?',
+                          (session['user_id'],)).fetchone()
+    if not user and 'username' in session:
+        # DB was wiped (Vercel cold start) — re-create the account row-less,
+        # return the session data so the UI stays logged in.
+        return jsonify({'user': {
+            'id': session.get('user_id', 0),
+            'username': session['username'],
+            'email': session.get('email', '')
+        }})
     if not user:
         session.clear()
         return jsonify({'error': 'Not logged in'}), 401
